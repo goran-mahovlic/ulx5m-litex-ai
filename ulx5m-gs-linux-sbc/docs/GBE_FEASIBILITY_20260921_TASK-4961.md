@@ -1,65 +1,65 @@
-# ULX5M-GS: izvedivost 1 Gbps Etherneta (TASK-4961, 2026-09-21)
+# ULX5M-GS: feasibility of 1 Gbps Ethernet (TASK-4961, 2026-09-21)
 
-Autor: Grga (REGOČ Designer) · Projekt: PRJ-033 (pripada FPGA/ULX5M-GS radu — ne pretincu)
+Author: Grga (REGOČ Designer) · Project: PRJ-033 (belongs to the FPGA/ULX5M-GS work — not to the inbox)
 Repo: `/home/klaudio/app/litex-eth-ulx5m-gs/litex-eth-ulx5m-gs`
-Alati: oss-cad-suite (`nextpnr-0.10-45-g98c18d7`), LiteX `52f183ef6`, LiteEth `9654767`
+Tools: oss-cad-suite (`nextpnr-0.10-45-g98c18d7`), LiteX `52f183ef6`, LiteEth `9654767`
 
 ---
 
-## 0. Sažetak u tri rečenice
+## 0. Summary in three sentences
 
-1. **GbE se danas ne zatvara vremenski**: traži 125 MHz, izmjereno je **60,45 MHz (RX)** i
-   **61,93 MHz (TX)** nakon rutiranja — manjak **≈ 2,0×**. Uskim grlom NISU RGMII izlazi ni
-   RXC pin, nego **gray-brojači LiteEth-ovih async FIFO-a**, i to pretežno **rutiranjem**
-   (12,96 ns od 16,54 ns = 78 %).
-2. **Postoji stariji, teži kvar koji blokira i 100 Mbps**: KSZ9031-u **nitko ne daje
-   referentni takt**. Oscilator X1 i njegov serijski otpornik R104 su na ULX5M-GS-u **oba
-   `dnp`**, a pin XI visi na netu `ETH_CLK` koji ide **isključivo na FPGA pin IO_EB_A3** —
-   koji dosadašnji gateware nikad nije vozio. To objašnjava i „ploča je nijema" (TASK-4959)
-   i MDIO koji vraća 0x0000.
-3. Isporučeno: zastavica `--gbe` (ukupno 29 redaka izmjene) i **pogon 25 MHz referentnog
-   takta na IO_EB_A3** (`--no-phy-refclk` gasi). Zadani 100 Mbps build s refclkom prolazi
-   vremenski i daje bitstream (453 676 B, md5 `fdc72cb175520564f72b82edb49215f0`) — to je
-   ono što treba prvo staviti na ploču. GbE build prolazi na sjemenu 7 **bez** refclka;
-   s refclkom ruter pada, pa gigabit ostaje mjerni rezultat, ne isporuka.
+1. **GbE does not close timing today**: it needs 125 MHz, and after routing we measured **60.45 MHz (RX)** and
+   **61.93 MHz (TX)** — a shortfall of **≈ 2.0×**. The bottleneck is NOT the RGMII outputs nor the
+   RXC pin, but the **gray counters of the LiteEth async FIFOs**, and mostly **routing**
+   (12.96 ns of 16.54 ns = 78%).
+2. **There is an older, more serious fault that also blocks 100 Mbps**: **nobody gives the KSZ9031 a
+   reference clock**. Oscillator X1 and its series resistor R104 are **both
+   `dnp`** on the ULX5M-GS, and pin XI hangs on net `ETH_CLK`, which goes **only to FPGA pin IO_EB_A3** —
+   which the gateware so far has never driven. This also explains "the board is silent" (TASK-4959)
+   and MDIO returning 0x0000.
+3. Delivered: the `--gbe` flag (29 changed lines in total) and **driving the 25 MHz reference
+   clock on IO_EB_A3** (`--no-phy-refclk` turns it off). The default 100 Mbps build with refclk passes
+   timing and produces a bitstream (453 676 B, md5 `fdc72cb175520564f72b82edb49215f0`) — this is
+   what should go on the board first. The GbE build passes on seed 7 **without** refclk;
+   with refclk the router fails, so gigabit stays a measurement result, not a deliverable.
 
 ---
 
-## 1. Što je izmjereno (nextpnr, post-route, worst corner)
+## 1. What was measured (nextpnr, post-route, worst corner)
 
-| Build | eth_tx (PLL#1) | eth_rx (RXC) | sys (PLL#2) | ishod |
+| Build | eth_tx (PLL#1) | eth_rx (RXC) | sys (PLL#2) | result |
 |---|---|---|---|---|
-| 100M baseline (prije zakrpe), seed 7 | 57,61 MHz @ 25 | 79,80 MHz @ 25 | 30,92 MHz @ 16 | PASS |
-| 100M nakon zakrpe (regresija), seed 7 | 52,80 MHz @ 25 | 68,67 MHz @ 25 | 27,85 MHz @ 16 | PASS |
-| **GbE `--gbe`, seed 7** | **61,93 MHz @ 125** | **60,45 MHz @ 125** | 29,13 MHz @ 16 | **FAIL** |
+| 100M baseline (before the patch), seed 7 | 57.61 MHz @ 25 | 79.80 MHz @ 25 | 30.92 MHz @ 16 | PASS |
+| 100M after the patch (regression), seed 7 | 52.80 MHz @ 25 | 68.67 MHz @ 25 | 27.85 MHz @ 16 | PASS |
+| **GbE `--gbe`, seed 7** | **61.93 MHz @ 125** | **60.45 MHz @ 125** | 29.13 MHz @ 16 | **FAIL** |
 
-Za GbE je potrebno 125 MHz u obje PHY-domene. Manjak: **125 / 61,93 = 2,02×** (TX) i
-**125 / 60,45 = 2,07×** (RX).
+GbE needs 125 MHz in both PHY domains. Shortfall: **125 / 61.93 = 2.02×** (TX) and
+**125 / 60.45 = 2.07×** (RX).
 
-### 1.3 Tablica mjerenja (nextpnr, worst corner, `--freq 125`)
+### 1.3 Measurement table (nextpnr, worst corner, `--freq 125`)
 
-| Sjeme | faza | eth_tx (PLL#1 @125) | eth_rx (RXC @125) | sys (PLL#2 @16) | ishod PnR |
+| Seed | phase | eth_tx (PLL#1 @125) | eth_rx (RXC @125) | sys (PLL#2 @16) | PnR result |
 |---|---|---|---|---|---|
-| 7 | nakon plasiranja | 104,09 | 107,17 | 37,46 | — |
-| 7 | **nakon rutiranja** | **61,93 FAIL** | **60,45 FAIL** | 29,13 PASS | rc=0 |
-| 1 | nakon plasiranja | 115,59 | 103,71 | 38,31 | — |
-| 1 | **nakon rutiranja** | **59,15 FAIL** | **62,89 FAIL** | 28,92 PASS | rc=0 |
-| 3 | nakon plasiranja | 126,50 PASS | 94,86 | 38,30 | — |
-| 3 | **nakon rutiranja** | **52,82 FAIL** | **65,50 FAIL** | 27,37 PASS | rc=0 |
-| 11 | nakon plasiranja | 123,38 | 108,52 | 40,08 | **rc=255 — ruter pao** |
+| 7 | after placement | 104.09 | 107.17 | 37.46 | — |
+| 7 | **after routing** | **61.93 FAIL** | **60.45 FAIL** | 29.13 PASS | rc=0 |
+| 1 | after placement | 115.59 | 103.71 | 38.31 | — |
+| 1 | **after routing** | **59.15 FAIL** | **62.89 FAIL** | 28.92 PASS | rc=0 |
+| 3 | after placement | 126.50 PASS | 94.86 | 38.30 | — |
+| 3 | **after routing** | **52.82 FAIL** | **65.50 FAIL** | 27.37 PASS | rc=0 |
+| 11 | after placement | 123.38 | 108.52 | 40.08 | **rc=255 — router failed** |
 
-Dvije stvari se vide odmah:
+Two things are visible right away:
 
-1. **Sjeme ne zatvara jaz.** Nakon rutiranja je raspon 52,8–65,5 MHz; traži se 125. Nema
-   sjemena koje je i blizu.
-2. **Plasiranje laže.** Procjena nakon plasiranja (95–127 MHz) je 1,7–2,4× optimističnija
-   od stvarnog rezultata nakon rutiranja. Tko gleda samo prvu tablicu iz nextpnr-a, misli
-   da je gigabit nadohvat ruke. Nije.
+1. **The seed does not close the gap.** After routing the range is 52.8–65.5 MHz; 125 is needed. No
+   seed comes even close.
+2. **Placement lies.** The post-placement estimate (95–127 MHz) is 1.7–2.4× more optimistic
+   than the real post-routing result. Whoever looks only at the first nextpnr table thinks
+   gigabit is within reach. It is not.
 
-### 1.4 Cijena globalnog takta na RXC-u
+### 1.4 The cost of a global clock on RXC
 
-`rxc_global=True` znači da Yosys smije staviti `CC_BUFG` na RXC. Dokaz da to prolazi
-(Kosjenkin nalaz, ovdje neovisno potvrđen na ovom dizajnu):
+`rxc_global=True` means Yosys may place a `CC_BUFG` on RXC. Evidence that this works
+(Kosjenka's finding, independently confirmed here on this design):
 
 ```
 100 Mbps build (clkbuf_inhibit):   Inserting CC_BUFG on ...crg_gatematepll1_clkout[0]
@@ -71,196 +71,196 @@ GbE build     (rxc_global):        Inserting CC_BUFG on ...eth_rx_clk[0]        
                                         3   CC_BUFG
 ```
 
-Build prolazi do bitstreama — **CC_BUFG na ne-clock pinu IO_EB_A7 ne ruši nextpnr.**
-Ali ima cijenu: treći globalni takt troši dodatni GLBOUT i sjeme 11 zbog toga **više ne
-rutira**:
+The build runs through to a bitstream — **CC_BUFG on the non-clock pin IO_EB_A7 does not crash nextpnr.**
+But it has a cost: the third global clock uses an extra GLBOUT, and because of that seed 11 **no longer
+routes**:
 
 ```
 Info:   failed to find a route using dedicated resources. GLBOUT0 -> X111Y129/CPE.CLK_int
 ERROR:  Failed to route arc 654.0 of net 'crg_gatematepll1_clkout' ...
 ```
 
-Dakle stara zabilješka („CC_BUFG na RXC-u ruši nextpnr") je **netočna kao uzrok**, ali je
-opažena krhkost bila stvarna — samo je uzrok bio nedostatak globalnih taktnih resursa, ne
-sam pin.
+So the old note ("CC_BUFG on RXC crashes nextpnr") is **wrong as a cause**, but the
+observed fragility was real — only the cause was a lack of global clock resources, not
+the pin itself.
 
-### 1.1 Gdje točno pada
+### 1.1 Where exactly it fails
 
-Kritični put NIJE RGMII serdes ni DDR na padovima — u obje domene to su **gray-brojači
-LiteEth-ovih async FIFO-a na granici MAC-a**:
+The critical path is NOT the RGMII serdes nor the DDR on the pads — in both domains it is the **gray counters
+of the LiteEth async FIFOs at the MAC boundary**:
 
 ```
-eth_rx (16,54 ns, treba ≤ 8,00 ns):   3,58 ns logika + 12,96 ns rutiranje (78 %)
+eth_rx (16,54 ns, needs ≤ 8,00 ns):   3,58 ns logic + 12,96 ns routing (78 %)
    mac_core_cdc_graycounter0_q[3] -> ... -> mac_core_cdc_graycounter0_ce -> FF
-eth_tx (16,15 ns, treba ≤ 8,00 ns):   5,45 ns logika + 10,70 ns rutiranje (66 %)
+eth_tx (16,15 ns, needs ≤ 8,00 ns):   5,45 ns logic + 10,70 ns routing (66 %)
    mac_core_txdatapath_cdc_asyncfifo_re -> graycounter1_q_next_binary -> BRAM ADDRB0
 ```
 
-Dakle: **problem je rutiranje/placement, ne silicij i ne odabir pina.** Logika sama
-(3,6–5,5 ns) stala bi u 8 ns proračun; 11–13 ns rutiranja je ono što ubija.
+So: **the problem is routing/placement, not the silicon and not the pin choice.** The logic alone
+(3.6–5.5 ns) would fit into the 8 ns budget; the 11–13 ns of routing is what kills it.
 
-### 1.2 Pin RXC (IO_EB_A7) NIJE ograničenje
+### 1.2 The RXC pin (IO_EB_A7) is NOT the limit
 
-Kosjenkin nalaz da CC_BUFG na ne-clock pinu radi — potvrđen u praksi: build s
-`rxc_global=True` (bez `clkbuf_inhibit`) prolazi kroz nextpnr do bitstreama, bez pada.
-Domena `eth_rx_clk` pritom drži 60,45 MHz, što je **isti red veličine** kao PLL-om vođena
-`eth_tx` domena (61,93 MHz). Da je USR_GLB put kriv, RX bi bio dramatično lošiji od TX-a.
-Nije. Pin je oslobođen sumnje.
+Kosjenka's finding that CC_BUFG on a non-clock pin works is confirmed in practice: a build with
+`rxc_global=True` (without `clkbuf_inhibit`) goes through nextpnr to a bitstream, without failure.
+The `eth_rx_clk` domain holds 60.45 MHz, which is the **same order of magnitude** as the PLL-driven
+`eth_tx` domain (61.93 MHz). If the USR_GLB path were to blame, RX would be dramatically worse than TX.
+It is not. The pin is cleared of suspicion.
 
 ---
 
-## 2. Tvrdi hardverski nalaz: PHY nema referentni takt
+## 2. Hard hardware finding: the PHY has no reference clock
 
-Provjereno **izravno iz sheme** (`/home/klaudio/app/ulx5m-gs-hw/hardware`,
-alat `regoc_system/tools/kicad_netlist.py`):
+Checked **directly from the schematic** (`/home/klaudio/app/ulx5m-gs-hw/hardware`,
+tool `regoc_system/tools/kicad_netlist.py`):
 
 ```
-### ETH_CLK  (3 pina)
+### ETH_CLK  (3 pins)
     R104.2   ~                      passive
-    U14.46   XI                     input          <- KSZ9031 referentni takt
+    U14.46   XI                     input          <- KSZ9031 reference clock
     U4.E16   IO_EB_A3               bidirectional  <- FPGA
 
 X1  (ECS-2520MV-250-xx, 25 MHz)  -> (dnp yes)   ethernet.kicad_sch:23337
 R104 (27 R, X1 -> ETH_CLK)       -> (dnp yes)
-tekst u shemi: "Use EB-A3 as clock source. Or use EB-A3 as input and place X1, C118, R104"
+text in the schematic: "Use EB-A3 as clock source. Or use EB-A3 as input and place X1, C118, R104"
 ```
 
-Dakle jedini mogući izvor 25 MHz za PHY je **FPGA preko IO_EB_A3**. Dosadašnji gateware ga
-ne vozi:
+So the only possible 25 MHz source for the PHY is **the FPGA via IO_EB_A3**. The gateware so far does
+not drive it:
 
 ```
 $ grep -c "IO_EB_A3" build/eth/gateware/intergalaktik_ulx5m_gs.ccf   ->  0
 ```
 
-Bez takta na XI KSZ9031-ov interni PLL ne starta: nema linka, nema RXC-a, MDIO čita
-0x0000. To je točno opaženo ponašanje iz TASK-4959 i iz starog „MDIO mystery" traga.
+Without a clock on XI, the KSZ9031 internal PLL does not start: no link, no RXC, MDIO reads
+0x0000. This is exactly the behaviour observed in TASK-4959 and in the old "MDIO mystery" trail.
 
-**Usput nađena greška u sestrinskom projektu:** `litex-rgmii-ulx5m` vozi `eth_refclk` na
-`IO_EA_A8` (`intergalaktik_ulx5m_gs_platform.py:84`), a taj pin je na netu `N$0061` koji
-ima **samo taj jedan pin** — nigdje ne ide. Taj projekt, dakle, također nikad nije taktirao
-PHY.
+**A bug found on the way in the sister project:** `litex-rgmii-ulx5m` drives `eth_refclk` on
+`IO_EA_A8` (`intergalaktik_ulx5m_gs_platform.py:84`), and that pin is on net `N$0061`, which
+has **only that one pin** — it goes nowhere. So that project also never clocked
+the PHY.
 
-### 2.1 Ostali nalazi iz sheme (bitni za GbE)
+### 2.1 Other findings from the schematic (relevant to GbE)
 
-| Signal | KSZ9031 | FPGA | napomena |
+| Signal | KSZ9031 | FPGA | note |
 |---|---|---|---|
-| `RGMII_REFCLK` | pin 41 `CLK125_NDO/LED_MODE` | **IO_EB_B8** | PHY može dati **125 MHz** natrag FPGA-i; isti net nosi i strap `LED_MODE` (R66 = 4k7 na +1V8) |
-| PHYAD1 / PHYAD0 | pin 15 / 17 | LEDY / LEDG | R74/R75 (pull-up) su `dnp`, R84/R85 = 4k7 na GND → **PHYAD = 0** |
-| MODE[3:0], CLK125_EN, PHYAD2 | pinovi 27/28/31/32/33/35 | preko R97–R102 = **27 Ω serijski** prema FPGA-i | ovo **nisu** strap otpornici — vrijednost strapa određuju interni pull-ovi KSZ9031 (default = RGMII, CLK125 uključen) |
+| `RGMII_REFCLK` | pin 41 `CLK125_NDO/LED_MODE` | **IO_EB_B8** | the PHY can give **125 MHz** back to the FPGA; the same net also carries the `LED_MODE` strap (R66 = 4k7 to +1V8) |
+| PHYAD1 / PHYAD0 | pin 15 / 17 | LEDY / LEDG | R74/R75 (pull-up) are `dnp`, R84/R85 = 4k7 to GND → **PHYAD = 0** |
+| MODE[3:0], CLK125_EN, PHYAD2 | pins 27/28/31/32/33/35 | via R97–R102 = **27 Ω series** to the FPGA | these are **not** strap resistors — the strap value is set by the KSZ9031 internal pulls (default = RGMII, CLK125 enabled) |
 
-Ranija bilješka koja je R66–R85 pripisala MODE/CLK125_EN strapovima **nije točna**; ti
-otpornici sjede na `RGMII_REFCLK`, `LEDY` i `LEDG`, a RX linija ima samo 27 Ω serijske.
-
----
-
-## 3. Što je promijenjeno u kodu (29 + 15 redaka)
-
-Sve je iza zastavica; zadano ponašanje repozitorija (100 Mbps) ostaje netaknuto.
-
-### 3.1 `--gbe` — brzinski prilagodljiv RGMII
-
-| Datoteka | Promjena |
-|---|---|
-| `gateware/target_eth.py` | `gbe=False` parametar; `--gbe` CLI; `fixed_100m = not gbe`, `with_dynamic_link = gbe`, `rxc_global = gbe`, `line_rate_1g = gbe`; period constraint RXC-a 8 ns umjesto 40 ns; `--gbe` diže `tx_clk_freq` na 125 MHz |
-| `gateware/phy_rgmii_gatemate.py` | `line_rate_1g` parametar (postavlja `tx_clk_freq`/`rx_clk_freq` na 125 MHz) |
-| `gateware/crg.py` | nula — `tx_clk_freq` je već bio parametar |
-
-Mehanizam je LiteEth-ov vlastiti: `LiteEthRGMIITXClock(external_tx_clk=True)` pri
-`link_1G` propušta 125 MHz kao TXC, a pri `link_100M` dijeli ga s 5 → 25 MHz. Brzina se
-bira iz RGMII in-band statusa, bez MDIO-a. Isti bitstream, dakle, pokriva 10/100/1000.
-
-### 3.2 Pogon referentnog takta PHY-ja (uključeno po defaultu)
-
-| Datoteka | Promjena |
-|---|---|
-| `gateware/ulx5m_eth_platform.py` | novi IO `("eth_refclk", 0, Pins("IO_EB_A3"), SLEW=fast, DRIVE=3)` |
-| `gateware/crg.py` | `self.clk25 = clk25` (izloženo cilju) |
-| `gateware/target_eth.py` | `self.comb += platform.request("eth_refclk").eq(self.crg.clk25)`; `--no-phy-refclk` gasi |
-
-Ovo je ispravak koji **mora ići i u 100 Mbps build** — bez njega PHY ne radi uopće.
+An earlier note that assigned R66–R85 to the MODE/CLK125_EN straps **is not correct**; those
+resistors sit on `RGMII_REFCLK`, `LEDY` and `LEDG`, and the RX line has only 27 Ω series resistors.
 
 ---
 
-## 4. Vanjski forkovi — što je ondje stvarno
+## 3. What was changed in the code (29 + 15 lines)
 
-| Izvor | Nalaz |
+Everything is behind flags; the default repository behaviour (100 Mbps) stays untouched.
+
+### 3.1 `--gbe` — speed-adaptive RGMII
+
+| File | Change |
 |---|---|
-| `pu-cc/liteeth`, grana **`gatematergmii`** | `liteeth/phy/gatematergmii.py` (Patrick Urban, Cologne Chip) — **gigabitni** RGMII PHY za GateMate: bajt po taktu, DDR, bez 10/100 nibble-geara |
-| isti file | **GateMate IMA programabilno kašnjenje na padu**: `CC_IBUF(DELAY_IBF=n)` i `CC_OBUF(DELAY_OBF=n)`, do 16 stepenica; u SPEED modu 30/38/50 ps (best/typ/worst) → **max ≈ 0,5–0,8 ns**. Komentar u našem repozitoriju („GateMate nema programabilni delay primitiv") je **netočan** |
-| `pu-cc/litex-boards`, grana `olimex_gatemate_ethio` | referentna uporaba: `tx_delay = 0.0`, `rx_delay = 0.0`, uz komentar *„RTL8211E adds 2ns TXDLY=1 / RXDLY=1"* — 2 ns RGMII pomak radi **PHY**, ne FPGA. Taktiranje: `tx_clk=None` ⇒ `cd_eth_tx.clk = cd_eth_rx.clk` (**TXC izveden iz PHY-jevog RXC-a**, bez 125 MHz PLL-a) |
-| `pu-cc/litex`, grana `gatemate-oddr-fix` | popravak `CC_ODDR`/`CC_IDDR` lowering-a (`i_DDR = clk` + re-timing `CC_DFF`). **Već je u našem LiteX-u** (`litex/build/colognechip/common.py:108` ima `i_DDR = clk` i oba DFF-a) — nije otvoren problem |
-| `pu-cc/liteeth`, grana **`gatemate1000basex`** | `liteeth/phy/gatemate_1000basex.py` (477 redaka) — gigabit preko **SerDes-a i 1000BASE-X**, potpuno zaobilazi RGMII i 125 MHz fabric. Traži SFP/optiku, ne KSZ9031 |
-| `mmicko` | **ima** fork `mmicko/nextpnr` (i `yosys`, `litex`, `litex-boards`) — tvrdnja „nema javni fork nextpnr-a" ne stoji; je li fork ičim ispred upstreama nije provjereno |
+| `gateware/target_eth.py` | `gbe=False` parameter; `--gbe` CLI; `fixed_100m = not gbe`, `with_dynamic_link = gbe`, `rxc_global = gbe`, `line_rate_1g = gbe`; RXC period constraint 8 ns instead of 40 ns; `--gbe` raises `tx_clk_freq` to 125 MHz |
+| `gateware/phy_rgmii_gatemate.py` | `line_rate_1g` parameter (sets `tx_clk_freq`/`rx_clk_freq` to 125 MHz) |
+| `gateware/crg.py` | none — `tx_clk_freq` was already a parameter |
 
-Zaključak: **postoji** javni gigabitni RGMII PHY za GateMate (pu-cc), samo nije za ovu
-ploču i nije mu nigdje pokazana zatvorena vremenska analiza na 125 MHz.
+The mechanism is LiteEth's own: `LiteEthRGMIITXClock(external_tx_clk=True)` at
+`link_1G` passes 125 MHz through as TXC, and at `link_100M` divides it by 5 → 25 MHz. The speed is
+selected from the RGMII in-band status, without MDIO. So the same bitstream covers 10/100/1000.
+
+### 3.2 Driving the PHY reference clock (enabled by default)
+
+| File | Change |
+|---|---|
+| `gateware/ulx5m_eth_platform.py` | new IO `("eth_refclk", 0, Pins("IO_EB_A3"), SLEW=fast, DRIVE=3)` |
+| `gateware/crg.py` | `self.clk25 = clk25` (exposed to the target) |
+| `gateware/target_eth.py` | `self.comb += platform.request("eth_refclk").eq(self.crg.clk25)`; `--no-phy-refclk` turns it off |
+
+This is a fix that **must also go into the 100 Mbps build** — without it the PHY does not work at all.
 
 ---
 
-## 5. Što bi trebalo da GbE stvarno proradi
+## 4. External forks — what is really there
 
-Poredano po omjeru učinka i rizika.
+| Source | Finding |
+|---|---|
+| `pu-cc/liteeth`, branch **`gatematergmii`** | `liteeth/phy/gatematergmii.py` (Patrick Urban, Cologne Chip) — a **gigabit** RGMII PHY for GateMate: one byte per clock, DDR, without the 10/100 nibble gear |
+| same file | **GateMate DOES HAVE a programmable delay on the pad**: `CC_IBUF(DELAY_IBF=n)` and `CC_OBUF(DELAY_OBF=n)`, up to 16 steps; in SPEED mode 30/38/50 ps (best/typ/worst) → **max ≈ 0.5–0.8 ns**. The comment in our repository ("GateMate has no programmable delay primitive") is **wrong** |
+| `pu-cc/litex-boards`, branch `olimex_gatemate_ethio` | reference usage: `tx_delay = 0.0`, `rx_delay = 0.0`, with the comment *"RTL8211E adds 2ns TXDLY=1 / RXDLY=1"* — the 2 ns RGMII shift is done by the **PHY**, not the FPGA. Clocking: `tx_clk=None` ⇒ `cd_eth_tx.clk = cd_eth_rx.clk` (**TXC derived from the PHY's RXC**, without a 125 MHz PLL) |
+| `pu-cc/litex`, branch `gatemate-oddr-fix` | fix for the `CC_ODDR`/`CC_IDDR` lowering (`i_DDR = clk` + re-timing `CC_DFF`). **Already in our LiteX** (`litex/build/colognechip/common.py:108` has `i_DDR = clk` and both DFFs) — not an open issue |
+| `pu-cc/liteeth`, branch **`gatemate1000basex`** | `liteeth/phy/gatemate_1000basex.py` (477 lines) — gigabit over **SerDes and 1000BASE-X**, fully bypasses RGMII and the 125 MHz fabric. Needs SFP/optics, not the KSZ9031 |
+| `mmicko` | **does have** a fork `mmicko/nextpnr` (and `yosys`, `litex`, `litex-boards`) — the claim "no public nextpnr fork" does not hold; whether the fork is ahead of upstream in any way was not checked |
 
-### P0 — bez ovoga ništa ne radi (ni 100M)
-1. **Voziti 25 MHz na IO_EB_A3.** Isporučeno u ovoj zakrpi. Treba potvrditi na ploči:
-   MDIO očitanje registara 0x02/0x03 na PHYAD = 0 mora dati `0x0022` / `0x1620`.
-   Dok je MDIO 0x0000, svaka rasprava o 100 vs. 1000 Mbps je bespredmetna.
-
-### P1 — vremensko zatvaranje 125 MHz (manjak ≈ 2,0×)
-2. **Novi nextpnr.** Lokalni je `nextpnr-0.10-45-g98c18d7`. Upstream ima control-set-aware
-   HeAP legaliser (#1678) i iterativni `reassign_bridges` (#1697), oboje mjeri upravo ono
-   što nas ubija (rutiranje FF-grupa). Ovo je najjeftiniji potez s najvećim potencijalom.
-3. **Skratiti gray-brojače LiteEth-ovih async FIFO-a.** Kritični put je
-   `graycounter_q -> ce -> q_next_binary -> BRAM ADDRB0`. Plići FIFO (manje bitova u
-   gray-brojaču) skraćuje i logiku i rutiranje.
-4. **Seed sweep je obavezan, ne kozmetika.** Raspon nakon plasiranja: eth_tx
-   115,6–126,5 MHz, eth_rx 94,9–108,5 MHz (sjemena 1/3/11). Jedno sjeme (3) čak *prolazi*
-   125 MHz na TX-u nakon plasiranja — pa padne u ruteru.
-5. **Probati timing-driven ripup** (`--router2-tmg-ripup`), jer je 66–78 % kritičnog puta
-   rutiranje.
-
-### P2 — propusnost, a ne samo takt
-6. Čak i kad se 125 MHz zatvori, `sys` na 16 MHz uz `dw=8` nosi **16 MB/s**, a gigabit
-   traži **125 MB/s**. Izmjereni strop `sys` domene je **29–42 MHz**. Dakle:
-   - **sustavni put do punog gigabita ne postoji pri `dw=8`.** Treba `dw=32` uz `sys`
-     ≥ 31,25 MHz (izmjereno 29,1–42,5 MHz → tijesno, ali u dometu) ili `dw=64` uz ≥ 15,6 MHz.
-   - S `dw=8` i `sys` = 16 MHz gigabitni link može *stajati* i primati kratke okvire, ali
-     async FIFO se prelije usred okvira dugog 1500 B. Ovo treba mjeriti, ne pretpostavljati.
-
-### P3 — RGMII kašnjenja (2 ns)
-7. **Ne raditi to u FPGA-i.** `CC_OBUF DELAY_OBF` daje najviše ≈ 0,8 ns — premalo.
-   Cologne Chip u vlastitoj referenci ostavlja 0 i traži da **PHY** doda 2 ns
-   (`RTL8211E: TXDLY=1 / RXDLY=1`). KSZ9031 ekvivalent je RGMII-ID preko MMD registara.
-8. **Alternativa bez MDIO-a:** `CC_PLL` CLK90 na 125 MHz = točno 2 ns pomaka za TXC.
-   `GateMatePLL.create_clkout(..., phase=90)` to već podržava. Ovo je čisto unutar FPGA-e
-   i ne dira pad-skew registre (koji su prošli put ubili TX).
-
-### Ne raditi
-- ❌ pisati pad-skew registre (MMD2 dev2 reg8) — ranije je ubilo TX;
-- ❌ voziti IO_EB_B8 kao izlaz — na njemu je `LED_MODE` strap (4k7 na +1V8) i PHY-jev
-  `CLK125_NDO`; smije biti samo ulaz;
-- ❌ `eth_refclk` na `IO_EA_A8` — taj pin nigdje ne ide (net `N$0061`).
+Conclusion: a public gigabit RGMII PHY for GateMate **does exist** (pu-cc), but it is not for this
+board, and nowhere is a closed timing analysis at 125 MHz shown for it.
 
 ---
 
-## 7. Što je pokušano da se jaz zatvori (i kako je prošlo)
+## 5. What would be needed for GbE to really work
 
-| Pokušaj | Rezultat |
+Ordered by effect-to-risk ratio.
+
+### P0 — without this nothing works (not even 100M)
+1. **Drive 25 MHz on IO_EB_A3.** Delivered in this patch. Needs confirmation on the board:
+   an MDIO read of registers 0x02/0x03 at PHYAD = 0 must give `0x0022` / `0x1620`.
+   While MDIO is 0x0000, any discussion of 100 vs. 1000 Mbps is pointless.
+
+### P1 — timing closure at 125 MHz (shortfall ≈ 2.0×)
+2. **A newer nextpnr.** The local one is `nextpnr-0.10-45-g98c18d7`. Upstream has a control-set-aware
+   HeAP legaliser (#1678) and an iterative `reassign_bridges` (#1697); both target exactly what
+   is killing us (routing of FF groups). This is the cheapest move with the biggest potential.
+3. **Shorten the gray counters of the LiteEth async FIFOs.** The critical path is
+   `graycounter_q -> ce -> q_next_binary -> BRAM ADDRB0`. A shallower FIFO (fewer bits in the
+   gray counter) shortens both logic and routing.
+4. **A seed sweep is mandatory, not cosmetic.** Post-placement range: eth_tx
+   115.6–126.5 MHz, eth_rx 94.9–108.5 MHz (seeds 1/3/11). One seed (3) even *passes*
+   125 MHz on TX after placement — and then fails in the router.
+5. **Try timing-driven ripup** (`--router2-tmg-ripup`), because 66–78% of the critical path is
+   routing.
+
+### P2 — throughput, not just the clock
+6. Even when 125 MHz closes, `sys` at 16 MHz with `dw=8` carries **16 MB/s**, while gigabit
+   needs **125 MB/s**. The measured ceiling of the `sys` domain is **29–42 MHz**. So:
+   - **there is no systemic path to full gigabit at `dw=8`.** It needs `dw=32` with `sys`
+     ≥ 31.25 MHz (measured 29.1–42.5 MHz → tight, but within reach) or `dw=64` with ≥ 15.6 MHz.
+   - With `dw=8` and `sys` = 16 MHz, a gigabit link can *come up* and receive short frames, but
+     the async FIFO overflows in the middle of a 1500 B frame. This must be measured, not assumed.
+
+### P3 — RGMII delays (2 ns)
+7. **Do not do it in the FPGA.** `CC_OBUF DELAY_OBF` gives at most ≈ 0.8 ns — too little.
+   Cologne Chip in its own reference leaves 0 and lets the **PHY** add 2 ns
+   (`RTL8211E: TXDLY=1 / RXDLY=1`). The KSZ9031 equivalent is RGMII-ID via MMD registers.
+8. **Alternative without MDIO:** `CC_PLL` CLK90 at 125 MHz = exactly 2 ns of shift for TXC.
+   `GateMatePLL.create_clkout(..., phase=90)` already supports this. This stays fully inside the FPGA
+   and does not touch the pad-skew registers (which killed TX last time).
+
+### Do not do
+- ❌ write the pad-skew registers (MMD2 dev2 reg8) — this killed TX before;
+- ❌ drive IO_EB_B8 as an output — it carries the `LED_MODE` strap (4k7 to +1V8) and the PHY's
+  `CLK125_NDO`; it may only be an input;
+- ❌ `eth_refclk` on `IO_EA_A8` — that pin goes nowhere (net `N$0061`).
+
+---
+
+## 7. What was tried to close the gap (and how it went)
+
+| Attempt | Result |
 |---|---|
-| Sweep sjemena 7 / 1 / 3 na 125 MHz | 52,8–65,5 MHz nakon rutiranja — jaz ostaje ≈ 2× |
-| Sjeme 11 | ruter pao: `Failed to route arc ... net 'crg_gatematepll1_clkout'` (GLBOUT0) |
-| `--router2-tmg-ripup` (timing-driven ripup), sjeme 7 | **ne konvergira**: prekinut nakon **532 iteracije** s `overused=1..3` koji samo titra. Nije upotrebljiv na ovom dizajnu |
-| `--gbe` + pogon refclka, sjeme 7 | ruter pao: `Failed to route arc 29.0 of net 'eth_rx_clk'` |
+| Seed sweep 7 / 1 / 3 at 125 MHz | 52.8–65.5 MHz after routing — the gap stays ≈ 2× |
+| Seed 11 | router failed: `Failed to route arc ... net 'crg_gatematepll1_clkout'` (GLBOUT0) |
+| `--router2-tmg-ripup` (timing-driven ripup), seed 7 | **does not converge**: stopped after **532 iterations** with `overused=1..3` that only oscillates. Not usable on this design |
+| `--gbe` + refclk drive, seed 7 | router failed: `Failed to route arc 29.0 of net 'eth_rx_clk'` |
 
-Zadnji redak je važan: **jedan dodatni IO pin (25 MHz na IO_EB_A3) dovoljan je da GbE
-varijanta prestane rutirati na sjemenu 7.** Dizajn s tri globalna takta na 125 MHz je na
-rubu routabilnosti — to nije „skoro gotovo", to je nestabilno.
+The last row is important: **one extra IO pin (25 MHz on IO_EB_A3) is enough for the GbE
+variant to stop routing on seed 7.** A design with three global clocks at 125 MHz is on the
+edge of routability — this is not "almost done", it is unstable.
 
-### 7.1 Suprotno tome: 100 Mbps s refclkom prolazi bez muke
+### 7.1 In contrast: 100 Mbps with refclk passes easily
 
-| Build | eth_tx | eth_rx | sys | ishod |
+| Build | eth_tx | eth_rx | sys | result |
 |---|---|---|---|---|
-| **100 Mbps + pogon refclka (zadano nakon zakrpe)** | 58,08 @ 25 PASS | 63,09 @ 25 PASS | 26,62 @ 16 PASS | **rc=0, bitstream 453 676 B** |
+| **100 Mbps + refclk drive (default after the patch)** | 58.08 @ 25 PASS | 63.09 @ 25 PASS | 26.62 @ 16 PASS | **rc=0, bitstream 453 676 B** |
 
 ```
 $ grep IO_EB_A3 build/eth/gateware/intergalaktik_ulx5m_gs.ccf
@@ -269,67 +269,67 @@ $ md5sum intergalaktik_ulx5m_gs.bit
 fdc72cb175520564f72b82edb49215f0
 ```
 
-**To je bitstream koji vrijedi prvi isprobati na ploči** — prvi put uopće daje KSZ9031-u
-referentni takt.
+**This is the bitstream worth trying on the board first** — for the first time ever it gives the KSZ9031
+a reference clock.
 
 ---
 
-## 6. Kako ovo ponoviti
+## 6. How to reproduce this
 
 ```bash
 export OSS_CAD_SUITE=/home/klaudio/Programs/oss-cad-suite
 export LXROOT=/home/klaudio/app/litex-rgmii-ulx5m
 cd /home/klaudio/app/litex-eth-ulx5m-gs/litex-eth-ulx5m-gs
-source ./env.sh                       # NE kroz cjevovod -- exporti se gube u podljusci
+source ./env.sh                       # NOT through a pipe -- the exports are lost in a subshell
 
-python3 gateware/target_eth.py --build                 # 100 Mbps (zadano) + refclk
+python3 gateware/target_eth.py --build                 # 100 Mbps (default) + refclk
 python3 gateware/target_eth.py --build --gbe           # 1000 Mbps datapath, eth_tx = 125 MHz
-python3 gateware/target_eth.py --build --gbe --no-phy-refclk   # bez pogona XI
+python3 gateware/target_eth.py --build --gbe --no-phy-refclk   # without driving XI
 
-# brojke po domenama:
-grep -E "Max frequency" build/eth/gateware/../../..  # vidi build.log; zadnje 4 linije = nakon rutiranja
+# numbers per domain:
+grep -E "Max frequency" build/eth/gateware/../../..  # see build.log; last 4 lines = after routing
 ```
 
-Za sweep sjemena bez ponovne sinteze:
+For a seed sweep without re-running synthesis:
 
 ```bash
 nextpnr-himbaechel --json <build>.json --vopt ccf=<build>.ccf --device CCGM1A1 \
   --vopt out=x.txt --router router2 --timing-allow-fail --seed <N> --freq 125
 ```
 
-### 6.1 Zamka u alatnom lancu koju treba znati
+### 6.1 A toolchain trap you need to know about
 
-`litex/build/colognechip/peppercorn.py:73` ima **zakomentiran** redak:
+`litex/build/colognechip/peppercorn.py:73` has a **commented-out** line:
 
 ```python
 #pnr_opts += " --sdc {top}.sdc"
 ```
 
-Generirani `.sdc` se, dakle, **nikad ne predaje nextpnr-u**. Jedino što stvarno stiže do
-statičke analize je `--freq <najveći period constraint>`, koji se primjenjuje na sve
-neograničene taktove. Posljedica: u 100 Mbps buildu cilj je `--freq 25`, pa su brojke
-„57 MHz / 79 MHz" samo *dovoljno dobro za 25*, a ne strop. Tek `--gbe` (koji podigne
-`--freq` na 125) natjera plasirač da stvarno pritisne — i tek tada se vidi pravi strop.
-Ovo je razlog zašto naivna usporedba brojki iz dva builda vara.
+So the generated `.sdc` is **never passed to nextpnr**. The only thing that really reaches
+static analysis is `--freq <largest period constraint>`, which is applied to all
+unconstrained clocks. Consequence: in the 100 Mbps build the target is `--freq 25`, so the numbers
+"57 MHz / 79 MHz" are only *good enough for 25*, not the ceiling. Only `--gbe` (which raises
+`--freq` to 125) makes the placer really push — and only then is the real ceiling visible.
+This is why a naive comparison of numbers from two builds is misleading.
 
 ---
 
-## 8. Presuda
+## 8. Verdict
 
-**1 Gbps na ULX5M-GS danas nije izvediv „minimalnim promjenama".** Kod jest minimalan
-(29 redaka) i build prolazi, ali:
+**1 Gbps on the ULX5M-GS is not feasible today "with minimal changes".** The code is minimal
+(29 lines) and the build passes, but:
 
-- vremenski je jaz **≈ 2,0×** (traži 125 MHz, dobiva 52,8–65,5 MHz), i **ne zatvara ga
-  sjeme**, nego bi ga trebalo zatvoriti novim nextpnr-om i prekrajanjem LiteEth-ovih
-  async FIFO-a — to više nisu minimalne promjene;
-- čak i da se takt zatvori, `sys` na 16 MHz uz `dw=8` nosi 16 MB/s, a gigabit traži
-  125 MB/s — treba i **širi datapath** (`dw=32`);
-- a prije svega toga, **PHY na ovoj ploči trenutno uopće nema referentni takt**, pa ni
-  100 Mbps ne radi.
+- the timing gap is **≈ 2.0×** (needs 125 MHz, gets 52.8–65.5 MHz), and **the seed does not
+  close it**; it would have to be closed with a newer nextpnr and by reworking the LiteEth
+  async FIFOs — those are no longer minimal changes;
+- even if the clock closes, `sys` at 16 MHz with `dw=8` carries 16 MB/s, while gigabit needs
+  125 MB/s — a **wider datapath** (`dw=32`) is also needed;
+- and before all of that, **the PHY on this board currently has no reference clock at all**, so
+  even 100 Mbps does not work.
 
-**Redoslijed koji preporučam:** prvo IO_EB_A3 i dokaz da MDIO na PHYAD 0 vraća
-`0x0022/0x1620`; zatim 100 Mbps na žici od kraja do kraja (ping + UDP echo); i tek onda
-gigabit kao zaseban projekt s novim nextpnr-om, `dw=32` i CLK90 TXC-om.
+**Recommended order:** first IO_EB_A3 and evidence that MDIO at PHYAD 0 returns
+`0x0022/0x1620`; then 100 Mbps on the wire end to end (ping + UDP echo); and only then
+gigabit as a separate project with a newer nextpnr, `dw=32` and a CLK90 TXC.
 
-Isporučena `--gbe` zastavica ostaje korisna kao **mjerni instrument** i kao pripremljena
-infrastruktura — ne kao tvrdnja da gigabit radi.
+The delivered `--gbe` flag stays useful as a **measurement instrument** and as prepared
+infrastructure — not as a claim that gigabit works.
