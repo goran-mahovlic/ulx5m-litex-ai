@@ -19,7 +19,10 @@ def parse(line):
     for (n, bits), v in zip(FIELDS, t[1:]):
         if len(v) != bits // 4:
             return None
-        d[n] = int(v, 16)
+        try:
+            d[n] = int(v, 16)
+        except ValueError:         # corrupted UART line (control bytes inside a field): skip it
+            return None
     for p in ('', 'p'):
         f = d[p + 'flg']
         d[p + 'synced'] = f >> 7 & 1

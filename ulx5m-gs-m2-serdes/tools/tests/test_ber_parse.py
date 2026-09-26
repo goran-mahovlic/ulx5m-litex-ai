@@ -34,5 +34,15 @@ class P(unittest.TestCase):
         self.assertEqual(ber(0, 10**9), (0.0, 3.0 / 4e10))
         self.assertEqual(ber(4, 10**9)[0], 1e-10)
 
+
+class Garbage(unittest.TestCase):
+    def test_corrupted_hex_field_is_skipped(self):
+        # 26.09.2026 (TASK-5063): a UART line with control bytes inside a field crashed ber_mon (ValueError)
+        from ber_parse import FIELDS
+        t = ['B'] + ['0' * (bits // 4) for _, bits in FIELDS]
+        t[3] = '04\x01\x00\x00\x00de'[:len(t[3])].ljust(len(t[3]), 'x')
+        self.assertIsNone(parse(' '.join(t)))
+
+
 if __name__ == '__main__':
     unittest.main()

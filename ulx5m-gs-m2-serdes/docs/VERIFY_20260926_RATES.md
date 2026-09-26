@@ -10,15 +10,24 @@ bit, gs lease `/home/pi/gs.owner` as `TASK-5063`, no power cycle). Raw data: `da
 |---|---|---|---|---|---|---|---|
 | 0.3 Gb/s | both | 1.14·10⁹ each | 0 | 0 | < 6.6·10⁻¹¹ | as built (`VERIFY_20260926.md` §6) | ✅ clean |
 | 1.25 Gb/s | both | 1.885·10⁹ each | 0 | 0 | < 4.0·10⁻¹¹ | as built | ✅ clean |
-| **2.5 Gb/s** | m2→gs | **3.76·10⁹** (120 s) | 16 576 | 4 715 | **1.1·10⁻⁷** | AFE PEAK 24, GAIN 0, VCM 3, TX_AMP 24; m2 `TX_NEG=1` | ⚠️ works, not clean |
-| **2.5 Gb/s** | gs→m2 | 1.86·10⁸ | 229 446 | 17 870 | 3.1·10⁻⁵ | same (gs has no `TX_NEG`) | ⚠️ |
+| **2.5 Gb/s, `PROFILE=1` in the bitstream** | m2→gs | **9.39·10⁹** (300 s) | **25** | 42 | **6.7·10⁻¹¹** | pu-cc 5G set baked in (DFE on, AFE PEAK 24 GAIN 0 VCM 3, CDR CKP 0x3E TRANS_TH 8, TX pre/post 5/12 AMP 31, TX calib); m2 `TX_NEG=1`; no JTAG writes | ✅ near-clean |
+| **2.5 Gb/s, `PROFILE=1`** | gs→m2 | **9.39·10⁹** (300 s) | 435 | 382 | **1.2·10⁻⁹** | same (gs has no `TX_NEG`) | ✅ near-clean |
+| 2.5 Gb/s, `PROFILE=0` as built | m2→gs / gs→m2 | 1.89·10⁹ / 1.1·10⁶ (60 s) | 4.4·10⁷ / 9 599 | 9.1·10⁶ / 1 900 | 5.9·10⁻⁴ / 2.1·10⁻⁴ | serdes_lb.v values (AFE PEAK 15 GAIN 8, CDR TRANS_TH 0) | ❌ |
+| 2.5 Gb/s, PROFILE 0 + AFE over JTAG | m2→gs | 3.76·10⁹ (120 s) | 16 576 | 4 715 | **1.1·10⁻⁷** | AFE PEAK 24, GAIN 0, VCM 3, TX_AMP 24; m2 `TX_NEG=1` | ⚠️ works, not clean |
+| 2.5 Gb/s, PROFILE 0 + AFE over JTAG | gs→m2 | 1.86·10⁸ | 229 446 | 17 870 | 3.1·10⁻⁵ | same (gs has no `TX_NEG`) | ⚠️ |
 | 2.5 Gb/s, best 40 s runs | gs→m2 | 1.25·10⁹ | 6 447 | 472 | 1.3·10⁻⁷ | TX_AMP 24 (`tune_best_amp24`) | ⚠️ run-to-run spread ×10–100 |
 | **5 Gb/s** | both | 10⁵–10⁶ | — | many | ~6·10⁻² | DFE on + TX pre/post 5/12 + AFE PEAK 15 GAIN 0 | ❌ link up (CDR lock, right sender IDs), not usable |
+| 5 Gb/s, `PROFILE=1` in the bitstream | m2→gs / gs→m2 | 1.9·10⁶ / 4.7·10⁶ (60 s) | 4.8·10⁶ / 9.8·10⁶ | 4.7·10⁵ / 1.8·10⁶ | 6·10⁻² / 5·10⁻² | PROFILE 1 + JTAG AFE PEAK 15 (PEAK 24: 0.12 / 0.07); both `TX_NEG=1` | ❌ CDR locks from the bitstream, PEER 8–9/10 |
 
 Rates are **measured** (clock counters): 2500.02 and 5000.04 Mb/s. Bitstreams: `bitstreams/README.md`.
 
 **Eye margin column:** not available. The on-chip eye counters (regfile 0x14–0x1D) never counted on this silicon —
 see §5. `tools/eyescan.py` is ready but has no data to show.
+
+**Most important result:** the same pu-cc analog set gives BER ~10⁻⁷ when written over JTAG into a running link,
+but **6.7·10⁻¹¹ / 1.2·10⁻⁹ when it is in the bitstream** (`PROFILE=1`). The bitstream path applies it before the
+reset/calibration sequence (TX termination calibration `TX_CALIB_EN`, `RX_RESET_TIMER_PRESC=4`, DFE adaption from
+reset). So: tune over JTAG to find the direction, then bake it into the bitstream and measure again.
 
 ## 2. What limits 2.5 Gb/s — three separate causes
 
@@ -114,10 +123,12 @@ at 62.5 MHz (Fmax 44 MHz), so the m2→gs number is not meaningful. 6.4 Gb/s (2�
 | `tools/lab/tune.sh` | load once, then per step: JTAG field writes → BER run → optional eye scan |
 | `tools/serdestool.py`, `eyetools.py` | pu-cc 56aa48b |
 
-Tests: `python3 -m unittest discover -s tools/tests` (38 pass), `gateware/ber/sim/tb_ber_link.v` 11/11 PASS, `tb_top.v` synced with 0 errors.
+Tests: `python3 -m unittest discover -s tools/tests` (39 pass; `ber_parse` now skips corrupted UART lines), `gateware/ber/sim/tb_ber_link.v` 11/11 PASS, `tb_top.v` synced with 0 errors.
 
 ## 7. Next steps (recommendation)
 
+0. **Use `PROFILE=1` bitstreams for 2.5 Gb/s** (`bitstreams/ber_*_2g5_p1_*`). Next: `TX_NEG=1` on gs too, and a
+   long run (≥ 30 min, target BER < 10⁻¹²).
 1. **Constrain or hand-place the SerDes interface.** The biggest lever left at 2.5 Gb/s is the untimed
    `TX_DATA_I`/`RX_DATA_O` path. Options: add SERDES port timing to nextpnr, or keep `TX_NEG`/`RX_NEG` and pick
    seeds by a short BER run.
@@ -151,3 +162,8 @@ Tests: `python3 -m unittest discover -s tools/tests` (38 pass), `gateware/ber/si
 | `t5063_5g_recipe` | 5000.04 | 5 Gb/s (1·5·5/1), m2 TX_NEG + gs s7 TX_NEG: DFE on, TX pre/post 5/12, AMP 31, PEAK 15 GAIN 0 | 1.32e+05 / 335386 / 45246 | 6.3e-02 | 3.66e+06 / 9561144 / 1724322 | 6.5e-02 |
 
 | `t5063_2g5_final` | 2500.02 | reproducible bits `ber_gs_2g5` + `ber_m2_2g5_txneg`, PEAK 24 GAIN 0 VCM 3 TX_AMP 24, 120 s | 3.76e+09 / 16576 / 4715 | 1.1e-07 | 1.86e+08 / 229446 / 17870 | 3.1e-05 |
+| `t5063_profile0_asbuilt` | 2500.02 | PROFILE 0 bits, no JTAG writes, 60 s | 1.89e+09 / 44373016 / 9065141 | 5.9e-04 | 1.13e+06 / 9599 / 1900 | 2.1e-04 |
+| `t5063_profile1_asbuilt` | 2500.02 | PROFILE 1 bits, no JTAG writes, 60 s | 1.89e+09 / 8 / 18 | 1.1e-10 | 1.89e+09 / 1656 / 1316 | 2.2e-08 |
+| `t5063_profile1_300s` | 2500.02 | PROFILE 1 bits, no JTAG writes, 300 s | 9.39e+09 / 25 / 42 | 6.7e-11 | 9.39e+09 / 435 / 382 | 1.2e-09 |
+| `t5063_5g_profile1_pk15` | 5000.04 | PROFILE 1 5G bits, both TX_NEG, JTAG AFE PEAK 15 | 1.93e+06 / 4795495 / 467073 | 6.2e-02 | 4.72e+06 / 9818639 / 1785938 | 5.2e-02 |
+| `t5063_5g_profile1_pk24` | 5000.04 | same, PEAK 24 | 1.78e+07 / 86704746 / 7132712 | 1.2e-01 | 1.20e+07 / 33738985 / 5297676 | 7.1e-02 |
