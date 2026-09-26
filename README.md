@@ -1,49 +1,138 @@
 # Base folder of AI projects for ULX5M-GS
 
-LiteX projects for the Radiona **ULX5M-GS** (CologneChip GateMate CCGM1A1, KSZ9031 GbE PHY),
-built with the open toolchain (Yosys → nextpnr-himbaechel → gmpack).
+FPGA projects for the Radiona **ULX5M-GS** board, built with LiteX and the open-source toolchain
+(Yosys, nextpnr-himbaechel, gmpack).
 
-## `ulx5m-gs-linux-sbc/` — Linux SBC: 1G Ethernet + DVI + DOOM (+ USB keyboard, untested)
+The board has:
+- a CologneChip GateMate CCGM1A1 FPGA,
+- 64 MB SDRAM,
+- a gigabit Ethernet PHY (KSZ9031),
+- a DVI output.
 
-VexRiscv-SMP (1 core) + 32 MiB SDRAM + 1 Gb/s Ethernet (CPU MAC) + DVI 640×480 framebuffer.
-BIOS boots Linux 5.14 (Buildroot) over TFTP.
+---
 
-| Works (measured on the board) | Does not work / not tested |
+## ulx5m-gs-linux-sbc — the board as a small Linux computer
+
+This project turns the FPGA into a small computer:
+- a RISC-V CPU (VexRiscv),
+- 64 MB of RAM,
+- gigabit Ethernet,
+- a 640×480 picture on a DVI monitor.
+
+Linux 5.14 boots over the network, and you can play DOOM on the screen.
+
+### What works
+
+- Gigabit Ethernet: link, ping, network boot.
+- Linux boots to a login prompt, on the serial console and on the DVI screen.
+- DOOM (shareware) runs on the DVI screen.
+- The picture is stable. There were no dropouts in 80 frames captured during boot, or in 19 minutes of running.
+
+### What does not work yet
+
+- **USB keyboard.** The bitstream is built, but it has never been tried on the board. The keyboard needs
+  5 V on the J5 VBUS pin, and the board does not supply it.
+- **SD card.** Linux sees the SD controller, but the card does not answer. The likely cause is voltage:
+  the FPGA pins run at 1.8 V and the card at 3.3 V.
+- **Slow boot.** Linux takes 4 to 10 minutes to reach the login prompt.
+- **PLL noise.** Under heavy memory traffic the FPGA clock (PLL) briefly reports "not locked". We changed
+  the design so the clocks keep running anyway, which keeps the picture stable. The cause is noise on the
+  PLL supply (VDD_PLL), so the real fix is in hardware.
+
+### Which bitstream to use
+
+The bitstreams are in `ulx5m-gs-linux-sbc/bitstreams/`:
+
+| File | Use |
 |---|---|
-| 1G link and ping; BIOS TFTP netboot | **USB keyboard** (`…USBHID_rec1.bit`): built, never loaded; needs 5 V on J5 VBUS |
-| Linux login on UART and on DVI (fbcon) | **SD card**: the SPI-SD host registers, but the card does not answer (probably 1.8 V bank vs 3.3 V card) |
-| DOOM (shareware) on DVI, `-timedemo` 30/30 clean frames | Linux boot is slow and varies: 4–10 min to login |
-| Picture stable: 80/80 frames during boot, 0 resync in 19 min (`LOCK_REQ=0` + video watchdog) | PLL lock detector still flickers under SDRAM load (analog noise on VDD_PLL); `LOCK_REQ=0` hides it |
+| `ETH_GateMateA1_2509_2330_Linux_GbE_DVI_lr0_rec3.bit` | **Use this one.** Linux + Ethernet + DVI + DOOM. |
+| `ETH_GateMateA1_2509_2330_Linux_GbE_DVI_USBHID_rec1.bit` | Same, plus the USB keyboard. Not tested yet. |
 
-Bitstreams (`bitstreams/`, load to SRAM only):
-- `ETH_GateMateA1_2509_2330_Linux_GbE_DVI_lr0_rec3.bit` — **recommended**, DTS `tools/linux/rv32_grec_3.dts`
-- `ETH_GateMateA1_2509_2330_Linux_GbE_DVI_USBHID_rec1.bit` — same + USB HID, DTS `tools/linux/rv32_ghrec_1.dts`
+Older bitstreams are not in this repository.
 
-## Test on another computer
+---
 
-You need: the ULX5M-GS on a 1G switch, DVI monitor, `openFPGALoader`, `dtc`, a TFTP server, and Python 3.
+## How to try it on another computer
 
-1. **Network.** The IPs are compiled into the bitstream: board = `192.168.10.213`, TFTP server = `192.168.10.14`.
-   Give your PC `192.168.10.14/24`, or rebuild with `--local-ip` / `--remote-ip`.
-2. **Linux images.** Get `Image`, `rootfs.cpio` and `opensbi.bin` from `linux_2022_03_23.zip`
-   (https://github.com/litex-hub/linux-on-litex-vexriscv/issues/164). Put them in the TFTP root.
-3. **DTB.** `dtc -O dtb -o rv32dvi.dtb ulx5m-gs-linux-sbc/tools/linux/rv32_grec_3.dts`. Then `boot.json`:
-   ```json
-   { "Image": "0x40000000", "rv32dvi.dtb": "0x40ef0000", "rootfs.cpio": "0x41000000", "opensbi.bin": "0x40f00000" }
-   ```
-4. **DOOM (optional).** `python3 tools/doom_linux/mkrootfs_dvi.py rootfs.cpio rootfs_doom.cpio` with
-   `WAD=/path/doom1.wad` (shareware, not included). Use it instead of `rootfs.cpio`.
-5. **Load:** `openFPGALoader -c dirtyJtag bitstreams/…_lr0_rec3.bit -r`. The UART console is on the same USB
-   (115200). Log in as `root`. Then run `doom` (reads `/usr/share/doom/doom1.wad`; `-timedemo demo1` for a benchmark).
+**You need:**
+- the board, connected to a gigabit switch,
+- a DVI monitor,
+- a Linux PC with `openFPGALoader`, `dtc` (device-tree compiler), a TFTP server and Python 3.
 
-**Rebuild** (optional): oss-cad-suite ≥ 2026-09, LiteX `b6ae9e0b2` + `docs/litex-b6ae9e0b2-local.patch`
-(CC_IOBUF tristate fix), litedram, liteeth, litesdcard, `pythondata-cpu-vexriscv_smp`, and a riscv-none-elf GCC.
-Set `OSS_CAD_SUITE` / `LXROOT`, then run `source env.sh`. Then:
+**1. Set the PC's IP address.** The addresses are built into the bitstream:
+- the board is `192.168.10.213`,
+- it downloads Linux from `192.168.10.14`.
 
-    python3 gateware/target_soc.py --build --output-dir build/s_grec_3 --cpu-type vexriscv_smp --cpu-variant linux \
-      --with-gbe --eth-mode mac --boot netboot --with-video --sdram-clk inv \
-      --video-ce-rep --video-neg-sync --pll-lock-req 0 --video-recover --seed 3
+Give your PC the address `192.168.10.14`, or build the bitstream again with other addresses.
+
+**2. Download Linux.** Get `linux_2022_03_23.zip` from
+https://github.com/litex-hub/linux-on-litex-vexriscv/issues/164.
+Copy `Image`, `rootfs.cpio` and `opensbi.bin` from it into the TFTP folder.
+
+**3. Make the device tree.** The device tree tells Linux what hardware the board has:
+
+    dtc -O dtb -o rv32dvi.dtb ulx5m-gs-linux-sbc/tools/linux/rv32_grec_3.dts
+
+Copy `rv32dvi.dtb` into the TFTP folder as well.
+
+**4. Tell the board what to load.** In the TFTP folder, create `boot.json`:
+
+    { "Image": "0x40000000", "rv32dvi.dtb": "0x40ef0000", "rootfs.cpio": "0x41000000", "opensbi.bin": "0x40f00000" }
+
+**5. Add DOOM (optional).** DOOM needs `doom1.wad`. The shareware version is free, but it is not included here.
+Build a new root file system that contains DOOM:
+
+    WAD=/path/to/doom1.wad python3 ulx5m-gs-linux-sbc/tools/doom_linux/mkrootfs_dvi.py rootfs.cpio rootfs_doom.cpio
+
+Copy the result into the TFTP folder under the name `rootfs.cpio`.
+
+**6. Load the FPGA and wait.**
+
+    openFPGALoader -c dirtyJtag ulx5m-gs-linux-sbc/bitstreams/ETH_GateMateA1_2509_2330_Linux_GbE_DVI_lr0_rec3.bit -r
+
+The serial console is on the same USB cable (`/dev/ttyACM0`, 115200 baud). After 4 to 10 minutes you get
+a login prompt, on the serial console and on the DVI screen. Log in as `root` and type `doom`.
+
+---
+
+## Building the bitstream yourself
+
+**You need:**
+- oss-cad-suite, 2026-09 or newer,
+- a RISC-V GCC (`riscv-none-elf`),
+- LiteX at commit `b6ae9e0b2`, together with migen, litedram, liteeth, litesdcard and
+  `pythondata-cpu-vexriscv_smp`.
+
+Set `OSS_CAD_SUITE` and `LXROOT` to point to them. Then run:
+
+    cd ulx5m-gs-linux-sbc
+    source env.sh
+    python3 gateware/target_soc.py --build --output-dir build/s_grec_3 --seed 3 \
+      --cpu-type vexriscv_smp --cpu-variant linux --sdram-clk inv \
+      --with-gbe --eth-mode mac --boot netboot \
+      --with-video --video-ce-rep --video-neg-sync --video-recover --pll-lock-req 0
     python3 tools/linux/mkdts.py build/s_grec_3 > rv32dvi.dts
 
-The helper scripts in `tools/` still contain our local paths and IPs; adjust them before use.
-Details, measurements and lessons: `ulx5m-gs-linux-sbc/docs/` (`SBC_DVI_USB_TASK-5047.md`, `LESSONS_GATEMATE.md`).
+Different seeds give different timing, and not every seed produces a working Ethernet receiver. Seed 3 is
+tested on the board. If you change the design, test the new bitstream on the board.
+
+### About the LiteX patch (`docs/litex-b6ae9e0b2-local.patch`)
+
+**You do not need this patch to build.** It records two small changes in our local LiteX copy:
+
+1. **`litex/build/colognechip/common.py`** (tristate buffer). This change only rewrites one line and adds a
+   comment. The logic is the same as in upstream LiteX (we checked: both give the same expression). It is left
+   over from our search for a tristate problem. That problem turned out to be a nextpnr bug, which shows up
+   when the tristate control is a constant. This patch will be removed.
+2. **`litex/soc/software/bios/main.c`**. This change adds one line to the BIOS start-up screen, showing the
+   board's IP and MAC address. Without it, the line is simply not printed.
+
+The scripts in `tools/` still contain our local paths and IP addresses. Change them before you use them.
+
+## More information
+
+`ulx5m-gs-linux-sbc/docs/` has the measurements and lessons we learned. Start with these two files:
+- `SBC_DVI_USB_TASK-5047.md`: the clock/PLL problem and the USB keyboard,
+- `LESSONS_GATEMATE.md`: general GateMate lessons.
+
+Some documents in that folder are in Croatian.
