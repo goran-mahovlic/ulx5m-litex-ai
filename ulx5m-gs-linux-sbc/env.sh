@@ -23,7 +23,7 @@ fi
 
 # Optional alternative nextpnr (default: the one from oss-cad-suite). LiteX calls nextpnr-himbaechel by name,
 # so its directory goes to the front of PATH. Patched setup/hold build (abd0731, see
-# docs/NEXTPNR_SETUPHOLD_PATCH.md):
+# ../ulx5m-gs-m2-serdes/docs/NEXTPNR_SETUPHOLD_PATCH.md):
 #   NEXTPNR=/home/klaudio/app/raid/tools/nextpnr-gatemate-setuphold/bin/nextpnr-himbaechel source ./env.sh
 if [ -n "${NEXTPNR:-}" ]; then
     if [ -x "$NEXTPNR" ] && [ "$(basename "$NEXTPNR")" = nextpnr-himbaechel ]; then

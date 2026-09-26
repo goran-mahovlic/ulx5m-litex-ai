@@ -41,6 +41,10 @@ The only connection between the two FPGAs is this SerDes lane (TX and RX pairs).
   fields do not mirror the fabric ports (`RX_POLARITY` reads 0 while `RX_POLARITY_I=1`). `LOOPBACK_SEL=0` in the
   tools therefore only proves that no regfile override is active. The proof that there is no loop comes from the
   sender IDs and the idle/cable tests.
+- **The nextpnr "setuphold" patch from pu-cc (abd0731) is wrong, so we do not use it.** It treats the rise/fall
+  timing values in the GateMate chipdb as speed corners and so swaps setup and hold on BRAM inputs, which makes
+  real BRAM setup failures look like passes; upstream nextpnr is correct, and the SerDes designs have no BRAM, so it
+  cannot help the link speed. Details: `docs/NEXTPNR_SETUPHOLD_PATCH.md`.
 - The source of the polarity swap (GS, CM4 baseboard, adapter or M2) has not been traced in the schematics.
 
 ## Layout
