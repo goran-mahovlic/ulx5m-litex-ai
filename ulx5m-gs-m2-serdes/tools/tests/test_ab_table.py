@@ -14,6 +14,11 @@ class AB(unittest.TestCase):
         self.assertEqual(A.label_of('/x/e1_tdr0_r2.json'), 'e1_tdr0')
         self.assertEqual(A.label_of('e2_g0_p16_r10.json'), 'e2_g0_p16')
 
+    def test_is_run(self):
+        # abrun.sh writes <label>_r<k>.health_<board>.json next to the run; a *_r*.json glob catches both
+        self.assertTrue(A.is_run('/x/e1_det0_r1.json'))
+        self.assertFalse(A.is_run('/x/e1_det0_r1.health_gs.json'))
+
     def test_ber_40_bits_per_word(self):
         self.assertEqual(A.ber({'words': 10, 'errb': 4}), 4 / 400.0)
         self.assertEqual(A.ber({'words': 0, 'errb': 0}), 0.5)      # no sync = as bad as it gets

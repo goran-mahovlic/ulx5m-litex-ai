@@ -12,6 +12,10 @@ import sys
 DIRS = ('gs_to_m2', 'm2_to_gs')
 
 
+def is_run(path):
+    return re.search(r'_r\d+\.json$', path) is not None
+
+
 def label_of(path):
     return re.sub(r'_r\d+$', '', os.path.basename(path).rsplit('.', 1)[0])
 
@@ -38,7 +42,7 @@ def fmt_ber(v, ub=None):
 
 def main(paths):
     groups = {}
-    for p in paths:
+    for p in filter(is_run, paths):
         groups.setdefault(label_of(p), []).append(json.load(open(p)))
     print('| Point | n | BER gs→m2 median (worst) | BER m2→gs median (worst) | bits per direction |\n|---|---|---|---|---|')
     for lab, runs in groups.items():

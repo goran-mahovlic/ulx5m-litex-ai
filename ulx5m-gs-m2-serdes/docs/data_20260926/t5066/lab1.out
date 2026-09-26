@@ -1,0 +1,68 @@
+== E0 2.5G 23:49:49
+Done
+Done
+INFO:  Found 1 device in JTAG chain.
+HEALTH board=gs E0 2g5 p1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0] span=0
+  PLL_LOCKED=1 PLL_CAP_FT_OF=0 PLL_CAP_FT_UF=0 PLL_CAP_FT=437 PLL_CAP_STATE=2 PLL_BISC_TIMER_DONE=0 PLL_BISC_CP_VALID=0 PLL_BISC_CP=24 PLL_BISC_OPT_DET=0 PLL_BISC_CO=65360 RX_CALIB_DONE=1 RX_CALIB_CAL=0 TX_CALIB_DONE=1 TX_CALIB_CAL=0 RX_EN_EQA=1 RX_EQA_LOCK_CFG=12 RX_EQA_LOCKED=1 RX_EQA_TAPW=0 RX_TH_MON=15 RX_OFFSET=2 RX_CDR_LOCK_CFG=213 RX_CDR_TRANS_TH=8 RX_CDR_LOCKED=1 RX_PRESENT=0 RX_DETECT_DONE=1 RX_BUF_ERR=0 RX_AFE_PEAK=24 RX_AFE_GAIN=0 RX_AFE_VCMSEL=3 RX_RTERM_VCMSEL=3 RX_CDR_CKP=62 TX_AMP=31 TX_SEL_PRE=5 TX_SEL_POST=5 PLL_REF_RTERM=1
+INFO:  Found 1 device in JTAG chain.
+HEALTH board=m2 E0 2g5 p1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0] span=0
+  PLL_LOCKED=1 PLL_CAP_FT_OF=0 PLL_CAP_FT_UF=0 PLL_CAP_FT=509 PLL_CAP_STATE=2 PLL_BISC_TIMER_DONE=0 PLL_BISC_CP_VALID=0 PLL_BISC_CP=24 PLL_BISC_OPT_DET=0 PLL_BISC_CO=63701 RX_CALIB_DONE=1 RX_CALIB_CAL=0 TX_CALIB_DONE=1 TX_CALIB_CAL=0 RX_EN_EQA=1 RX_EQA_LOCK_CFG=12 RX_EQA_LOCKED=1 RX_EQA_TAPW=0 RX_TH_MON=15 RX_OFFSET=7 RX_CDR_LOCK_CFG=213 RX_CDR_TRANS_TH=8 RX_CDR_LOCKED=1 RX_PRESENT=0 RX_DETECT_DONE=1 RX_BUF_ERR=0 RX_AFE_PEAK=24 RX_AFE_GAIN=0 RX_AFE_VCMSEL=3 RX_RTERM_VCMSEL=3 RX_CDR_CKP=62 TX_AMP=31 TX_SEL_PRE=5 TX_SEL_POST=5 PLL_REF_RTERM=1
+== E1 2.5G 23:50:31
+HEALTH board=m2 e1_2g5_det1 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs e1_2g5_det1 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+== e1_2g5_det1 r1: gs->m2 1.41e-09  m2->gs 4.75e-09
+HEALTH board=m2 e1_2g5_det1 r2 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs e1_2g5_det1 r2 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== e1_2g5_det1 r2: gs->m2 5.15e-08  m2->gs 2.49e-10
+HEALTH board=m2 e1_2g5_det1 r3 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs e1_2g5_det1 r3 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== e1_2g5_det1 r3: gs->m2 6.38e-09  m2->gs 2.13e-10
+ABRUN DONE 23:54:59
+HEALTH board=m2 e1_2g5_det0 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs e1_2g5_det0 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== e1_2g5_det0 r1: gs->m2 5.28e-10  m2->gs 1.25e-09
+HEALTH board=m2 e1_2g5_det0 r2 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs e1_2g5_det0 r2 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== e1_2g5_det0 r2: gs->m2 4.26e-07  m2->gs 7.11e-08
+HEALTH board=m2 e1_2g5_det0 r3 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs e1_2g5_det0 r3 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== e1_2g5_det0 r3: gs->m2 2.71e-07  m2->gs 2.89e-08
+ABRUN DONE 23:59:21
+== sides 2.5G 23:59:21
+HEALTH board=m2 sd_gs7_m21 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs sd_gs7_m21 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== sd_gs7_m21 r1: gs->m2 2.43e-09  m2->gs 1.19e-08
+ABRUN DONE 00:04:47
+HEALTH board=m2 sd_gs2_m21 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs sd_gs2_m21 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== sd_gs2_m21 r1: gs->m2 3.42e-09  m2->gs 1.89e-08
+ABRUN DONE 00:10:15
+HEALTH board=m2 sd_gs3_m21 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs sd_gs3_m21 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== sd_gs3_m21 r1: gs->m2 9.53e-09  m2->gs 1.62e-08
+ABRUN DONE 00:15:43
+HEALTH board=m2 sd_gs7_m22 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs sd_gs7_m22 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== sd_gs7_m22 r1: gs->m2 4.68e-10  m2->gs 1.58e-11
+ABRUN DONE 00:21:16
+HEALTH board=m2 sd_gs7_m23 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs sd_gs7_m23 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== sd_gs7_m23 r1: gs->m2 7.54e-10  m2->gs 6.86e-08
+ABRUN DONE 00:26:41
+HEALTH board=m2 sd_gs7nt_m21 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs sd_gs7nt_m21 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== sd_gs7nt_m21 r1: gs->m2 1.47e-07  m2->gs 1.09e-10
+ABRUN DONE 00:32:05
+| Point | n | BER gs→m2 median (worst) | BER m2→gs median (worst) | bits per direction |
+|---|---|---|---|---|
+Traceback (most recent call last):
+  File "/home/pi/ulx5m-serdes/tools/lab/ab_table.py", line 52, in <module>
+    main(sys.argv[1:])
+  File "/home/pi/ulx5m-serdes/tools/lab/ab_table.py", line 45, in main
+    m = point(runs)
+  File "/home/pi/ulx5m-serdes/tools/lab/ab_table.py", line 26, in point
+    b = [ber(r[d]) for r in runs]
+  File "/home/pi/ulx5m-serdes/tools/lab/ab_table.py", line 26, in <listcomp>
+    b = [ber(r[d]) for r in runs]
+KeyError: 'gs_to_m2'
+LAB1 DONE 00:32:06
