@@ -57,6 +57,21 @@ def pair_rates(L, key):
     return v[len(v) // 2] if v else 0.0
 
 
+def robust(L, wkey, ekey):
+    """(BER, seconds used) from 1 s deltas that are physically possible: 0 <= words <= 1.05 x gs TX words + 1000
+    and 0 <= bit errors <= 40 x words. Drops status lines with corrupted m2 counters (back channel with errors).
+    EXPERIMENTAL: on the boards at 5 Gb/s it also gave a false 1.7e-4 where the counters say 0.11 (TASK-5066
+    e2_g1_p0) - recorded in the JSON for diagnosis, not used for decisions (lab/ab_table.py uses the counters)."""
+    w = e = n = 0
+    for x, y in zip(L, L[1:]):
+        dw = (y[wkey] - x[wkey]) & ((1 << 48) - 1)
+        de = (y[ekey] - x[ekey]) & 0xFFFFFFFF
+        dt = (y['tcnt'] - x['tcnt']) & 0xFFFFFFFF
+        if dw <= 1.05 * dt + 1000 and de <= 40 * dw:
+            w, e, n = w + dw, e + de, n + 1
+    return (e / (40.0 * w) if w else None), n
+
+
 def summary(a, b, L=None):
     """Differences between two parsed lines (L = all lines between them, for rate and duration)."""
     L = L or [a, b]
@@ -78,6 +93,8 @@ def summary(a, b, L=None):
     for k in ('m2_to_gs', 'gs_to_m2'):
         m, ub = ber(r[k]['errb'], r[k]['words'])
         r[k]['ber'], r[k]['ber_95_upper'] = m, ub
+    for k, wk, ek in (('m2_to_gs', 'words', 'errb'), ('gs_to_m2', 'pwords', 'perrb')):
+        r[k]['ber_robust'], r[k]['robust_secs'] = robust(L, wk, ek)
     return r
 
 

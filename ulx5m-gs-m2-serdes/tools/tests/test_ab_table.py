@@ -23,6 +23,19 @@ class AB(unittest.TestCase):
         self.assertEqual(A.ber({'words': 10, 'errb': 4}), 4 / 400.0)
         self.assertEqual(A.ber({'words': 0, 'errb': 0}), 0.5)      # no sync = as bad as it gets
 
+    def test_impossible_ber_is_capped(self):
+        # 5 Gb/s: m2 counters come back over a link with ~10 % BER and can be corrupted (seen: BER 1.92).
+        # ber_robust from ber_mon.py is NOT used: on the boards it also returned a false 1.7e-4 (e2_g1_p0).
+        self.assertEqual(A.ber({'words': 10, 'errb': 4000, 'ber_robust': 1e-3}), 0.5)
+        self.assertEqual(A.ber({'words': 10, 'errb': 4, 'ber_robust': 1e-9}), 4 / 400.0)
+
+    def test_impossible_word_count_is_invalid(self):
+        # e2_g2_p0 (5 G): 1.3e11 words in 60 s = corrupted back-channel counter (max 62.5e6 words/s) -> BER 0.5
+        r = run(10, 0, 1.33e11, 4000)
+        r['gs_tx_rate_bps'] = 5e9
+        self.assertEqual(A.run_ber(r, 'gs_to_m2'), 0.5)
+        self.assertEqual(A.run_ber(r, 'm2_to_gs'), 0.0)
+
     def test_median(self):
         rs = [run(100, 4, 100, 0), run(100, 40, 100, 0), run(100, 0, 100, 400)]
         m = A.point(rs)
