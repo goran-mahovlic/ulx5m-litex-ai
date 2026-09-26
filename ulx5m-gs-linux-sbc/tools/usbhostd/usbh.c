@@ -364,7 +364,7 @@ static void hub_poll(struct usbh *h, struct usbh_dev *d)
 
 static void hid_poll(struct usbh *h, struct usbh_dev *d)
 {
-	uint8_t b[8];
+	uint8_t b[64];
 	int r;
 	if (d->kbd_ep) {
 		r = usbh_txn(h, d, PID_IN, d->kbd_ep, d->kbd_toggle, 0, 0, b, 8);
@@ -382,10 +382,12 @@ static void hid_poll(struct usbh *h, struct usbh_dev *d)
 		}
 	}
 	if (d->mse_ep) {
-		r = usbh_txn(h, d, PID_IN, d->mse_ep, d->mse_toggle, 0, 0, b, 8);
+		/* full packet (up to 64): a composite receiver sends longer vendor reports on the same EP (Logitech
+		 * c534: 20-byte HID++); a boot mouse report is 3..8 bytes, anything longer is not one - drop it */
+		r = usbh_txn(h, d, PID_IN, d->mse_ep, d->mse_toggle, 0, 0, b, sizeof b);
 		if (r >= 0) {
 			d->mse_toggle ^= 1;
-			if (r >= 3 && h->on_mouse)
+			if (r >= 3 && r <= 8 && h->on_mouse)
 				h->on_mouse(h->ctx, b, r);
 		} else if (r == USBH_STALL) {
 			say(h, "usbh: mouse EP stalled");

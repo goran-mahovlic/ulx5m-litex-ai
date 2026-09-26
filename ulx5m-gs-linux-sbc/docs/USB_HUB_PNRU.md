@@ -293,7 +293,7 @@ The first run therefore used the PNRU build, which answers both questions in one
 - `usbhostd` now logs the idle line state at start (`usbh: line state D+ 1 D- 0 (FS device)` / `D+ 0 D- 1 (LS
   device)`) and hex-dumps the device and configuration descriptors of every device (`usbh: dev …`, `usbh: cfg …`).
 - Host test `test_usbh` case 3: an FS composite receiver on the root port (boot keyboard on EP1, boot mouse on EP2)
-  enumerates in FS mode, types "hi⏎" and delivers a mouse report: **18/18 PASS**.
+  enumerates in FS mode, types "hi⏎" and delivers a mouse report: **18/18 PASS** (19/19 since TASK-5060, §7.1.2).
 - Boot: `tools/linux/lxrun.sh <bit> rv32_usb2.dtb rootfs_usb.cpio 720 "cat /var/log/usbhostd.log" …` on the Pi
   (rootfs: the REGOČ rootfs + `usbhostd`, padded to 12 MiB for the initrd window).
 
@@ -366,6 +366,29 @@ the serial console is unreliable while the output is not; the Pi's capture (`too
 The receiver is a Logitech nano receiver (046d:c534, full speed): interface 0 boot keyboard (EP1 IN, 8 bytes,
 8 ms), interface 1 boot mouse (EP2 IN, 20 bytes, 2 ms). Enumeration, SET_CONFIGURATION, SET_PROTOCOL(boot) and
 the interrupt polling work with no error in 1498 transactions.
+
+Descriptors decoded (TASK-5060):
+
+| Field | Value | Meaning |
+|---|---|---|
+| Device | `12 01 00 02 00 00 00 08 6d 04 34 c5 01 29 01 02` | USB 2.0, class per interface, EP0 8 bytes, 046d:c534, bcdDevice 29.01 |
+| Configuration | total 59 bytes, 2 interfaces, iConfiguration 4, `a0` = bus powered + remote wake-up, 98 mA | |
+| Interface 0 | class 3/1/1 (boot keyboard), report descriptor 59 bytes, EP1 IN interrupt 8 bytes / 8 ms | |
+| Interface 1 | class 3/1/2 (boot mouse), report descriptor **177 bytes**, EP2 IN interrupt **20 bytes** / 2 ms | also carries non-boot reports |
+
+Interface 1 is more than a boot mouse: a 177-byte report descriptor and a 20-byte endpoint (the length of a
+Logitech HID++ long report) mean the same EP also carries vendor reports and, in report protocol, most likely the
+multimedia/system keys (inferred from the lengths, the report descriptor was not read). Consequences:
+
+- `usbhostd` read EP2 with an 8-byte buffer, so a 20-byte vendor packet was cut to 8 bytes and passed on as a
+  mouse report (report ID `0x11` read as buttons = phantom click, bytes 1–2 as a jump). Now EP2 is read in full
+  (64 bytes, the size of the engine's RX buffer) and only 3–8-byte reports go to the mouse; `test_usbh` case 3
+  uses the descriptors read on the board and sends a 20-byte vendor report before the mouse report (19/19 PASS).
+- Multimedia keys need report protocol and a report descriptor parser (GET_DESCRIPTOR 0x22); in boot protocol
+  only the keyboard and the mouse work. Not needed for the SBC console.
+- Emard's host (`…USBHID_rec1.bit`) is LS-only; its FS mode would need a 48 MHz clock (the same clock problem as
+  here) and handles one interface, so at most the keyboard of this set. Not pursued: the PNRU host already
+  enumerates both interfaces. A wired LS keyboard is still wanted for the LS path of the PHY (§7.2, step 1).
 
 Open: 733 main-loop passes in 90 s (8 per second instead of ~400 with the 2 ms sleep) — the Linux system on this
 SoC is slow as a whole (boot to login 10–15 min, load average ≈ 3 already without usbhostd, see TASK-5047), so a

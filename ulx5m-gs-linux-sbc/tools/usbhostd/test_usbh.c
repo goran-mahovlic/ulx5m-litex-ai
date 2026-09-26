@@ -37,7 +37,7 @@ struct mdev {
 	const uint8_t (*script)[8]; int nscript, pos; uint32_t start_ms;
 	int wrong_mode;                 /* transactions seen with the wrong xcvrsel */
 	const uint8_t *devd, *cfg;      /* keyboard: descriptors (0 = LS boot keyboard) */
-	int cfg_len, mouse_sent;
+	int cfg_len, mouse_sent, hidpp_sent;
 };
 
 static const uint8_t hub_dev_desc[18] = {18, 1, 0x00, 0x02, 9, 0, 1, 64, 0x24, 0x04, 0x14, 0x25, 0xb3, 0x0b, 0, 0, 0, 1};
@@ -48,11 +48,17 @@ static const uint8_t kbd_dev_desc[18] = {18, 1, 0x10, 0x01, 0, 0, 0, 8, 0x6d, 0x
 static const uint8_t kbd_cfg[34] = {9, 2, 34, 0, 1, 1, 0, 0xa0, 50,  9, 4, 0, 0, 1, 3, 1, 1, 0,
                                     9, 0x21, 0x10, 0x01, 0, 1, 0x22, 63, 0,  7, 5, 0x81, 3, 8, 0, 10};
 /* 2.4 GHz keyboard+mouse receiver (dongle): FS, composite - interface 0 boot keyboard EP1, interface 1 boot
- * mouse EP2 (TASK-5051 instruction #83: Goran's wireless set on the USB-C of the Waveshare CM5-IO-BASE-A) */
-static const uint8_t dgl_dev_desc[18] = {18, 1, 0x10, 0x01, 0, 0, 0, 8, 0x6d, 0x04, 0x2b, 0xc5, 0, 0x12, 1, 2, 0, 1};
-static const uint8_t dgl_cfg[59] = {9, 2, 59, 0, 2, 1, 0, 0xa0, 49,
-                                    9, 4, 0, 0, 1, 3, 1, 1, 0,  9, 0x21, 0x11, 0x01, 0, 1, 0x22, 59, 0,  7, 5, 0x81, 3, 8, 0, 8,
-                                    9, 4, 1, 0, 1, 3, 1, 2, 0,  9, 0x21, 0x11, 0x01, 0, 1, 0x22, 148, 0,  7, 5, 0x82, 3, 8, 0, 2};
+ * mouse EP2 (TASK-5051 instruction #83: Goran's wireless set on the USB-C of the Waveshare CM5-IO-BASE-A).
+ * Descriptors as read on the board (Logitech 046d:c534, USB_HUB_PNRU.md 7.1.2); the last two bytes of the device
+ * descriptor (iSerialNumber, bNumConfigurations) were not in the trace. Interface 1 has a 177-byte report
+ * descriptor and a 20-byte EP2: besides the boot mouse it carries 20-byte vendor (HID++ long) reports. */
+static const uint8_t dgl_dev_desc[18] = {0x12, 0x01, 0x00, 0x02, 0x00, 0x00, 0x00, 0x08, 0x6d, 0x04, 0x34, 0xc5,
+                                         0x01, 0x29, 0x01, 0x02, 0x00, 0x01};
+static const uint8_t dgl_cfg[59] = {
+	0x09, 0x02, 0x3b, 0x00, 0x02, 0x01, 0x04, 0xa0, 0x31, 0x09, 0x04, 0x00, 0x00, 0x01, 0x03, 0x01, 0x01, 0x00,
+	0x09, 0x21, 0x11, 0x01, 0x00, 0x01, 0x22, 0x3b, 0x00, 0x07, 0x05, 0x81, 0x03, 0x08, 0x00, 0x08, 0x09, 0x04,
+	0x01, 0x00, 0x01, 0x03, 0x01, 0x02, 0x00, 0x09, 0x21, 0x11, 0x01, 0x00, 0x01, 0x22, 0xb1, 0x00, 0x07, 0x05,
+	0x82, 0x03, 0x14, 0x00, 0x02};
 /* "hi" + Enter, each key pressed and released */
 static const uint8_t kbd_script[][8] = {
 	{0, 0, 0x0b}, {0}, {0, 0, 0x0c}, {0}, {0, 0, 0x28}, {0},
@@ -204,11 +210,19 @@ static int transact(int xcvr, int pid, int addr, int ep, int data1, const uint8_
 		/* mouse: one report (left button, dx -2, dy 3) after the keyboard script */
 		if (d->mouse_sent || d->pos < d->nscript)
 			return PID_NAK;
+		if (!d->hidpp_sent) {
+			/* a 20-byte vendor report first (HID++ long, report ID 0x11): not a boot mouse report */
+			memset(rx, 0, 20);
+			rx[0] = 0x11; rx[1] = 0xff; rx[2] = 0x81; rx[3] = 0x02;
+			*rxlen = 20;
+			d->hidpp_sent = 1;
+			return PID_DATA0;
+		}
 		static const uint8_t m[4] = {0x01, 0xfe, 3, 0};
 		memcpy(rx, m, 4);
 		*rxlen = 4;
 		d->mouse_sent = 1;
-		return PID_DATA0;
+		return PID_DATA1;
 	}
 	if (pid == PID_IN && d == &hub)
 		return PID_NAK;
@@ -370,7 +384,11 @@ int main(int argc, char **argv)
 	      "FS keyboard+mouse receiver on the root port: addr %d, xcvrsel %d (FS)", root_kbd.addr, xcvr_kbd);
 	CHECK(h.dev[0].kbd_ep == 1 && h.dev[0].mse_ep == 2, "receiver: keyboard EP%d, mouse EP%d", h.dev[0].kbd_ep, h.dev[0].mse_ep);
 	CHECK(strcmp(typed, "hi\r") == 0, "receiver typed \"hi\\r\" (got \"%s\")", typed);
-	CHECK(n_mouse == 1 && mouse_dx == -2 && mouse_dy == 3, "receiver mouse report: %d, dx %d dy %d", n_mouse, mouse_dx, mouse_dy);
+	CHECK(n_mouse == 1 && mouse_dx == -2 && mouse_dy == 3,
+	      "receiver: 20-byte vendor report dropped, boot mouse report delivered: %d report(s), dx %d dy %d",
+	      n_mouse, mouse_dx, mouse_dy);
+	CHECK(root_kbd.hidpp_sent && root_kbd.mouse_sent && h.dev[0].mse_ep == 2,
+	      "receiver: mouse EP still polled after the vendor report (EP%d)", h.dev[0].mse_ep);
 
 	/* 4: HID -> Linux input events (uinput path of usbhostd) */
 	{
