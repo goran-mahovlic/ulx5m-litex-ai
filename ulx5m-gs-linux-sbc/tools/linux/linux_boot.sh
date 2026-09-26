@@ -1,11 +1,12 @@
 #!/bin/bash
 # [APP=linuxsd] linux_boot.sh <bit> [secs]: netboot Linux images from /srv/tftp and watch the serial console (runs on the Pi)
-BIT=$1; T=${2:-300}; U=/dev/ttyACM0
-fuser $U 2>/dev/null && { echo "ttyACM0 BUSY"; exit 2; }
+. "$(dirname "$(readlink -f "$0")")/dj_probe.sh" 2>/dev/null || . "$(dirname "$(readlink -f "$0")")/../dj_probe.sh"   # flat copy on the Pi, or this repo
+BIT=$1; T=${2:-300}; U=$DJ_UART
+fuser $U 2>/dev/null && { echo "$U BUSY"; exit 2; }
 ~/FPGA/netboot_app.sh ${APP:-linux} >/dev/null   # APP=linuxsd: SPI-SD SoC (TASK-5039)
 stty -F $U 115200 raw -echo; timeout 2 cat $U >/dev/null 2>&1
 ip neigh del 192.168.10.213 dev eth0 2>/dev/null
-sudo -n /usr/local/bin/openFPGALoader -c dirtyJtag "$BIT" -r 2>&1 | grep -E "^Done|rror" | tail -1
+dj_load "$BIT"
 T0=$(date +%s)
 timeout $T cat $U > /tmp/lx_uart.txt 2>/dev/null & CP=$!
 for ((t=0; t<T; t+=5)); do

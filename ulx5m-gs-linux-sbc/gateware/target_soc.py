@@ -132,7 +132,8 @@ class ULX5MSoC(SoCCore):
                  sdram_cl=2, l2_size=0, boot="none", cpu_mac_address=0x10e2d5000001,
                  local_ip="192.168.10.213", remote_ip="192.168.10.14", with_video=False,
                  fb_base=0x43f00000, video_ce_rep=False, video_neg_sync=False,
-                 pll_lock_req=1, video_640x240=False, with_usb_hid=False, video_recover=False, **kwargs):
+                 pll_lock_req=1, video_640x240=False, with_usb_hid=False, video_recover=False,
+                 phy_write_after=0, phy_reg4=0x0001, phy_snap_csr=False, **kwargs):
         platform = intergalaktik_ulx5m_gs.Platform("peppercorn")
         # nextpnr timing model = VDD_CORE 1.1 V (SPEED); PLLs stay ECONOMY (lessons B3, I9).
         platform.toolchain._pnr_opts += " --vopt fpga_mode=%d " % {"lowpower": 1, "economy": 2, "speed": 3}[pnr_mode]
@@ -250,23 +251,18 @@ class ULX5MSoC(SoCCore):
             self.ethmac = LiteEthMAC(phy=phy, dw=8, interface="wishbone", endianness=self.cpu.endianness,
                                      with_preamble_crc=True, with_sys_datapath=True)
             self.add_cpu_mac_regions(self.ethmac, cpu_mac_address, local_ip, remote_ip)
-            # KSZ9031: RESET_N + advertisement 1000FD on the first MDIO pass (lessons I2/I3). Its UART is not
-            # connected (the pins belong to the BIOS serial).
-            platform.add_source(os.path.join(os.path.dirname(__file__), "verilog", "mdio_core.v"))
-            snap = Signal(256)
-            self.specials += Instance("mdio_core",
-                p_WRITE_AFTER = 0, p_REG9 = 0x0200, p_REG4 = 0x0001, p_REG0 = 0x1200,
-                p_BAUD = int(round(sys_clk_freq/115200)) - 1,
-                i_clk25 = ClockSignal("sys"), o_uart_a = Signal(), o_uart_b = Signal(),
-                o_mdc = pads.mdc, io_mdio = pads.mdio, o_rst_n = pads.rst_n,
-                i_rxc = ClockSignal("grx"), i_rx_ctl = 0, i_dbg = 0, o_snap_bus = snap)
-            # KSZ9031 registers for the CPU / Etherbone: phy_status0 = {R1, R1F}, phy_status1 = {RA, RXC count/2^8}
-            # snap_bus = {passes, idm, {wrote,addr}, r0, r1, r4, r5, r9, ra, rf, rfreq(24), frames(16), 80'h0}
-            f = lambda hi, n: snap[256 - hi - n:256 - hi]
+            # KSZ9031: RESET_N + advertisement 1000FD on the first MDIO pass (lessons I2/I3), in hardware.
+            from mdio_core import MDIOCore
+            self.phy_mdio = m = MDIOCore(pads, write_after=phy_write_after, reg9=0x0200, reg4=phy_reg4, reg0=0x1200,
+                                         rxc_domain="grx")
             self.phy_status0 = CSRStatus(32, description="KSZ9031 R1 (bits 31:16) and R1F (15:0); R1F bit 6 = 1000 Mb/s")
             self.phy_status1 = CSRStatus(32, description="KSZ9031 RA (31:16), RXC edges per 2^20 sys cycles >> 8 (15:0)")
-            self.comb += [self.phy_status0.status.eq(Cat(f(120, 16), f(40, 16))),
-                          self.phy_status1.status.eq(Cat(f(136, 24)[8:24], f(104, 16)))]
+            self.comb += [self.phy_status0.status.eq(Cat(m.rf, m.r1)),
+                          self.phy_status1.status.eq(Cat(m.rfreq[8:24], m.ra))]
+            if phy_snap_csr:
+                # Board test of the MDIO controller: {passes, idm, {wrote, addr}, r0, r1, r4, r5, r9, ra, rf, ...}
+                self.phy_snap = CSRStatus(256, description="MDIOCore snap (gateware/mdio_core.py)")
+                self.comb += self.phy_snap.status.eq(m.snap)
 
         # SD card ----------------------------------------------------------------------------------
         # native: LiteSDCard (4-bit, DMA); with SMP + 1G MAC it reaches 77 % CPE_LT and the placer fails (J7).
@@ -395,6 +391,10 @@ def main():
     p.add_argument("--video-640x240", action="store_true", help="640x240 framebuffer, lines doubled only (80x30 text, 18.4 MB/s)")
     p.add_argument("--video-recover", action="store_true", help="resettable video domain + resync watchdog (TASK-5047)")
     p.add_argument("--with-usb-hid", action="store_true", help="USB low-speed HID host (Emard) on J5, CSR usb_hid (TASK-5047)")
+    # MDIO controller board test (docs/REVIZIJA_LITEX_DUPLIKATI.md): later write, other REG4, full snap as a CSR.
+    p.add_argument("--phy-write-after", default=0, type=int, help="MDIO pass in which REG9/4/0 are written")
+    p.add_argument("--phy-reg4", default=0x0001, type=lambda x: int(x, 0), help="KSZ9031 REG4 written by MDIOCore")
+    p.add_argument("--phy-snap-csr", action="store_true", help="CSR phy_snap = MDIOCore snap (256 bit)")
     soc_core_args(p)
     p.set_defaults(cpu_type="vexriscv", integrated_rom_size=0x10000, integrated_sram_size=0x2000, l2_size=0)
     args = p.parse_args()
@@ -405,6 +405,7 @@ def main():
                    remote_ip=args.remote_ip, with_video=args.with_video, fb_base=args.fb_base,
                    video_ce_rep=args.video_ce_rep, video_neg_sync=args.video_neg_sync, pll_lock_req=args.pll_lock_req,
                    video_640x240=args.video_640x240, with_usb_hid=args.with_usb_hid, video_recover=args.video_recover,
+                   phy_write_after=args.phy_write_after, phy_reg4=args.phy_reg4, phy_snap_csr=args.phy_snap_csr,
                    **soc_core_argdict(args))
     if args.synth_extra:
         soc.platform.toolchain._synth_opts += " " + args.synth_extra + " "

@@ -2,8 +2,10 @@
 
 Helper scripts for building the SoC, booting Linux and running things on the board.
 
-Many of them run on our test setup: a Raspberry Pi at `192.168.10.14` holds the DirtyJTAG programmer
-(`/dev/ttyACM0` = board serial), the TFTP server (`/srv/tftp`) and a copy of these scripts in `~/FPGA/`.
+Many of them run on our test setup: a Raspberry Pi at `192.168.10.14` holds the DirtyJTAG programmers, the TFTP
+server (`/srv/tftp`) and a copy of these scripts in `~/FPGA/`. There are two DirtyJTAG probes with the same USB ID
+(ULX5M-GS and a second board), so the scripts load bitstreams through the Pi's `fpga-jtag gs` wrapper (it picks the
+probe by serial number) and use the probe's `/dev/serial/by-id/...` console, never `/dev/ttyACMn` (`dj_probe.sh`).
 The board's CPU uses `192.168.10.213`. Scripts marked **Pi** expect that setup; scripts marked **local paths**
 contain paths from our build machine. Change them before use.
 
@@ -12,6 +14,7 @@ contain paths from our build machine. Change them before use.
 | File | What it does |
 |---|---|
 | `soc_build.sh <name> [args]` | Builds the SoC (`gateware/target_soc.py --build`) into `build/s_<name>/`, log in `~/.tmp/t5032/soc_<name>.log`. **Local paths** (via `sbc_env.sh`). |
+| `dj_probe.sh` | Sourced by the **Pi** scripts: console path and `dj_load <bit>` for the board `DJ_BOARD` (default `gs`) through `fpga-jtag`. |
 | `sbc_env.sh` | `source` it to get our toolchain paths (oss-cad-suite, LiteX tree, RISC-V GCC) and then `../env.sh`. **Local paths.** On another machine, use `env.sh` with `OSS_CAD_SUITE` and `LXROOT` instead. |
 
 ## Linux and netboot (`linux/`)

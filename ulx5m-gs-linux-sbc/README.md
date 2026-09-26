@@ -35,7 +35,7 @@ has them in a form that does not fit this board:
 | `gateware/pll_stdy.py` | A small subclass of LiteX `GateMatePLL` that connects the PLL's sticky lock flag. LiteX leaves it unconnected. |
 | `gateware/sticky_lock.py` | LiteX resets the clock domains from the raw PLL lock flag. On this board that flag flickers, so it is filtered here. |
 | `gateware/video_sbc.py` | LiteX's HDMI PHY needs its own pixel clock net, and there is none left. Here video runs in the 125 MHz Ethernet clock with a 1-in-5 clock enable. LiteX's framebuffer at 640×480 would use 92 % of the SDRAM bandwidth, so a 320×240 frame is scaled up in hardware. |
-| `gateware/verilog/mdio_core.v` | Sets up the Ethernet PHY for 1000 Mb/s in hardware, before the CPU runs. LiteEth only offers MDIO access from software. |
+| `gateware/mdio_core.py` | Sets up the Ethernet PHY for 1000 Mb/s in hardware, before the CPU runs. LiteEth only offers MDIO access from software. (Migen; it replaced an older Verilog file and behaves cycle for cycle the same, see `sim/tb_mdio_core_equiv.py`.) |
 | `gateware/usb_hid.py`, `gateware/verilog/usbhost/` | LiteX's USB host (OHCI) needs a 48 MHz clock net and a kernel driver that the prebuilt kernel does not have. This is Emard's small low-speed keyboard host. |
 
 ## Gigabit Ethernet: how it works here
