@@ -85,7 +85,8 @@ class IS42VM16320(SDRModule):
 
 
 class SoCCRG(LiteXModule):
-    def __init__(self, platform, sys_clk_freq, perf_mode="economy", with_gbe=False, pll_lock_req=1):
+    def __init__(self, platform, sys_clk_freq, perf_mode="economy", with_gbe=False, pll_lock_req=1,
+                 usb48=None, gtx270=False):
         # TASK-5047: every PLL is a GateMatePLLStdy (USR_PLL_LOCKED_STDY wired out). pll_lock_req=0: the PLL keeps
         # its clock outputs running while the raw lock flag is low (DS1001 Table 2.19); LiteX default is 1.
         from pll_stdy import GateMatePLLStdy
@@ -121,9 +122,26 @@ class SoCCRG(LiteXModule):
             pll_tx.register_clkin(clk25, 25e6)
             pll_tx.create_clkout(self.cd_gtx0,  125e6, with_reset=False)
             pll_tx.create_clkout(self.cd_gtx90, 125e6, phase=90, with_reset=False)
+            if gtx270:
+                # TASK-5051 clock option c: TXC = CLK270 over fabric routing (no BUFG), see ULX5MSoC.
+                self.cd_gtx270 = ClockDomain(reset_less=True)
+                pll_tx.create_clkout(self.cd_gtx270, 125e6, phase=270, with_reset=False)
             self.lock_tx = ClockDomainsRenamer("ref")(StickyLock(pll_tx.locked, int(25e6*1e-3)))
             self.eth_rst = Signal()
             self.comb += self.eth_rst.eq(~rst_n | ~self.lock_sys.locked | ~self.lock_tx.locked)
+
+        # TASK-5051: 48 MHz for the USB host engine from a third PLL. usb48 = "local": fabric routing (no global
+        # net, clkbuf_inhibit as the ref domain), "bufg": a global net (needs one free CC_BUFG).
+        if usb48 is not None:
+            self.cd_usb = ClockDomain()
+            self.pll_usb = pll_usb = GateMatePLL(perf_mode=perf_mode)
+            self.comb += pll_usb.reset.eq(~rst_n)
+            pll_usb.register_clkin(clk25, 25e6)
+            pll_usb.create_clkout(self.cd_usb, 48e6, with_reset=False)
+            if usb48 == "local":
+                self.cd_usb.clk.attr.add(("clkbuf_inhibit", 1))
+            self.lock_usb = ClockDomainsRenamer("ref")(StickyLock(pll_usb.locked, int(25e6*1e-3)))
+            self.specials += AsyncResetSynchronizer(self.cd_usb, ~rst_n | ~self.lock_usb.locked)
 
 
 class ULX5MSoC(SoCCore):
@@ -133,14 +151,19 @@ class ULX5MSoC(SoCCore):
                  local_ip="192.168.10.213", remote_ip="192.168.10.14", with_video=False,
                  fb_base=0x43f00000, video_ce_rep=False, video_neg_sync=False,
                  pll_lock_req=1, video_640x240=False, with_usb_hid=False, video_recover=False,
-                 phy_write_after=0, phy_reg4=0x0001, phy_snap_csr=False, **kwargs):
+                 phy_write_after=0, phy_reg4=0x0001, phy_snap_csr=False, with_usb_pnru=False,
+                 usb_pnru_clk="pll48", **kwargs):
         platform = intergalaktik_ulx5m_gs.Platform("peppercorn")
         # nextpnr timing model = VDD_CORE 1.1 V (SPEED); PLLs stay ECONOMY (lessons B3, I9).
         platform.toolchain._pnr_opts += " --vopt fpga_mode=%d " % {"lowpower": 1, "economy": 2, "speed": 3}[pnr_mode]
         platform.toolchain._packer_opts = "--reset " + platform.toolchain._packer_opts     # CMD_CFGRST (lesson H1)
         platform.add_extension(_status_leds)
 
-        self.crg = crg = SoCCRG(platform, sys_clk_freq, perf_mode, with_gbe, pll_lock_req=pll_lock_req)
+        assert usb_pnru_clk in USB_PNRU_CLKS, usb_pnru_clk
+        usb48 = {"pll48": "local", "bufg48": "bufg"}.get(usb_pnru_clk) if with_usb_pnru else None
+        gtx270 = with_usb_pnru and usb_pnru_clk == "bufg48"
+        self.crg = crg = SoCCRG(platform, sys_clk_freq, perf_mode, with_gbe, pll_lock_req=pll_lock_req,
+                                usb48=usb48, gtx270=gtx270)
         kwargs.setdefault("uart_name", "serial")
         # The ident names the address and MAC the CPU answers on (BIOS `ident` command, csr.json).
         fmt_mac = lambda m: ":".join("%02x" % ((m >> (8*i)) & 0xff) for i in reversed(range(6)))
@@ -233,6 +256,29 @@ class ULX5MSoC(SoCCore):
             self.usb_hid = USBHIDHost(platform, platform.request("usb_host"), platform.request("usb_pull"),
                                       src_domain="gtx0", rst=~crg.rst_n)
 
+        # USB 1.1 LS/FS host (TASK-5051): PNRU PHY/SIE ported to Migen (gateware/usb_pnru.py), CSR usb_pnru, on J5
+        # and, on the CM4 IO board, the USB2514B hub (CM4 pins 103/105 are in parallel with J5). Clock options:
+        #   pll48  (a) 48 MHz from a third PLL on fabric routing, no global net;
+        #   gtx125 (b) the engine runs in gtx0 (125 MHz), the PHY oversamples 10.42x (NCO), no new clock;
+        #   bufg48 (c) 48 MHz on a global net, freed by moving TXC (CLK90 over a BUFG) to CLK270 over fabric
+        #              routing: the ~5.8 ns route adds to 270 deg, about the 90 deg of the BUFG path.
+        if with_usb_pnru:
+            from usb_pnru import USBHostPNRU
+            if with_usb_hid:
+                raise ValueError("--with-usb-pnru and --with-usb-hid use the same pins (J5)")
+            if not with_gbe and usb_pnru_clk != "pll48":
+                raise ValueError("--usb-pnru-clk gtx125/bufg48 need --with-gbe")
+            platform.add_extension(_usb_host)
+            if usb_pnru_clk == "gtx125":
+                self.cd_usb = ClockDomain("usb")
+                self.comb += self.cd_usb.clk.eq(ClockSignal("gtx0"))
+                self.specials += AsyncResetSynchronizer(self.cd_usb, crg.eth_rst)
+            # No connect detect and no EventManager: the userspace driver polls and debounces stat.dp/dn itself
+            # (-~150 LT; the full SoC is at the placer limit, lesson J7).
+            self.usb_pnru = USBHostPNRU(platform.request("usb_host"), 125e6 if usb_pnru_clk == "gtx125" else 48e6,
+                                        sys_clk_freq, pull=platform.request("usb_pull"),
+                                        with_detect=False, with_events=False)
+
         # Ethernet 1000 Mb/s: own RGMII PHY (gateware/gbe_phy.py) + LiteEth MAC for the CPU -----------------------
         if with_gbe:
             from gbe_phy import GbePHY
@@ -240,9 +286,11 @@ class ULX5MSoC(SoCCore):
             platform.add_extension(_eth)
             clock_pads = platform.request("eth_clocks")
             pads       = platform.request("eth")
-            self.ethphy = phy = GbePHY(clock_pads, pads, clk_tx=crg.cd_gtx0.clk,
-                                       txc_clks=[crg.cd_gtx0.clk, crg.cd_gtx90.clk], txc_sel=2, rst=crg.eth_rst,
-                                       txc_bufg=True)
+            if hasattr(crg, "cd_gtx270"):
+                txc = dict(txc_clks=[crg.cd_gtx0.clk, crg.cd_gtx90.clk, crg.cd_gtx270.clk], txc_sel=4, txc_bufg=False)
+            else:
+                txc = dict(txc_clks=[crg.cd_gtx0.clk, crg.cd_gtx90.clk], txc_sel=2, txc_bufg=True)
+            self.ethphy = phy = GbePHY(clock_pads, pads, clk_tx=crg.cd_gtx0.clk, rst=crg.eth_rst, **txc)
             phy.tx_clk_freq = phy.rx_clk_freq = sys_clk_freq
             platform.add_period_constraint(clock_pads.rx, 1e9/125e6)
             # CPU-only MAC (TASK-5033): the CPU answers ping (Linux) and does TFTP (BIOS netboot) itself, on local_ip.
@@ -356,8 +404,9 @@ class ULX5MSoC(SoCCore):
         add_mac_address_constants(self, "MACADDR", mac_address)
 
 
-BOOT_MODES   = ["none", "serial", "sdcard", "netboot", "sdnet"]
-SDCARD_MODES = ["none", "native", "spi"]
+BOOT_MODES     = ["none", "serial", "sdcard", "netboot", "sdnet"]
+USB_PNRU_CLKS  = ["pll48", "gtx125", "bufg48"]
+SDCARD_MODES   = ["none", "native", "spi"]
 
 
 def main():
@@ -391,6 +440,8 @@ def main():
     p.add_argument("--video-640x240", action="store_true", help="640x240 framebuffer, lines doubled only (80x30 text, 18.4 MB/s)")
     p.add_argument("--video-recover", action="store_true", help="resettable video domain + resync watchdog (TASK-5047)")
     p.add_argument("--with-usb-hid", action="store_true", help="USB low-speed HID host (Emard) on J5, CSR usb_hid (TASK-5047)")
+    p.add_argument("--with-usb-pnru", action="store_true", help="USB 1.1 LS/FS host (PNRU port), CSR usb_pnru (TASK-5051)")
+    p.add_argument("--usb-pnru-clk", default="pll48", choices=USB_PNRU_CLKS, help="USB engine clock (see ULX5MSoC)")
     # MDIO controller board test (docs/REVIEW_LITEX_DUPLICATES.md): later write, other REG4, full snap as a CSR.
     p.add_argument("--phy-write-after", default=0, type=int, help="MDIO pass in which REG9/4/0 are written")
     p.add_argument("--phy-reg4", default=0x0001, type=lambda x: int(x, 0), help="KSZ9031 REG4 written by MDIOCore")
@@ -406,6 +457,7 @@ def main():
                    video_ce_rep=args.video_ce_rep, video_neg_sync=args.video_neg_sync, pll_lock_req=args.pll_lock_req,
                    video_640x240=args.video_640x240, with_usb_hid=args.with_usb_hid, video_recover=args.video_recover,
                    phy_write_after=args.phy_write_after, phy_reg4=args.phy_reg4, phy_snap_csr=args.phy_snap_csr,
+                   with_usb_pnru=args.with_usb_pnru, usb_pnru_clk=args.usb_pnru_clk,
                    **soc_core_argdict(args))
     if args.synth_extra:
         soc.platform.toolchain._synth_opts += " " + args.synth_extra + " "

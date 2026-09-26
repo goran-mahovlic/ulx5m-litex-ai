@@ -23,6 +23,9 @@ csrpeek: csrpeek.c sys_linux.c
 usbhidd: ../usbhidd/usbhidd.c sys_linux.c ../usbhidd/hidkey.h
 	$(CC) $(CFLAGS) $(LDFLAGS) -I../usbhidd -o $@ ../usbhidd/usbhidd.c sys_linux.c -lc -lgcc
 
+usbhostd: ../usbhostd/usbhostd.c ../usbhostd/usbh.c ../usbhostd/usbh.h sys_linux.c ../usbhidd/hidkey.h
+	$(CC) $(CFLAGS) $(LDFLAGS) -I../usbhidd -I../usbhostd -o $@ ../usbhostd/usbhostd.c ../usbhostd/usbh.c sys_linux.c -lc -lgcc
+
 clean:
-	rm -f doom csrpeek usbhidd
+	rm -f doom csrpeek usbhidd usbhostd
 .PHONY: clean

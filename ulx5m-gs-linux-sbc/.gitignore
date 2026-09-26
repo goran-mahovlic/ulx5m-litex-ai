@@ -15,3 +15,7 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 .venv/
+
+# cocotb runs of sim/tb_usb_pnru.py (also holds the fetched PNRU reference Verilog, not redistributed here)
+sim/usb_pnru/build/
+sim/usb_pnru/results.xml

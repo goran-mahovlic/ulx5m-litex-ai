@@ -77,4 +77,16 @@ if "usb_hid" in d["csr_bases"]:
 """ % (ub, ub)
     anchor = "        soc {"
     dts = dts.replace(anchor, node + anchor, 1)
+if "usb_pnru" in d["csr_bases"]:
+    # TASK-5051: USB 1.1 LS/FS host (PNRU port); S90usbhostd starts usbhostd only if this node exists.
+    ub = d["csr_bases"]["usb_pnru"]
+    node = """        usbhost@%x {
+            compatible = "regoc,usb-pnru-csr";
+            reg = <0x%x 0x100>;
+            status = "okay";
+        };
+
+""" % (ub, ub)
+    anchor = "        soc {"
+    dts = dts.replace(anchor, node + anchor, 1)
 sys.stdout.write(dts)
