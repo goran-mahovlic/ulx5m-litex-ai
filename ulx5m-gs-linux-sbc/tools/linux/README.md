@@ -7,6 +7,9 @@ root shell over BIOS TFTP netboot**, bitstream `bitstreams/ETH_GateMateA1_2509_1
 - eth0 = 192.168.10.213 after `ip addr add`, ping Linux -> Pi 3/3, Pi -> Linux 5/5;
 - log: `docs/linux/linux_boot_smp8_9.txt`.
 
+The DTS files kept here are for the two bitstreams in `bitstreams/`: `rv32_grec_3.dts` (recommended) and
+`rv32_ghrec_1.dts` (+ USB HID). DTS files of older builds are in the git tag `pre-cleanup-20260926`.
+
 ## SoC
 
 VexRiscv-SMP (1 core, I$/D$ 4 KiB, ITLB/DTLB 4, native LiteDRAM 16 bit, l2 0, no FPU) + 1G CPU MAC
@@ -30,7 +33,7 @@ The first attempt with `add_ethernet(data_width=32)` sent ARP requests, but RX n
 - `Image`, `rootfs.cpio`, `opensbi.bin` come from https://github.com/litex-hub/linux-on-litex-vexriscv/issues/164 (`linux_2022_03_23.zip`).
 - `rv32.dtb` is built from this SoC: `mkdts.py` = `litex_json2dts_linux` + a `litex,liteeth` node without MDIO (our GbePHY has no MDIO CSRs, and the Linux driver maps only "mac" and "buffer"). It is compiled on the Pi, because the container has no dtc:
 
-      python3 tools/linux/mkdts.py build/s_smp8_9 > rv32.dts       # soc_build.sh environment (= rv32_smp8_9.dts)
+      python3 tools/linux/mkdts.py build/s_smp8_9 > rv32.dts       # soc_build.sh environment
       dtc -O dtb -o /srv/tftp/rv32.dtb rv32.dts                       # on the Pi
       ~/FPGA/netboot_app.sh linux     # boot.json: Image, rv32.dtb, rootfs.cpio, opensbi.bin (OpenSBI last = jump)
 
@@ -50,4 +53,4 @@ The first attempt with `add_ethernet(data_width=32)` sent ARP requests, but RX n
 `--sdcard spi --boot sdnet` (SD first, then TFTP): P&R PASS at 55 % CPE_LT / 50 RAM_HALF, Linux boots and registers
 `mmc_spi` host mmc0, 1G ping works. The inserted card does not answer the init (same with LiteSDCard), most likely a
 1.8 V bank vs 3.3 V card level/power issue — see `docs/SPI_SD_TASK-5039.md`. Boot with `APP=linuxsd bash linux_boot.sh
-<bit>` (uses `rv32sd.dtb` from `rv32_spisd_1.dts`); `tools/sd/bios_cmds.sh <bit> "<cmd>"...` types BIOS commands.
+<bit>` (uses `rv32sd.dtb`: `mkdts.py` output of the SPI-SD build); `tools/sd/bios_cmds.sh <bit> "<cmd>"...` types BIOS commands.

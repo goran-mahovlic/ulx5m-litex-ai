@@ -146,16 +146,12 @@ even when a "dirty" design was loaded just before it.
 options for every build, so you do not have to do anything. If you build the bitstream in another way (other
 scripts, or gmpack by hand), add `--reset` yourself. All bitstreams in `bitstreams/` already contain it.
 
-### About the LiteX patch (`docs/litex-b6ae9e0b2-local.patch`)
+### LiteX is used without changes
 
-**You do not need this patch to build.** It records two small changes in our local LiteX copy:
-
-1. **`litex/build/colognechip/common.py`** (tristate buffer). This change only rewrites one line and adds a
-   comment. The logic is the same as in upstream LiteX (we checked: both give the same expression). It is left
-   over from our search for a tristate problem. That problem turned out to be a nextpnr bug, which shows up
-   when the tristate control is a constant. This patch will be removed.
-2. **`litex/soc/software/bios/main.c`**. This change adds one line to the BIOS start-up screen, showing the
-   board's IP and MAC address. Without it, the line is simply not printed.
+The build uses plain upstream LiteX at the version linked under [Built on](#built-on). An older version of
+this folder had a small optional LiteX patch (one line that did not change the logic, and one extra line in the
+BIOS start-up screen). It was removed on 26 September 2026; see
+`ulx5m-gs-linux-sbc/docs/REVIZIJA_LITEX_DUPLIKATI.md`.
 
 The scripts in `tools/` still contain our local paths and IP addresses. Change them before you use them.
 
@@ -174,8 +170,8 @@ exact version we used. All are plain upstream `master`, without local changes, u
 
 | Project | What we use it for |
 |---|---|
-| [LiteX](https://github.com/enjoy-digital/litex/tree/b6ae9e0b227354aecffef5339d3e946f2395ac09) | SoC builder, BIOS, CPU integration, build flow. Two small optional local changes, see [the patch](#about-the-litex-patch-docslitex-b6ae9e0b2-localpatch). |
-| [LiteEth](https://github.com/enjoy-digital/liteeth/tree/96547670d9d4776b81edba0c8a82e5f10ed8a1e3) | Ethernet MAC (and the IP stack in the CPU-less designs) |
+| [LiteX](https://github.com/enjoy-digital/litex/tree/b6ae9e0b227354aecffef5339d3e946f2395ac09) | SoC builder, BIOS, CPU integration, build flow |
+| [LiteEth](https://github.com/enjoy-digital/liteeth/tree/96547670d9d4776b81edba0c8a82e5f10ed8a1e3) | Ethernet MAC |
 | [LiteDRAM](https://github.com/enjoy-digital/litedram/tree/51de2b05e9b8e555cde8ff5508b5996945a2fd22) | SDRAM controller |
 | [LiteX-Boards](https://github.com/litex-hub/litex-boards/tree/8741034010bdbd98f2740d7b7345d93a480b7877) | ULX5M-GS platform (pin definitions) |
 | [LiteSDCard](https://github.com/enjoy-digital/litesdcard/tree/17718d9258ac2dd62ac23e2eecd7ac613a050986) | SD card support (not working on this board yet) |

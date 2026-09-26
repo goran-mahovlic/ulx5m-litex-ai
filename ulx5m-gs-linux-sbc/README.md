@@ -12,17 +12,31 @@ Linux 5.14 boots over TFTP, and DOOM runs on the screen.
 **Quick start** (which bitstream to use, how to boot Linux, how to rebuild) is in the
 [main README](../README.md). This file describes what is inside the folder.
 
-## Three designs in one folder
+## One design
 
-The project grew in three steps. All three top-level files still build:
+`gateware/target_soc.py` is the whole design: CPU, SDRAM, BIOS, 1000 Mb/s Ethernet, DVI, an optional USB
+keyboard and SD card. The bitstreams in `bitstreams/` are built from it.
 
-| Top file | What it is | Ethernet |
-|---|---|---|
-| `gateware/target_eth.py` | No CPU. LiteEth answers ping and UDP echo in hardware. | 100 Mb/s |
-| `gateware/target_gbe.py` | No CPU. Same idea, using our own gigabit PHY. | 1000 Mb/s |
-| `gateware/target_soc.py` | **The Linux computer.** CPU, SDRAM, BIOS, Ethernet, DVI, optional USB keyboard and SD card. | 1000 Mb/s |
+The project started with two designs without a CPU (100 Mb/s and 1000 Mb/s ping in hardware) and many
+diagnostic modules. They were removed on 26 September 2026 and are kept in the git tag `pre-cleanup-20260926`.
+The review is in `docs/REVIZIJA_LITEX_DUPLIKATI.md`.
 
-The bitstreams in `bitstreams/` are built from `target_soc.py`.
+## Why these files are local
+
+Most of the design comes from LiteX: the board platform (`litex_boards.platforms.intergalaktik_ulx5m_gs`), the
+VexRiscv CPU, the BIOS, the LiteDRAM SDRAM controller, the LiteEth MAC, the video timing generator and the TMDS
+encoder. The build uses unmodified upstream LiteX. These files are local because LiteX does not have them, or
+has them in a form that does not fit this board:
+
+| File | Why it is not taken from LiteX |
+|---|---|
+| `gateware/target_soc.py` | The litex-boards target for this board has no Ethernet, DVI or USB. Its clock generator uses a separate PLL output for the SDRAM clock, and 1G Ethernet already takes all 4 global clock nets. The SDRAM chip (IS42VM16320E, 1.8 V, 64 MB) is not in LiteDRAM, so its timings are defined here. |
+| `gateware/gbe_phy.py` | LiteEth has no GateMate RGMII PHY. Its other PHYs keep clock-crossing FIFOs at 125 MHz, and on GateMate those paths only reach 52–65 MHz. |
+| `gateware/pll_stdy.py` | A small subclass of LiteX `GateMatePLL` that connects the PLL's sticky lock flag. LiteX leaves it unconnected. |
+| `gateware/sticky_lock.py` | LiteX resets the clock domains from the raw PLL lock flag. On this board that flag flickers, so it is filtered here. |
+| `gateware/video_sbc.py` | LiteX's HDMI PHY needs its own pixel clock net, and there is none left. Here video runs in the 125 MHz Ethernet clock with a 1-in-5 clock enable. LiteX's framebuffer at 640×480 would use 92 % of the SDRAM bandwidth, so a 320×240 frame is scaled up in hardware. |
+| `gateware/verilog/mdio_core.v` | Sets up the Ethernet PHY for 1000 Mb/s in hardware, before the CPU runs. LiteEth only offers MDIO access from software. |
+| `gateware/usb_hid.py`, `gateware/verilog/usbhost/` | LiteX's USB host (OHCI) needs a 48 MHz clock net and a kernel driver that the prebuilt kernel does not have. This is Emard's small low-speed keyboard host. |
 
 ## Gigabit Ethernet: how it works here
 
@@ -63,9 +77,8 @@ On GateMate any pin can drive the global clock network through `CC_BUFG`, and th
 |---|---|
 | `gateware/` | The FPGA design (Python/migen + some Verilog) |
 | `bitstreams/` | Ready-made bitstreams; `bitstreams/README.md` lists what each one does |
-| `tools/` | Build scripts, Linux/netboot helpers, DOOM and rootfs, USB daemon, board diagnostics |
-| `sim/` | Simulations and test benches |
-| `test_script/` | Host-side tests (UDP echo, UART) |
+| `tools/` | Build scripts, Linux/netboot helpers, DOOM and rootfs, USB daemon; see `tools/README.md` |
+| `sim/` | Simulations of the local modules (PHY, scaler, watchdog, lock filter) and a BIOS boot-option test |
 | `docs/` | Measurements, investigations and lessons (`docs/LESSONS_GATEMATE.md`) |
 | `build/` | Build output; only `csr.json`/`csr.csv` of the two recommended builds are kept |
 | `env.sh` | Sets up the toolchain and LiteX paths (`OSS_CAD_SUITE`, `LXROOT`) |
@@ -74,5 +87,6 @@ Loading uses the DirtyJTAG programmer: `openFPGALoader -c dirtyJtag <file.bit> -
 
 ## License
 
-BSD-2-Clause. See `LICENSE`. The first, CPU-less 100 Mb/s design comes from the LiteX-Ethernet-ULX5M-GS
-contributors. The USB host is by Emard (`gateware/verilog/usbhost/README.md`).
+BSD-2-Clause. See `LICENSE`. The project started from the CPU-less 100 Mb/s LiteX-Ethernet-ULX5M-GS design
+by its contributors (in the tag `pre-cleanup-20260926`). The USB host is by Emard, GPL
+(`gateware/verilog/usbhost/README.md`). The DOOM files in `tools/doom_linux/` are GPL v2+.
