@@ -1,6 +1,6 @@
 # Base folder of AI projects for ULX5M-GS
 
-FPGA projects for the Radiona **ULX5M-GS** board, built with LiteX and the open-source toolchain
+FPGA projects for the **[ULX5M-GS](https://github.com/intergalaktik/ulx5m-gs)** board, built with LiteX and the open-source toolchain
 (Yosys, nextpnr-himbaechel, gmpack).
 
 The board has:
@@ -8,6 +8,8 @@ The board has:
 - 64 MB SDRAM,
 - a gigabit Ethernet PHY (KSZ9031),
 - a DVI output.
+
+Board hardware (schematics, PCB, production files): https://github.com/intergalaktik/ulx5m-gs
 
 ---
 
