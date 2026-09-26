@@ -103,7 +103,7 @@ a login prompt, on the serial console and on the DVI screen. Log in as `root` an
 - oss-cad-suite, 2026-09 or newer,
 - a RISC-V GCC (`riscv-none-elf`),
 - LiteX, migen, litedram, liteeth, litex-boards, litesdcard and `pythondata-cpu-vexriscv_smp`,
-  at the commits listed under [Exact versions we used](#exact-versions-we-used).
+  at the versions linked under [Built on](#built-on).
 
 Set `OSS_CAD_SUITE` and `LXROOT` to point to them. Then run:
 
@@ -169,46 +169,26 @@ The scripts in `tools/` still contain our local paths and IP addresses. Change t
 
 ## Built on
 
-This work is built on these open-source projects. Without them it would not exist:
+This work is built on these open-source projects. Without them it would not exist. Each link points to the
+exact version we used. All are plain upstream `master`, without local changes, unless the table says otherwise.
 
 | Project | What we use it for |
 |---|---|
-| [LiteX](https://github.com/enjoy-digital/litex) | SoC builder, BIOS, CPU integration, build flow |
-| [LiteEth](https://github.com/enjoy-digital/liteeth) | Ethernet MAC (and the IP stack in the CPU-less designs) |
-| [LiteDRAM](https://github.com/enjoy-digital/litedram) | SDRAM controller |
-| [LiteSDCard](https://github.com/enjoy-digital/litesdcard) | SD card support (not working on this board yet) |
-| [Migen](https://github.com/m-labs/migen) | Python hardware description language that LiteX uses |
-| [VexRiscv](https://github.com/SpinalHDL/VexRiscv) / [pythondata-cpu-vexriscv_smp](https://github.com/litex-hub/pythondata-cpu-vexriscv_smp) | RISC-V CPU |
-| [linux-on-litex-vexriscv](https://github.com/litex-hub/linux-on-litex-vexriscv) | Prebuilt Linux 5.14, Buildroot root file system and OpenSBI |
-| [Yosys](https://github.com/YosysHQ/yosys), [nextpnr](https://github.com/YosysHQ/nextpnr) (himbaechel/GateMate), [Project Peppercorn](https://github.com/YosysHQ/prjpeppercorn) (`gmpack`) | Open-source synthesis, place and route, and bitstream packing for GateMate |
-| [oss-cad-suite](https://github.com/YosysHQ/oss-cad-suite-build) | Ready-made bundle of the tools above |
-| [openFPGALoader](https://github.com/trabucayre/openFPGALoader) | Loading bitstreams over JTAG |
-| [smunaut/doom_riscv](https://github.com/smunaut/doom_riscv) | DOOM engine for RISC-V (we added a Linux framebuffer layer) |
-| [emard/ulx3s-misc](https://github.com/emard/ulx3s-misc) | USB 1.1 HID host (Ultra-Embedded SIE + OpenCores USB PHY) |
+| [LiteX](https://github.com/enjoy-digital/litex/tree/b6ae9e0b227354aecffef5339d3e946f2395ac09) | SoC builder, BIOS, CPU integration, build flow. Two small optional local changes, see [the patch](#about-the-litex-patch-docslitex-b6ae9e0b2-localpatch). |
+| [LiteEth](https://github.com/enjoy-digital/liteeth/tree/96547670d9d4776b81edba0c8a82e5f10ed8a1e3) | Ethernet MAC (and the IP stack in the CPU-less designs) |
+| [LiteDRAM](https://github.com/enjoy-digital/litedram/tree/51de2b05e9b8e555cde8ff5508b5996945a2fd22) | SDRAM controller |
+| [LiteX-Boards](https://github.com/litex-hub/litex-boards/tree/8741034010bdbd98f2740d7b7345d93a480b7877) | ULX5M-GS platform (pin definitions) |
+| [LiteSDCard](https://github.com/enjoy-digital/litesdcard/tree/17718d9258ac2dd62ac23e2eecd7ac613a050986) | SD card support (not working on this board yet) |
+| [Migen](https://github.com/m-labs/migen/tree/e19524c963a8342952840983047557707fbe0b6a) | Python hardware description language that LiteX uses |
+| [VexRiscv SMP](https://github.com/litex-hub/pythondata-cpu-vexriscv_smp/tree/217d23d7e9ad5556c17a73dc6ffc1971765f3d7c) / [VexRiscv](https://github.com/litex-hub/pythondata-cpu-vexriscv/tree/642ecfed1c84460555d6d803d660cc60cfc1ecb6) | RISC-V CPU (SMP for Linux, the plain one for the smaller test SoCs) |
+| [linux-on-litex-vexriscv](https://github.com/litex-hub/linux-on-litex-vexriscv/issues/164) | Prebuilt Linux 5.14, Buildroot root file system and OpenSBI (`linux_2022_03_23.zip`) |
+| [oss-cad-suite](https://github.com/YosysHQ/oss-cad-suite-build/releases/tag/2026-09-23): [Yosys](https://github.com/YosysHQ/yosys), [nextpnr](https://github.com/YosysHQ/nextpnr), [Project Peppercorn](https://github.com/YosysHQ/prjpeppercorn) (`gmpack`), [openFPGALoader](https://github.com/trabucayre/openFPGALoader) | Open-source synthesis, place and route, bitstream packing and loading for GateMate |
+| [smunaut/doom_riscv](https://github.com/smunaut/doom_riscv/tree/02b0d80) | DOOM engine for RISC-V. Not changed; our Linux framebuffer layer is in `tools/doom_linux/`. |
+| [emard/ulx3s-misc](https://github.com/emard/ulx3s-misc/tree/d0c6f15/examples/usb) | USB 1.1 HID host (Ultra-Embedded SIE + OpenCores USB PHY). Copied into `gateware/verilog/usbhost/`; the VHDL PHY was converted to Verilog with GHDL. |
 
-### Exact versions we used
-
-Everything is plain upstream `master`. The only local change is in LiteX (see the patch above), and the
-build does not need it.
-
-| Repository | Branch | Commit | Date | Local changes |
-|---|---|---|---|---|
-| [litex](https://github.com/enjoy-digital/litex) | master | `b6ae9e0b2` ("Bump to version 2026.08") | 2026-09-24 | 2 files, optional (`docs/litex-b6ae9e0b2-local.patch`) |
-| [liteeth](https://github.com/enjoy-digital/liteeth) | master | `9654767` | 2026-09-18 | none |
-| [litedram](https://github.com/enjoy-digital/litedram) | master | `51de2b0` | 2026-02-19 | none |
-| [litex-boards](https://github.com/litex-hub/litex-boards) | master | `8741034` | 2026-03-13 | none |
-| [litesdcard](https://github.com/enjoy-digital/litesdcard) | master | `17718d9` | 2026-09-24 | none |
-| [migen](https://github.com/m-labs/migen) | master | `e19524c` | 2026-01-05 | none |
-| [pythondata-cpu-vexriscv_smp](https://github.com/litex-hub/pythondata-cpu-vexriscv_smp) | master | `217d23d` | 2026-05-26 | none |
-| [pythondata-cpu-vexriscv](https://github.com/litex-hub/pythondata-cpu-vexriscv) | master | `642ecfe` | 2026-06-02 | none |
-| [smunaut/doom_riscv](https://github.com/smunaut/doom_riscv) | master | `02b0d80` | – | none; our Linux layer is in `tools/doom_linux/` |
-| [emard/ulx3s-misc](https://github.com/emard/ulx3s-misc) | master | `d0c6f15` | – | copied into `gateware/verilog/usbhost/`; the VHDL PHY converted to Verilog with GHDL |
-| oss-cad-suite | – | build 2026-09-23 | 2026-09-23 | none |
-
-**Where the board-specific work lives.** We did not change LiteEth. Gigabit Ethernet works because we use our
-own PHY (`gateware/gbe_phy.py`) with the stock LiteEth MAC. The reason is explained in
-`ulx5m-gs-linux-sbc/README.md`. The same goes for the other GateMate-specific parts: they live in this
-repository, not in patched LiteX code.
+**We did not change LiteEth.** Gigabit Ethernet works because we use our own PHY (`gateware/gbe_phy.py`)
+with the stock LiteEth MAC. The reason is explained in `ulx5m-gs-linux-sbc/README.md`. The same goes for the
+other GateMate-specific parts: they live in this repository, not in patched LiteX code.
 
 Our own code is BSD-2-Clause. Files taken from other projects keep their original license: the DOOM files
 in `tools/doom_linux/` are GPL v2+, and the USB host in `gateware/verilog/usbhost/` is GPL.
