@@ -1,7 +1,0 @@
-rtl.v
-synth.v
-*.vvp
-*.init
-*.log
-!s/run.log
-r/

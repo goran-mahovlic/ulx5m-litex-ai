@@ -1,4 +1,0 @@
-t=248470000 frame 1: 72 bytes
-t=493510000 frame 2: 72 bytes
-END: 2 frames, rst_n=1
-tb.v:25: $finish called at 600000000 (1ps)

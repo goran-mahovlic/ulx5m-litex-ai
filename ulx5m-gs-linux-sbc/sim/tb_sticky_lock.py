@@ -6,9 +6,7 @@
 # Checks, in the PLL-free reference domain:
 #   1) no lock while the raw flag chatters (stable run < stable_cycles),
 #   2) lock after stable_cycles consecutive 1s,
-#   3) once locked, later glitches (raw 0 pulses) do NOT clear it,
-#   4) the PHY control (hw reset + MDIO sequencer) in that domain completes although the raw
-#      lock keeps glitching -> MDIO frames are really shifted out.
+#   3) once locked, later glitches (raw 0 pulses) do NOT clear it.
 #
 # Run:  source ./env.sh && python3 sim/tb_sticky_lock.py
 #
@@ -62,37 +60,6 @@ def tb_lock():
     check(st.index(1) >= N - 1, "not earlier than %d cycles (first at %d)" % (N, st.index(1)))
     check(all(v for p, v in trace if p == "glitch"), "glitches after lock do not clear it")
 
-def tb_phy_ctrl():
-    # PHY control in the reference domain is independent of the (glitching) PLL lock.
-    from mdio_sequencer import MDIOWriteSequencer
-    from liteeth.phy.common import LiteEthPHYHWReset
-    class Pads:
-        def __init__(self):
-            self.mdc = Signal(); self.mdio = Signal()
-    class DUT(Module):
-        def __init__(self):
-            self.submodules.hw_reset = LiteEthPHYHWReset(cycles=50)
-            self.submodules.seq = MDIOWriteSequencer(pads=None, clk_freq=25e6, phy_reset=self.hw_reset.reset,
-                                                     settle_time=2e-6)
-    dut = DUT()
-    res = {}
-    def gen():
-        mdc_edges, prev = 0, 0
-        for _ in range(60000):
-            yield
-            m = (yield dut.seq.mdc)
-            if m and not prev:
-                mdc_edges += 1
-            prev = m
-            if (yield dut.seq.done):
-                break
-        res["done"] = (yield dut.seq.done)
-        res["edges"] = mdc_edges
-    run_simulation(dut, gen())
-    check(res["done"] == 1, "MDIO sequencer in the reference domain finishes (done=1)")
-    check(res["edges"] >= 64 * 24, "all 24 write frames clocked out (%d MDC edges)" % res["edges"])
-
 tb_lock()
-tb_phy_ctrl()
 print("RESULT:", "ALL PASS" if not fails else "%d FAIL" % len(fails))
 sys.exit(1 if fails else 0)

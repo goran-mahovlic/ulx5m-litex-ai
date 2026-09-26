@@ -1,7 +1,0 @@
-*.json
-*.txt
-*.bit
-*.log
-tb[a-z0-9]*
-!tb_*.v
-sim_out.txt

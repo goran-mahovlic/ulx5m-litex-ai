@@ -1,3 +1,0 @@
-Net "clk25" Loc = "IO_SB_A8" | SCHMITT_TRIGGER=true;
-Net "uart_a" Loc = "IO_NA_A4";
-Net "uart_b" Loc = "IO_NB_B5";

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Environment for building/simulating the LiteX Ethernet design. `source` this first.
+# Environment for building/simulating the LiteX SoC (gateware/target_soc.py). `source` this first.
 #
 #   source ./env.sh
 #
@@ -23,7 +23,7 @@ fi
 
 export LXROOT
 export PYTHONPATH="$LXROOT/migen:$LXROOT/litex:$LXROOT/liteeth:$LXROOT/litedram:$LXROOT/litex-boards"
-# optional cores (SoC target, TASK-5032 phase 2): present only in the ~/app/litex-1g-deps tree
+# optional cores (SD card): added when present in the LiteX tree
 for _c in litesdcard litespi; do [ -d "$LXROOT/$_c" ] && PYTHONPATH="$PYTHONPATH:$LXROOT/$_c"; done
 # Version-matched pythondata packages (if present alongside the LiteX tree) must precede
 # any pip-installed copies on the path.
@@ -32,5 +32,4 @@ for _pd in "$LXROOT"/pythondata-*; do
 done
 export PYTHONPATH
 export LITEX_ROOT="$LXROOT"
-export LITEETH_TEST_ROOT="$LXROOT/liteeth"   # so sims can import `test.model`
 echo "[env] python=$(python3 --version 2>&1 | awk '{print $2}') LXROOT=$LXROOT migen=$LXROOT/migen (fork)"

@@ -1,10 +1,10 @@
 #
 # DVI output + 2x-scaled framebuffer for the ULX5M-GS standalone computer (TASK-5040).
 #
-# DVI:    TMDS 640x480@60 on IO_SB_A4..B7 (DDMI0). hdmi5x = 125 MHz from its own PLL, hdmi = 25 MHz from a
-#         divide-by-5 flop chain (GateMate PLL outputs are one frequency with 4 phases, so 25 and 125 MHz cannot
-#         share one PLL). PHY and divider are copied from GateMate_demos/LiteX_DVI (Miodrag Milanovic, 2025),
-#         which is proven on this board (README: "DVI - tested and works" from v004).
+# DVI:    TMDS 640x480@60 on IO_SB_A4..B7 (DDMI0). Everything runs in one 125 MHz domain (gtx0 of the 1G Ethernet,
+#         all 4 global nets are taken) and the pixel logic advances on a 1-in-5 clock enable. The 10:2 serializer
+#         through CC_ODDR + CC_LVDS_OBUF follows GateMate_demos/LiteX_DVI (Miodrag Milanovic, 2025), which is proven
+#         on this board. LiteX VideoHDMIPHY (litex/soc/cores/video.py) needs a separate pixel clock domain.
 #
 # Framebuffer: LiteX VideoFrameBuffer at 640x480 rgb565 needs 36.9 MB/s = 92 % of the 16-bit SDRAM peak
 #         (40 MB/s at 20 MHz), so the CPU would starve. FrameBuffer2x reads a 320x240 rgb565 frame (9.2 MB/s, 23 %)
@@ -25,77 +25,38 @@ from litex.soc.cores.code_tmds import TMDSEncoder
 from litex.soc.cores.video import video_timing_layout, video_data_layout, _dvi_c2d
 
 
-class Divide5(LiteXModule):
-    """50 % duty cycle clk/5 (flop chain + one negedge flop), from LiteX_DVI."""
-    def __init__(self, clock_domain):
-        self.clk_o = Signal()
-        # load: high in the fast cycle before the edge that is 3 fast cycles after the divided clock rises
-        # (states 000 001 010 011 110; clk_o rises entering 010) -> serializer word load with 2-3 fast cycles
-        # of margin on both sides, no hdmi->hdmi5x sampling of a toggle (TASK-5040, drop-outs under SDRAM load).
-        self.load = Signal()
-        d, q, qbar = Signal(3), Signal(3), Signal(3)
-        qtemp = Signal(reset_less=True)
-        self.comb += [
-            qbar[0].eq(~q[2]), qbar[1].eq(~q[1]), qbar[2].eq(~q[0]),
-            d[0].eq(qbar[2] & qbar[0]),
-            d[1].eq((q[1] & qbar[0]) | (qbar[1] & q[0])),
-            d[2].eq(q[1] & q[0]),
-        ]
-        sync = getattr(self.sync, clock_domain)
-        sync += q.eq(d)
-        self.specials += Instance("CC_DFF", p_CLK_INV=1, p_EN_INV=0, p_SR_INV=0, p_SR_VAL=0,
-                                  i_D=q[1], i_CLK=ClockSignal(clock_domain), i_EN=1, i_SR=0, o_Q=qtemp)
-        self.comb += [self.clk_o.eq(q[1] | qtemp), self.load.eq(q == 0b110)]
-
-
 class _Serializer10to2(LiteXModule):
-    """10:1 TMDS serializer: 10-bit word in pix, shifted out 2 bits per 5x cycle through CC_ODDR (LiteX_DVI custom).
-    With `ce` (single-clock mode) the word is loaded in the fast domain whenever ce is high (1 cycle in 5)."""
-    def __init__(self, data_i, data_o, pix, fast, ce=None):
+    """10:1 TMDS serializer: the 10-bit word is loaded in the fast domain whenever ce is high (1 cycle in 5) and
+    shifted out 2 bits per cycle through CC_ODDR (LiteX_DVI custom)."""
+    def __init__(self, data_i, data_o, fast, ce):
         dat = Signal(10)
         sf = getattr(self.sync, fast)
-        if ce is None:
-            tog, tog_d, edge = Signal(), Signal(), Signal()
-            sp = getattr(self.sync, pix)
-            sp += tog.eq(~tog)
-            sf += [tog_d.eq(tog), edge.eq(tog_d ^ tog)]
-        else:
-            edge = ce
-        sf += If(edge, dat.eq(data_i)).Else(dat.eq(Cat(dat[2:10], C(0, 2))))
+        sf += If(ce, dat.eq(data_i)).Else(dat.eq(Cat(dat[2:10], C(0, 2))))
         self.specials += DDROutput(clk=ClockSignal(fast), i1=dat[0], i2=dat[1], o=data_o)
 
 
 class DVIPHY(LiteXModule):
-    """clock_domain = pixel clock, clock_domain+"5x" = bit clock/2 (two clocks, two global nets).
-    ce_domain: single-clock mode - everything runs in ce_domain (125 MHz) and the pixel logic advances when ce is
-    high (1 cycle in 5); the TMDS clock pair is a 2-high/3-low pattern through CC_ODDR (no pixel-clock net)."""
-    def __init__(self, pads, clock_domain="hdmi", ce_domain=None, ce=None, neg_sync=False, ser_load=None):
+    """Everything runs in ce_domain (125 MHz = bit clock/2) and the pixel logic advances when ce is high (1 cycle
+    in 5); the TMDS clock pair is a 5-high/5-low pattern through CC_ODDR (no pixel-clock net)."""
+    def __init__(self, pads, ce_domain, ce, neg_sync=False):
         # ce: Signal, or a factory returning a fresh ce register per call (CE tree: a single ce net with fanout
         # ~150 reached the FF enables after 10.9 ns > 8 ns at 125 MHz -> sporadic TMDS/sync errors, TASK-5040).
         mk = ce if callable(ce) else (lambda: ce)
         self.sink = sink = stream.Endpoint(video_data_layout)
         self.comb += sink.ready.eq(1)
-        fast = ce_domain or clock_domain + "5x"
-        if ce_domain is None:
-            self.specials += Instance("CC_LVDS_OBUF", i_A=ClockSignal(clock_domain), o_O_P=pads.clk_p, o_O_N=pads.clk_n)
-        else:
-            # 10-bit clock word 0b0000011111 shifted out like the data: 5 bits high, 5 low per pixel.
-            clk_o = Signal()
-            self.clk_serializer = _Serializer10to2(C(0b0000011111, 10), clk_o, None, fast, mk())
-            self.specials += Instance("CC_LVDS_OBUF", i_A=clk_o, o_O_P=pads.clk_p, o_O_N=pads.clk_n)
+        # 10-bit clock word 0b0000011111 shifted out like the data: 5 bits high, 5 low per pixel.
+        clk_o = Signal()
+        self.clk_serializer = _Serializer10to2(C(0b0000011111, 10), clk_o, ce_domain, mk())
+        self.specials += Instance("CC_LVDS_OBUF", i_A=clk_o, o_O_P=pads.clk_p, o_O_N=pads.clk_n)
         for color, channel in _dvi_c2d.items():
-            if ce_domain is None:
-                enc = ClockDomainsRenamer(clock_domain)(TMDSEncoder())
-            else:
-                enc = ClockDomainsRenamer(ce_domain)(CEInserter()(TMDSEncoder()))
-                self.comb += enc.ce.eq(mk())
+            enc = ClockDomainsRenamer(ce_domain)(CEInserter()(TMDSEncoder()))
+            self.comb += enc.ce.eq(mk())
             self.add_module(name=f"{color}_encoder", module=enc)
             self.comb += [enc.d.eq(getattr(sink, color)), enc.de.eq(sink.de),
                           enc.c.eq((Cat(~sink.hsync, ~sink.vsync) if neg_sync else Cat(sink.hsync, sink.vsync))
                                    if channel == 0 else 0)]    # neg_sync: VESA 640x480 (both negative)
             o = Signal()
-            self.add_module(name=f"{color}_serializer", module=_Serializer10to2(enc.out, o, clock_domain, fast,
-                            mk() if ce is not None else ser_load))    # ser_load: Divide5.load (two-clock mode)
+            self.add_module(name=f"{color}_serializer", module=_Serializer10to2(enc.out, o, ce_domain, mk()))
             self.specials += Instance("CC_LVDS_OBUF", i_A=o,
                                       o_O_P=getattr(pads, f"data{channel}_p"), o_O_N=getattr(pads, f"data{channel}_n"))
 
@@ -118,8 +79,9 @@ class FrameBuffer2x(LiteXModule):
 
     CSRs (LiteX DMA reader): dma_base, dma_length, dma_enable, dma_loop. Scan-out is enabled at reset
     (enable=1), so the BIOS and Linux simplefb only write pixels into main RAM."""
-    def __init__(self, port, hres=640, vres=480, base=0, clock_domain="hdmi", fifo_depth=2048, enable=1, ce=None,
+    def __init__(self, port, ce, clock_domain, hres=640, vres=480, base=0, fifo_depth=2048, enable=1,
                  hdouble=True, cdc_from="sys"):
+        # ce: the 1-in-5 pixel enable of clock_domain (Signal, or a factory returning a fresh ce register per call).
         # cdc_from: domain of the CDC write side (same clock as sys; "vsys" = sys with the video recovery reset).
         self.vtg_sink = stream.Endpoint(video_timing_layout)
         self.source   = stream.Endpoint(video_data_layout)
@@ -135,24 +97,20 @@ class FrameBuffer2x(LiteXModule):
         dma_reset = Signal()
         self.specials += MultiReg(self.dma.fsm.reset, dma_reset, clock_domain)
         mk = ce if callable(ce) else (lambda: ce)
-        if ce is None:
-            self.scaler = ClockDomainsRenamer(clock_domain)(Scaler2x(self.fb_width, hdouble))
-            self.comb += self.cdc.source.connect(self.scaler.pix)
-        else:
-            # single-clock mode: the scaler advances on ce only, so it may pop the CDC FIFO only on ce cycles.
-            # ready is registered (stable for the whole 5-cycle window): the unregistered scaler ready -> FIFO
-            # gray counter path took 18 ns, a true 1-cycle path at 125 MHz.
-            ce_sc = mk()
-            ready_q = Signal()
-            self.scaler = ClockDomainsRenamer(clock_domain)(CEInserter()(Scaler2x(self.fb_width, hdouble)))
-            sd = getattr(self.sync, clock_domain)
-            sd += ready_q.eq(self.scaler.pix.ready)
-            self.comb += [
-                self.scaler.ce.eq(ce_sc),
-                self.scaler.we_ce.eq(ce_sc),
-                self.cdc.source.connect(self.scaler.pix, omit={"ready"}),
-                self.cdc.source.ready.eq(ready_q & mk()),
-            ]
+        # The scaler advances on ce only, so it may pop the CDC FIFO only on ce cycles. ready is registered (stable
+        # for the whole 5-cycle window): the unregistered scaler ready -> FIFO gray counter path took 18 ns, a true
+        # 1-cycle path at 125 MHz.
+        ce_sc = mk()
+        ready_q = Signal()
+        self.scaler = ClockDomainsRenamer(clock_domain)(CEInserter()(Scaler2x(self.fb_width, hdouble)))
+        sd = getattr(self.sync, clock_domain)
+        sd += ready_q.eq(self.scaler.pix.ready)
+        self.comb += [
+            self.scaler.ce.eq(ce_sc),
+            self.scaler.we_ce.eq(ce_sc),
+            self.cdc.source.connect(self.scaler.pix, omit={"ready"}),
+            self.cdc.source.ready.eq(ready_q & mk()),
+        ]
         self.comb += [
             self.scaler.reset.eq(dma_reset),
             self.vtg_sink.connect(self.scaler.vtg),
@@ -161,9 +119,8 @@ class FrameBuffer2x(LiteXModule):
         self.underflow = self.scaler.underflow
         # Recovery request (TASK-5047), in the video domain; the SoC resets the whole video path on it.
         self.watchdog = ClockDomainsRenamer(clock_domain)(ResyncWatchdog(4))
-        en_wd = (lambda: 1) if ce is None else mk
-        self.comb += [self.watchdog.resync.eq(en_wd() & self.scaler.resync),
-                      self.watchdog.frame_ok.eq(en_wd() & self.scaler.frame_ok)]
+        self.comb += [self.watchdog.resync.eq(mk() & self.scaler.resync),
+                      self.watchdog.frame_ok.eq(mk() & self.scaler.frame_ok)]
         self.wd = self.watchdog.wd
 
         # Diagnostics (TASK-5040 uputa #59): counters in the video domain, read through MultiReg (a torn read is
@@ -174,10 +131,9 @@ class FrameBuffer2x(LiteXModule):
         self._resyncs   = CSRStatus(32, description="frames that lost DMA alignment")
         frames, underflows, resyncs = Signal(32), Signal(32), Signal(32)
         sv = getattr(self.sync, clock_domain)
-        en = (lambda: 1) if ce is None else mk
-        sv += If(en() & self.scaler.frame_end, frames.eq(frames + 1))
-        sv += If(en() & self.scaler.underflow, underflows.eq(underflows + 1))
-        sv += If(en() & self.scaler.resync, resyncs.eq(resyncs + 1))
+        sv += If(mk() & self.scaler.frame_end, frames.eq(frames + 1))
+        sv += If(mk() & self.scaler.underflow, underflows.eq(underflows + 1))
+        sv += If(mk() & self.scaler.resync, resyncs.eq(resyncs + 1))
         self.specials += [MultiReg(frames, self._frames.status), MultiReg(underflows, self._underflow.status),
                           MultiReg(resyncs, self._resyncs.status)]
 
