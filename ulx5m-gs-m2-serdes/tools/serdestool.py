@@ -16,7 +16,7 @@
 #
 #  Visit https://colognechip.com for more information.
 #
-#  Copyright (C) 2022 - 2025 Cologne Chip AG <support@colognechip.com>
+#  Copyright (C) 2022 - 2026 Cologne Chip AG <support@colognechip.com>
 #  Authors: Patrick Urban
 #
 
@@ -30,13 +30,18 @@ import argparse
 import datetime
 import threading
 
-from time import sleep
+from time import sleep, time
 from itertools import chain
 
 from pyftdi.ftdi import Ftdi
-from pyftdi.jtag import JtagEngine
+from pyftdi.jtag import JtagEngine, JtagController, JtagStateMachine
 from pyftdi.usbtools import UsbTools
 from pyftdi.bits import BitSequence
+
+try:  # eyetools needs numpy + matplotlib; the register access below does not (ulx5m-gs-m2-serdes, TASK-5063)
+    from eyetools import EyeData, EyePlot
+except ImportError:
+    EyeData = EyePlot = None
 
 Boards_e = ['auto', 'pgm', 'evb']
 ArgEpilog = 'example usage: python3 serdestool.py'
@@ -78,12 +83,50 @@ def FindAndFormatFtdiAddr(idx=0) -> str:
     if not d:
         raise Exception('Error: No FTDI device found.')
     d = d[idx][0]
-    return f'ftdi://ftdi:{ftdiname[d[1]]}/1'
+    if args.serial:
+        return f'ftdi://ftdi:{ftdiname[d[1]]}:{args.serial}/1'
+    else:
+        return f'ftdi://ftdi:{ftdiname[d[1]]}/1'
+
+def ReadCfgFile(filename) -> bytes:
+    lst = ['.bit', '.bin']
+    binarytype = any(x in filename for x in lst)
+    cfg_bin = bytes()
+
+    if binarytype:
+        f = open(filename, mode='rb')
+        cfg_bin = f.read()
+    else:
+        f = open(filename, mode='r')
+        lines = list(f)
+        hexstr = str()
+
+        for i in range(len(lines)):
+            s = lines[i].split('//')
+            if s[0] != '' and s[0] != '\n':
+                hexstr += s[0].strip()
+        # build bytearray
+        cfg_bin = bytes.fromhex(hexstr)
+
+    f.close()
+    return cfg_bin
+
+def ph_code(value):
+    """Signed phase offset (-32..+31) -> 6-bit register code."""
+    if value not in range(-32, 32):
+        raise ValueError('phase offset out of range (-32..+31)')
+    return value & 0x3F
+
+
+def ph_value(code):
+    """6-bit register code -> signed phase offset."""
+    code &= 0x3F
+    return code - 64 if code & 0x20 else code
 
 class ColorFormatter:
     pos_cond = ["DONE", "PRESENT", "LOCKED", "IS_ALIGNED", "EN_ADPLL_CTRL", "CONFIG_SEL", "SERDES_ENABLE"]
     neg_cond = ["ERR", "DOWN", "TESTMODE"]
-    ovr_cond = ["OVR"]
+    ovr_cond = ["OVR", "LOOPBACK"]
 
     @staticmethod
     def get_color_pair(key, value):
@@ -101,6 +144,13 @@ class ColorFormatter:
             return 4  # Blue for "OVR" values
         return 0  # Default
 
+class PatchedJtagController(JtagController):
+    def configure(self, url: str) -> None:
+        self._ftdi.open_mpsse_from_url(
+            url, direction=self.direction, frequency=self._frequency)
+        self._ftdi.write_data(bytearray((Ftdi.SET_BITS_LOW, 0x00, 0x0B)))
+        self._ftdi.write_data(bytearray((Ftdi.SET_BITS_HIGH, 0x00, 0x01)))
+
 class JtagTool:
     CMD_JTAG_ID                = '000000' # 0x00
     CMD_JTAG_BYPASS            = '111111' # 0x3F
@@ -113,30 +163,30 @@ class JtagTool:
     CMD_JTAG_STATUS_PLL2       = '011110' # 0x1E
     CMD_JTAG_STATUS_PLL3       = '011111' # 0x1F
 
-    _chain_idx = 0
-    _taps_before = 0
+    _chain_len = 0
 
     def __init__(self, engine):
         self._engine = engine
-        self._chain_idx = args.idx
-        self.idcode()
 
-    def write_ir(self, instruction) -> None:
-        byp_before = BitSequence('1'*6*self._taps_before, msb=True)
-        byp_after = BitSequence('1'*6*self._chain_idx, msb=True)
+    def write_ir(self, instruction, idx=0) -> None:
+        byp_before = BitSequence('1'*6*(self._chain_len-idx-1), msb=True)
+        byp_after = BitSequence('1'*6*idx, msb=True)
         self._engine.write_ir(byp_before+instruction+byp_after)
 
-    def write_dr(self, data) -> None:
-        nb = self._taps_before + self._chain_idx
-        byp = BitSequence('0'*nb, msb=True) if nb else BitSequence()
-        self._engine.write_dr(data+byp)
-
-    def read_dr(self, length: int) -> BitSequence:
-        word = self._engine.read_dr(length+self._taps_before+self._chain_idx)
-        if self._chain_idx > 0:
-            return word[self._taps_before:-self._chain_idx]
+    def write_dr(self, data, idx=0) -> None:
+        byp_before = BitSequence('0'*(self._chain_len-idx-1), msb=True)
+        if (idx%8) == 0:
+            byp_after = BitSequence('0'*idx, msb=True)
         else:
-            return word[self._taps_before:]
+            byp_after = BitSequence('0'*(8-idx), msb=True)
+        self._engine.write_dr(byp_after+data+byp_before)
+
+    def read_dr(self, length: int, idx=0) -> BitSequence:
+        word = self._engine.read_dr(length+(self._chain_len-idx-1))
+        if idx > 0:
+            return word[(self._chain_len-idx-1):-idx]
+        else:
+            return word[(self._chain_len-idx-1):]
 
     def get_chunk(self, data, start, length):
         return (data >> start) & ((1 << length) - 1)
@@ -145,14 +195,13 @@ class JtagTool:
     def idcode(self) -> int:
         idcodes = self._engine.read_dr(128)
         self._engine.go_idle()
-        chain_len = 0
+        self._chain_len = 0
         for i in range(0, 128, 32):
             chunk_data = self.get_chunk(int(idcodes), i, 32)
             if chunk_data != 0:
-                chain_len += 1
-        print(f'INFO:  Found {chain_len} device{"s" if chain_len > 1 else ""} in JTAG chain.')
-        self._taps_before = chain_len - self._chain_idx - 1
-        return chain_len
+                self._chain_len += 1
+        print(f'INFO:  Found {self._chain_len} device{"s" if self._chain_len > 1 else ""} in JTAG chain.')
+        return self._chain_len
 
     # Read the IDCODE using CMD_JTAG_ID
     def idcode_seq(self) -> int:
@@ -162,7 +211,7 @@ class JtagTool:
         return int(status)
 
     # Configure FPGA using CMD_JTAG_CONFIGURE
-    def wr_cfg(self, cfg_data):
+    def wr_cfg(self, cfg_data, idx):
         a = []
         b = bytearray(cfg_data)
 
@@ -171,26 +220,28 @@ class JtagTool:
 
         seq = BitSequence(bytes_=a[:-1], length=len(b)*8, msb=False, msby=True)
 
-        self.write_ir(BitSequence(self.CMD_JTAG_CONFIGURE, msb=True))
-        self.write_dr(seq)
+        self.write_ir(BitSequence(self.CMD_JTAG_CONFIGURE, msb=True), idx)
+        self.write_dr(seq, idx)
+
         self._engine.go_idle()
 
-    def wr_serdes_regfile(self, addr, data, mask, wren):
-        self.write_ir(BitSequence(self.CMD_JTAG_WR_SERDES_REGFILE, msb=True))
+    def wr_serdes_regfile(self, idx, addr, data, mask, wren):
+        self.write_ir(BitSequence(self.CMD_JTAG_WR_SERDES_REGFILE, msb=True), idx)
         cmd  = BitSequence(value=addr, length=8,  msb=False, msby=True)
         cmd += BitSequence(value=data, length=16, msb=False, msby=True)
         cmd += BitSequence(value=mask, length=16, msb=False, msby=True)
         cmd += BitSequence(value=wren, length=1, msb=False, msby=True)
-        self.write_dr(cmd)
-        self._engine.go_idle()
+        self.write_dr(cmd, idx)
+        #self._engine.go_idle()
 
-    def rd_serdes_regfile(self):
-        self.write_ir(BitSequence(self.CMD_JTAG_RD_SERDES_REGFILE, msb=True))
-        word = self.read_dr(16)
-        self._engine.go_idle()
+    def rd_serdes_regfile(self, idx):
+        self.write_ir(BitSequence(self.CMD_JTAG_RD_SERDES_REGFILE, msb=True), idx)
+        word = self.read_dr(16, idx)
+        #self._engine.go_idle()
         return word
 
-    def rd_status_pll(self, device=1, pll=0, verbose=0):
+    # Read PLLn status
+    def rd_status_pll(self, idx=0, pll=0, verbose=0):
         bs = BitSequence()
         if pll == 0:
             bs += BitSequence(self.CMD_JTAG_STATUS_PLL0, msb=True)
@@ -203,35 +254,43 @@ class JtagTool:
         else:
             raise JtagError("Invalid PLL number: %s" % pll)
             return 0
-        self._engine.write_ir(bs)
-        status = self._engine.read_dr(17)
+        self.write_ir(bs, idx)
+        status = self.read_dr(17, idx)
         self._engine.go_idle()
 
         pll_status_bin = '{:017b}'.format(int(status))
+
+        #     0: fine tune overflow flag
+        #     1: fine tune underflow flag
+        # 11: 2: fine tune value
+        # 13:12: state
+        # 16:14: coarse tune value
+        fine_tune_overflow_flag = pll_status_bin[-1]
+        fine_tune_underflow_flag = pll_status_bin[-2]
+        fine_tune_value = pll_status_bin[-12:-2]
+        state = pll_status_bin[-14:-12]
+        coarse_tune_value = pll_status_bin[-17:-14]
+
         if verbose:
             print('pll{}: 0x{:05X}'.format(pll, int(status)))
             print('pll%d: 0b%s' %(pll, pll_status_bin))
 
-            #     0: fine tune overflow flag
-            #     1: fine tune underflow flag
-            # 11: 2: fine tune value
-            # 13:12: state
-            # 16:14: coarse tune value
-            print('pll%d: fine tune overflow flag : %s ' %(pll, pll_status_bin[-1]))
-            print('pll%d: fine tune underflow flag : %s ' %(pll, pll_status_bin[-2]))
-            print('pll%d: fine tune value : %s ' %(pll, pll_status_bin[-12:-2]))
+            print('pll%d: fine tune overflow flag : %s ' %(pll, fine_tune_overflow_flag))
+            print('pll%d: fine tune underflow flag : %s ' %(pll, fine_tune_underflow_flag))
+            print('pll%d: fine tune value : %s ' %(pll, fine_tune_value))
 
             #S_IDLE = ‘d0; S_LOCK_IN = ‘d1; S_LOCKED = ‘d2; S_FAST_LOCK = ‘d3;
-            if pll_status_bin[-14:-12] == '00':
-                print('pll%d: state : %s  -> S_IDLE' %(pll, pll_status_bin[-14:-12]))
-            elif pll_status_bin[-14:-12] == '01':
-                print('pll%d: state : %s  -> S_LOCK_IN' %(pll, pll_status_bin[-14:-12]))
-            elif pll_status_bin[-14:-12] == '10':
-                print('pll%d: state : %s  -> S_LOCKED' %(pll, pll_status_bin[-14:-12]))
-            elif pll_status_bin[-14:-12] == '11':
-                print('pll%d: state : %s  -> S_FAST_LOCK' %(pll, pll_status_bin[-14:-12]))
-            print('pll%d: coarse tune value : %s ' %(pll, pll_status_bin[-17:-14]))
-        return (pll_status_bin[-14:-12] == '10') # locked
+            if state == '00':
+                print('pll%d: state : %s  -> S_IDLE' %(pll, state))
+            elif state == '01':
+                print('pll%d: state : %s  -> S_LOCK_IN' %(pll, state))
+            elif state == '10':
+                print('pll%d: state : %s  -> S_LOCKED' %(pll, state))
+            elif state == '11':
+                print('pll%d: state : %s  -> S_FAST_LOCK' %(pll, state))
+            print('pll%d: coarse tune value : %s ' %(pll, coarse_tune_value))
+
+        return fine_tune_overflow_flag, fine_tune_underflow_flag, fine_tune_value, state, coarse_tune_value
 
 class SerdesRegfile:
     def __init__(self, initial_fields):
@@ -260,25 +319,25 @@ class SerdesTool:
         'RX_EN_EQA':                {'addr': 0x04, 'mode': 'R/W', 'hbit':  8, 'lbit':  8, 'val': 0},
         'RX_EQA_LOCK_CFG':          {'addr': 0x04, 'mode': 'R/W', 'hbit': 12, 'lbit':  9, 'val': 0},
         'RX_EQA_LOCKED':            {'addr': 0x04, 'mode': 'R',   'hbit': 13, 'lbit': 13, 'val': 0},
-        'RX_TH_MON1':               {'addr': 0x05, 'mode': 'R/W', 'hbit':  4, 'lbit':  0, 'val': 8},
-        'RX_EN_EQA_EXT_VALUE[0]':   {'addr': 0x05, 'mode': 'R/W', 'hbit':  5, 'lbit':  5, 'val': 0},
-        'RX_TH_MON2':               {'addr': 0x05, 'mode': 'R/W', 'hbit': 10, 'lbit':  6, 'val': 8},
-        'RX_EN_EQA_EXT_VALUE[1]':   {'addr': 0x05, 'mode': 'R/W', 'hbit': 11, 'lbit': 11, 'val': 0},
-        'RX_TAPW':                  {'addr': 0x06, 'mode': 'R/W', 'hbit':  4, 'lbit':  0, 'val': 8},
-        'RX_EN_EQA_EXT_VALUE[2]':   {'addr': 0x06, 'mode': 'R/W', 'hbit':  5, 'lbit':  5, 'val': 0},
+        'RX_TH_MON1':               {'addr': 0x05, 'mode': 'R/W', 'hbit':  4, 'lbit':  0, 'val': 8, 'sign': 's'},
+        'RX_EN_EQA_EXT_VALUE[0]':   {'addr': 0x05, 'mode': 'R/W', 'hbit':  5, 'lbit':  5, 'val': 0}, # unused
+        'RX_TH_MON2':               {'addr': 0x05, 'mode': 'R/W', 'hbit': 10, 'lbit':  6, 'val': 8, 'sign': 's'},
+        'RX_EN_EQA_EXT_VALUE[1]':   {'addr': 0x05, 'mode': 'R/W', 'hbit': 11, 'lbit': 11, 'val': 0}, # unused
+        'RX_TAPW':                  {'addr': 0x06, 'mode': 'R/W', 'hbit':  4, 'lbit':  0, 'val': 8, 'sign': 's'},
+        'RX_EN_EQA_EXT_VALUE[2]':   {'addr': 0x06, 'mode': 'R/W', 'hbit':  5, 'lbit':  5, 'val': 0}, # RX_TH_MON1_OVR + RX_TAPW_OVR
         'RX_AFE_OFFSET':            {'addr': 0x06, 'mode': 'R/W', 'hbit': 10, 'lbit':  6, 'val': 8},
-        'RX_EN_EQA_EXT_VALUE[3]':   {'addr': 0x06, 'mode': 'R/W', 'hbit': 11, 'lbit': 11, 'val': 0},
-        'RX_EQA_TAPW':              {'addr': 0x07, 'mode': 'R',   'hbit':  4, 'lbit':  0, 'val': 0},
-        'RX_TH_MON':                {'addr': 0x07, 'mode': 'R',   'hbit':  9, 'lbit':  5, 'val': 0},
-        'RX_OFFSET':                {'addr': 0x07, 'mode': 'R',   'hbit': 13, 'lbit': 10, 'val': 0},
+        'RX_EN_EQA_EXT_VALUE[3]':   {'addr': 0x06, 'mode': 'R/W', 'hbit': 11, 'lbit': 11, 'val': 0}, # RX_TH_MON2_OVR + RX_AFE_OFFSET_OVR
+        'RX_EQA_TAPW':              {'addr': 0x07, 'mode': 'R',   'hbit':  4, 'lbit':  0, 'val': 0, 'sign': 's'},
+        'RX_TH_MON':                {'addr': 0x07, 'mode': 'R',   'hbit':  9, 'lbit':  5, 'val': 0, 'sign': 's'},
+        'RX_OFFSET':                {'addr': 0x07, 'mode': 'R',   'hbit': 13, 'lbit': 10, 'val': 0, 'sign': 'sm'},
         'RX_EQA_CONFIG':            {'addr': 0x08, 'mode': 'R/W', 'hbit': 15, 'lbit':  0, 'val': 0x01C0},
         'RX_AFE_PEAK':              {'addr': 0x09, 'mode': 'R/W', 'hbit':  4, 'lbit':  0, 'val': 15},
         'RX_AFE_GAIN':              {'addr': 0x09, 'mode': 'R/W', 'hbit':  8, 'lbit':  5, 'val': 8},
         'RX_AFE_VCMSEL':            {'addr': 0x09, 'mode': 'R/W', 'hbit': 11, 'lbit':  9, 'val': 4},
         'RX_CDR_CKP':               {'addr': 0x0A, 'mode': 'R/W', 'hbit':  7, 'lbit':  0, 'val': 0xF8},
         'RX_CDR_CKI':               {'addr': 0x0A, 'mode': 'R/W', 'hbit': 15, 'lbit':  8, 'val': 0},
-        'RX_CDR_TRANS_TH':          {'addr': 0x0B, 'mode': 'R/W', 'hbit':  8, 'lbit':  0, 'val': 128},
-        'RX_CDR_LOCK_CFG':          {'addr': 0x0B, 'mode': 'R/W', 'hbit': 14, 'lbit':  9, 'val': 0x0B},
+        'RX_CDR_LOCK_CFG':          {'addr': 0x0B, 'mode': 'R/W', 'hbit':  7, 'lbit':  0, 'val': 0xD5},
+        'RX_CDR_TRANS_TH':          {'addr': 0x0B, 'mode': 'R/W', 'hbit': 14, 'lbit':  8, 'val': 0x08},
         'RX_CDR_LOCKED':            {'addr': 0x0B, 'mode': 'R',   'hbit': 15, 'lbit': 15, 'val': 0},
         'RX_CDR_FREQ_ACC_VAL':      {'addr': 0x0C, 'mode': 'R',   'hbit': 14, 'lbit':  0, 'val': 0},
         'RX_CDR_PHASE_ACC_VAL':     {'addr': 0x0D, 'mode': 'R',   'hbit': 15, 'lbit':  0, 'val': 0},
@@ -297,11 +356,11 @@ class SerdesTool:
         'RX_SLIDE_MODE':            {'addr': 0x13, 'mode': 'R/W', 'hbit': 11, 'lbit': 10, 'val': 0},
         'RX_COMMA_DETECT_EN_OVR':   {'addr': 0x13, 'mode': 'R/W', 'hbit': 12, 'lbit': 12, 'val': 0},
         'RX_COMMA_DETECT_EN':       {'addr': 0x13, 'mode': 'R/W', 'hbit': 13, 'lbit': 13, 'val': 0},
-        'RX_SLIDE[0]':              {'addr': 0x13, 'mode': 'R/W', 'hbit': 14, 'lbit': 14, 'val': 0},
-        'RX_SLIDE[1]':              {'addr': 0x13, 'mode': 'W/C', 'hbit': 15, 'lbit': 15, 'val': 0},
+        'RX_SLIDE_OVR':             {'addr': 0x13, 'mode': 'R/W', 'hbit': 14, 'lbit': 14, 'val': 0},
+        'RX_SLIDE':                 {'addr': 0x13, 'mode': 'W/C', 'hbit': 15, 'lbit': 15, 'val': 0},
         'RX_EYE_MEAS_EN':           {'addr': 0x14, 'mode': 'W/C', 'hbit':  0, 'lbit':  0, 'val': 0},
-        'RX_EYE_MEAS_CFG':          {'addr': 0x14, 'mode': 'R/W', 'hbit': 15, 'lbit':  1, 'val': 0},
-        'RX_MON_PH_OFFSET':         {'addr': 0x15, 'mode': 'R/W', 'hbit':  5, 'lbit':  0, 'val': 0},
+        'RX_EYE_MEAS_CFG':          {'addr': 0x14, 'mode': 'R/W', 'hbit': 15, 'lbit':  4, 'val': 0},
+        'RX_MON_PH_OFFSET':         {'addr': 0x15, 'mode': 'R/W', 'hbit':  5, 'lbit':  0, 'val': 0, 'sign': 's'},
         'RX_EYE_MEAS_CORRECT_11S':  {'addr': 0x16, 'mode': 'R',   'hbit': 15, 'lbit':  0, 'val': 0},
         'RX_EYE_MEAS_WRONG_11S':    {'addr': 0x17, 'mode': 'R',   'hbit': 15, 'lbit':  0, 'val': 0},
         'RX_EYE_MEAS_CORRECT_00S':  {'addr': 0x18, 'mode': 'R',   'hbit': 15, 'lbit':  0, 'val': 0},
@@ -343,18 +402,18 @@ class SerdesTool:
         'RX_PRESENT':               {'addr': 0x2A, 'mode': 'R',   'hbit': 12, 'lbit': 12, 'val': 0},
         'RX_DETECT_DONE':           {'addr': 0x2A, 'mode': 'R',   'hbit': 13, 'lbit': 13, 'val': 0},
         'RX_BUF_ERR':               {'addr': 0x2A, 'mode': 'R',   'hbit': 14, 'lbit': 14, 'val': 0},
-        'RX_RESET_OVR':             {'addr': 0x2B, 'mode': 'R/W', 'hbit':  0, 'lbit':  0, 'val': 0},
-        'RX_RESET':                 {'addr': 0x2B, 'mode': 'W/C', 'hbit':  1, 'lbit':  1, 'val': 0},
-        'RX_PMA_RESET_OVR':         {'addr': 0x2B, 'mode': 'R/W', 'hbit':  2, 'lbit':  2, 'val': 0},
-        'RX_PMA_RESET':             {'addr': 0x2B, 'mode': 'W/C', 'hbit':  3, 'lbit':  3, 'val': 0},
-        'RX_EQA_RESET_OVR':         {'addr': 0x2B, 'mode': 'R/W', 'hbit':  4, 'lbit':  4, 'val': 0},
-        'RX_EQA_RESET':             {'addr': 0x2B, 'mode': 'W/C', 'hbit':  5, 'lbit':  5, 'val': 0},
-        'RX_CDR_RESET_OVR':         {'addr': 0x2B, 'mode': 'R/W', 'hbit':  6, 'lbit':  6, 'val': 0},
-        'RX_CDR_RESET':             {'addr': 0x2B, 'mode': 'W/C', 'hbit':  7, 'lbit':  7, 'val': 0},
-        'RX_PCS_RESET_OVR':         {'addr': 0x2B, 'mode': 'R/W', 'hbit':  8, 'lbit':  8, 'val': 0},
-        'RX_PCS_RESET':             {'addr': 0x2B, 'mode': 'W/C', 'hbit':  9, 'lbit':  9, 'val': 0},
-        'RX_BUF_RESET_OVR':         {'addr': 0x2B, 'mode': 'R/W', 'hbit': 10, 'lbit': 10, 'val': 0},
-        'RX_BUF_RESET':             {'addr': 0x2B, 'mode': 'W/C', 'hbit': 11, 'lbit': 11, 'val': 0},
+        'RX_PMA_RESET_OVR':         {'addr': 0x2B, 'mode': 'R/W', 'hbit':  0, 'lbit':  0, 'val': 0},
+        'RX_PMA_RESET':             {'addr': 0x2B, 'mode': 'W/C', 'hbit':  1, 'lbit':  1, 'val': 0},
+        'RX_EQA_RESET_OVR':         {'addr': 0x2B, 'mode': 'R/W', 'hbit':  2, 'lbit':  2, 'val': 0},
+        'RX_EQA_RESET':             {'addr': 0x2B, 'mode': 'W/C', 'hbit':  3, 'lbit':  3, 'val': 0},
+        'RX_CDR_RESET_OVR':         {'addr': 0x2B, 'mode': 'R/W', 'hbit':  4, 'lbit':  4, 'val': 0},
+        'RX_CDR_RESET':             {'addr': 0x2B, 'mode': 'W/C', 'hbit':  5, 'lbit':  5, 'val': 0},
+        'RX_PCS_RESET_OVR':         {'addr': 0x2B, 'mode': 'R/W', 'hbit':  6, 'lbit':  6, 'val': 0},
+        'RX_PCS_RESET':             {'addr': 0x2B, 'mode': 'W/C', 'hbit':  7, 'lbit':  7, 'val': 0},
+        'RX_BUF_RESET_OVR':         {'addr': 0x2B, 'mode': 'R/W', 'hbit':  8, 'lbit':  8, 'val': 0},
+        'RX_BUF_RESET':             {'addr': 0x2B, 'mode': 'W/C', 'hbit':  9, 'lbit':  9, 'val': 0},
+        'RX_RESET_OVR':             {'addr': 0x2B, 'mode': 'R/W', 'hbit': 10, 'lbit': 10, 'val': 0},
+        'RX_RESET':                 {'addr': 0x2B, 'mode': 'W/C', 'hbit': 11, 'lbit': 11, 'val': 0},
         'RX_POLARITY_OVR':          {'addr': 0x2B, 'mode': 'R/W', 'hbit': 12, 'lbit': 12, 'val': 0},
         'RX_POLARITY':              {'addr': 0x2B, 'mode': 'R/W', 'hbit': 13, 'lbit': 13, 'val': 0},
         'RX_8B10B_EN_OVR':          {'addr': 0x2B, 'mode': 'R/W', 'hbit': 14, 'lbit': 14, 'val': 0},
@@ -466,7 +525,7 @@ class SerdesTool:
         'PLL_MAIN_DIVSEL':          {'addr': 0x51, 'mode': 'R/W', 'hbit': 11, 'lbit':  6, 'val': 27},
         'PLL_OUT_DIVSEL':           {'addr': 0x51, 'mode': 'R/W', 'hbit': 13, 'lbit': 12, 'val': 0},
         'PLL_CI':                   {'addr': 0x52, 'mode': 'R/W', 'hbit':  4, 'lbit':  0, 'val': 3},
-        'PLL_CP':                   {'addr': 0x52, 'mode': 'R/W', 'hbit': 14, 'lbit':  5, 'val': 80},
+        'PLL_CP':                   {'addr': 0x52, 'mode': 'R/W', 'hbit': 14, 'lbit':  5, 'val': 60},
         'PLL_AO':                   {'addr': 0x53, 'mode': 'R/W', 'hbit':  3, 'lbit':  0, 'val': 0},
         'PLL_SCAP':                 {'addr': 0x53, 'mode': 'R/W', 'hbit':  6, 'lbit':  4, 'val': 0},
         'PLL_FILTER_SHIFT':         {'addr': 0x53, 'mode': 'R/W', 'hbit':  8, 'lbit':  7, 'val': 2},
@@ -494,7 +553,9 @@ class SerdesTool:
         'PLL_BISC_DLY_PFD_MON_REF': {'addr': 0x59, 'mode': 'R/W', 'hbit':  4, 'lbit':  0, 'val': 0},
         'PLL_BISC_DLY_PFD_MON_DIV': {'addr': 0x59, 'mode': 'R/W', 'hbit':  9, 'lbit':  5, 'val': 2},
         'PLL_BISC_TIMER_DONE':      {'addr': 0x5A, 'mode': 'R',   'hbit':  0, 'lbit':  0, 'val': 0},
-        'PLL_BISC_CP':              {'addr': 0x5A, 'mode': 'R',   'hbit':  7, 'lbit':  1, 'val': 0}, # BISC_RESULT[15:1]
+        'PLL_BISC_CP_VALID':        {'addr': 0x5A, 'mode': 'R',   'hbit':  1, 'lbit':  1, 'val': 0},
+        'PLL_BISC_CP':              {'addr': 0x5A, 'mode': 'R',   'hbit':  6, 'lbit':  2, 'val': 0},
+        'PLL_BISC_OPT_DET':         {'addr': 0x5A, 'mode': 'R',   'hbit':  7, 'lbit':  7, 'val': 0},
         'PLL_BISC_CO':              {'addr': 0x5B, 'mode': 'R',   'hbit': 15, 'lbit':  0, 'val': 0},
         'SERDES_ENABLE':            {'addr': 0x5C, 'mode': 'R/C', 'hbit':  0, 'lbit':  0, 'val': 1},
         'SERDES_AUTO_INIT':         {'addr': 0x5C, 'mode': 'R/C', 'hbit':  1, 'lbit':  1, 'val': 0},
@@ -609,6 +670,16 @@ class SerdesTool:
             self._board = args.board
             if self._jtag is not None:
                 self.configure()
+            self._tool.idcode()
+
+        #self._tool.wr_serdes_regfile(idx=0, addr=0, data=0, mask=0, wren=1)
+        self._tool.rd_serdes_regfile(0)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self._jtag.close()
 
     def configure(self):
         if self._board == Boards_e[0]: # auto
@@ -617,7 +688,6 @@ class SerdesTool:
             self._jtag.configure('ftdi://ftdi:232h/1')
         elif self._board == Boards_e[2]: # evb
             self._jtag.configure('ftdi://ftdi:2232h/1')
-
         self._jtag.reset()
         self._tool = JtagTool(self._jtag)
 
@@ -625,7 +695,7 @@ class SerdesTool:
         self._tool.idcode()
 
     def wr_cfg(self, bitfile):
-        self._tool.wr_cfg(bitfile)
+        self._tool.wr_cfg(bitfile, args.idx)
 
     def gen_module_vlog(self, filename):
         print(f'Generate verilog template: {filename}')
@@ -638,7 +708,7 @@ class SerdesTool:
                 end = '' if idx == len(self.regfile.fields.items())-1 else ','
                 if data['mode'] != 'R':
                     width = data['hbit']-data['lbit']+1
-                    file.write('')  # patched-out py3.12 fstring
+                    file.write('    .%s(%s\'h%X)%s\n' % (param, width, data['val'], end))  # py3.7 (Pi): no nested quotes in f-strings
             file.write(') i_cc_serdes (\n')
             for idx, (port, width) in enumerate(self.ports.items()):
                 end = '' if idx == len(self.ports.items())-1 else ','
@@ -686,7 +756,7 @@ class SerdesTool:
                 end = '' if (idx == len(self.regfile.fields.items())-1) else ','
                 if data['mode'] != 'R':
                     width = data['hbit']-data['lbit']+1
-                    file.write('')  # patched-out py3.12 fstring
+                    file.write('    %s => %sX"%X"%s\n' % (param, width, data['val'], end))  # py3.7 (Pi)
             file.write(')\n')
             file.write('port map (\n')
             for idx, (port, width) in enumerate(self.ports.items()):
@@ -712,17 +782,122 @@ class SerdesTool:
         else:
             print(line)
 
-    def rd_regfile(self, addr) -> int:
-        self._tool.wr_serdes_regfile(addr=addr, data=0, mask=0, wren=0)
-        return self._tool.rd_serdes_regfile()
+    def _fld(self, name):
+        f = self.regfile.fields
+        if name in f:
+            return [(name, f[name])]
 
-    def wr_regfile(self, addr, data, mask):
-        self._tool.wr_serdes_regfile(addr=addr, data=data, mask=mask, wren=1)
-        self._tool.rd_serdes_regfile()
+        if name.endswith(']') and '[' in name:
+            base, idx = name[:-1].split('[', 1)
+            if base in f:
+                hi, _, lo = idx.partition(':')
+                hi = int(hi)
+                lo = int(lo) if lo else hi
+                if hi < lo:
+                    hi, lo = lo, hi
+                b = f[base]
+                width = b['hbit'] - b['lbit'] + 1
+                if hi >= width:
+                    raise ValueError(f'{name}: bit {hi} is outside {base} [{width - 1}:0]')
+                sub = dict(b)
+                sub['lbit'] = b['lbit'] + lo
+                sub['hbit'] = b['lbit'] + hi
+                sub.pop('sign', None)      # a slice of a signed field is unsigned
+                return [(name, sub)]
+        grp = sorted((k for k in f if k.startswith(name + '[')), key=lambda k: int(k[len(name) + 1:-1].split(':')[-1]))
+        if not grp:
+            raise KeyError(f'unknown register field: {name}')
+        return [(k, f[k]) for k in grp]
+
+
+    def _decode(self, val, fld):
+        """Raw field bits -> signed value, honouring the 'sign' annotation."""
+        w = fld['hbit'] - fld['lbit'] + 1
+        sign = fld.get('sign')
+        if sign == 's':
+            v = val - (1 << w) if val & (1 << (w - 1)) else val
+            return -(( 1 << (w - 1)) - 1) if v == -(1 << (w - 1)) else v   # -16 -> -15
+        if sign == 'sm':                       # bit w-1 = sign, rest magnitude
+            mag = val & ((1 << (w - 1)) - 1)
+            return -mag if val & (1 << (w - 1)) else mag
+        return val
+
+
+    def _encode(self, val, fld):
+        """Signed value -> raw field bits."""
+        w = fld['hbit'] - fld['lbit'] + 1
+        if fld.get('sign') in ('s', 'sm') and val < 0:
+            val = (val & ((1 << w) - 1)) if fld['sign'] == 's' \
+                else ((1 << (w - 1)) | (-val))
+        if not 0 <= val < (1 << w):
+            raise ValueError(f"value {val} does not fit {w}-bit field")
+        return val
+
+    def rd_field(self, name, idx=None):
+        """Read one field by name.  One register access."""
+        idx = args.idx if idx is None else idx
+        parts = self._fld(name)
+        word = int(self.rd_regfile(idx, parts[0][1]['addr']))
+        out, shift = 0, 0
+        for _, fl in parts:                    # grouped fields concatenate LSB first
+            w = fl['hbit'] - fl['lbit'] + 1
+            out |= ((word >> fl['lbit']) & ((1 << w) - 1)) << shift
+            shift += w
+        return self._decode(out, parts[0][1]) if len(parts) == 1 else out
+
+
+    def rd_fields(self, names, idx=None):
+        """Read several fields with one register access per distinct address."""
+        idx = args.idx if idx is None else idx
+        want = {}
+        for n in names:
+            for _, fl in self._fld(n):
+                want.setdefault(fl['addr'], None)
+        for a in want:
+            want[a] = int(self.rd_regfile(idx, a))
+        out = {}
+        for n in names:
+            parts, v, shift = self._fld(n), 0, 0
+            for _, fl in parts:
+                w = fl['hbit'] - fl['lbit'] + 1
+                v |= ((want[fl['addr']] >> fl['lbit']) & ((1 << w) - 1)) << shift
+                shift += w
+            out[n] = self._decode(v, parts[0][1]) if len(parts) == 1 else v
+        return out
+
+    def wr_field(self, name, value, idx=None):
+        return self.wr_fields({name: value}, idx=idx)
+
+    def wr_fields(self, values, idx=None, check=True): # replaces self.wr_regfile(idx=args.idx, addr=0x2A, data=0x0210, mask=0x02F0)
+        idx = args.idx if idx is None else idx
+        merged = {}
+        for name, val in values.items():
+            parts = self._fld(name)
+            if check and parts[0][1]['mode'] == 'R':
+                raise PermissionError(f'{name} is read-only')
+            raw = self._encode(val, parts[0][1]) if len(parts) == 1 else val
+            shift = 0
+            for _, fl in parts:
+                w = fl['hbit'] - fl['lbit'] + 1
+                chunk = (raw >> shift) & ((1 << w) - 1)
+                d, m = merged.get(fl['addr'], (0, 0))
+                merged[fl['addr']] = (d | (chunk << fl['lbit']),
+                                    m | (((1 << w) - 1) << fl['lbit']))
+                shift += w
+        for a, (d, m) in merged.items():
+            self.wr_regfile(idx=idx, addr=a, data=d, mask=m)
+
+    def rd_regfile(self, idx, addr) -> int:
+        self._tool.wr_serdes_regfile(idx=idx, addr=addr, data=0, mask=0, wren=0)
+        return self._tool.rd_serdes_regfile(idx)
+
+    def wr_regfile(self, idx, addr, data, mask):
+        self._tool.wr_serdes_regfile(idx=idx, addr=addr, data=data, mask=mask, wren=1)
+        self._tool.rd_serdes_regfile(idx)
 
     def rd_regfile_rx(self, verbose=0):
         for addr in range(0x00, 0x30):
-            word = self.rd_regfile(addr)
+            word = self.rd_regfile(args.idx, addr)
             if verbose == 1:
                 print(f'{addr:02X}: 0x{int(word):04X}')
             elif verbose == 2:
@@ -735,7 +910,7 @@ class SerdesTool:
     def rd_regfile_rx_data(self):
         rxd_80bit = BitSequence()
         for addr in range(0x20, 0x25):
-            rxd_80bit += self.rd_regfile(addr)
+            rxd_80bit += self.rd_regfile(args.idx, addr)
         rxd_64bit = rxd_80bit[0:7+1] + rxd_80bit[10:17+1] + rxd_80bit[20:27+1] + rxd_80bit[30:37+1] + rxd_80bit[40:47+1] + rxd_80bit[50:57+1] + rxd_80bit[60:67+1] + rxd_80bit[70:77+1]
         return rxd_64bit, rxd_80bit
 
@@ -743,7 +918,7 @@ class SerdesTool:
         rx_data_80bit = 0
         word_idx = 0
         for addr in range(0x20, 0x25):
-            word = self.rd_regfile(addr)
+            word = self.rd_regfile(args.idx, addr)
             if verbose == 1:
                 print(f'{addr:02X}: 0x{int(word):04X}')
             rx_fields = {
@@ -773,14 +948,14 @@ class SerdesTool:
         return rx_data_64bit, rx_data_80bit
 
     def wr_regfile_tx_data(self, data):
-        self.wr_regfile(addr=0x41, data=0x1000, mask=0x1F00) # TX_DATA_OVR=1, TX_DATA_CNT=0, TX_DATA_VALID=0
+        self.wr_regfile(idx=args.idx, addr=0x41, data=0x1000, mask=0x1F00) # TX_DATA_OVR=1, TX_DATA_CNT=0, TX_DATA_VALID=0
         for i in range(5):
-            self.wr_regfile(addr=0x42, data=(data >> 16*i) & 0xFFFF, mask=0xFFFF) # auto inc
-        self.wr_regfile(addr=0x41, data=0x1B00, mask=0x1F00) # TX_DATA_OVR=1, TX_DATA_CNT=5, TX_DATA_VALID=1
+            self.wr_regfile(idx=args.idx, addr=0x42, data=(data >> 16*i) & 0xFFFF, mask=0xFFFF) # auto inc
+        self.wr_regfile(idx=args.idx, addr=0x41, data=0x1B00, mask=0x1F00) # TX_DATA_OVR=1, TX_DATA_CNT=5, TX_DATA_VALID=1
 
     def rd_regfile_tx(self, verbose=0):
         for addr in range(0x30, 0x43): # 0x43..0x4F unused
-            word = self.rd_regfile(addr)
+            word = self.rd_regfile(args.idx, addr)
             if verbose == 1:
                 print(f'{addr:02X}: 0x{int(word):04X}')
             elif verbose == 2:
@@ -792,7 +967,7 @@ class SerdesTool:
 
     def rd_regfile_pll(self, verbose=0):
         for addr in range(0x50, 0x5D):
-            word = self.rd_regfile(addr)
+            word = self.rd_regfile(args.idx, addr)
             if verbose == 1:
                 print(f'{addr:02X}: 0x{int(word):04X}')
             elif verbose == 2:
@@ -803,7 +978,7 @@ class SerdesTool:
                     self.fprint(key, v, line)
 
     def rd_regfile_pll_div_settings(self):
-        word = self.rd_regfile(addr=0x51)
+        word = self.rd_regfile(args.idx, addr=0x51)
         FCNTRL = word[0:5+1]
         MAIN_DIVSEL = word[6:11+1]
         OUT_DIVSEL = word[12:13+1]
@@ -813,23 +988,62 @@ class SerdesTool:
         return n1, n2, n3, OUT_DIVSEL
 
     def rd_regfile_pll_status(self):
-        return self.rd_regfile(addr=0x55) + self.rd_regfile(addr=0x56)
+        return self.rd_regfile(args.idx, addr=0x55) + self.rd_regfile(args.idx, addr=0x56)
 
     def rd_regfile_pll_bisc_status(self):
-        return self.rd_regfile(addr=0x5A) + self.rd_regfile(addr=0x5B)
+        return self.rd_regfile(args.idx, addr=0x5A) + self.rd_regfile(args.idx, addr=0x5B)
+
+    #   f_dco  = f_ref * N1 * N2 * N3
+    #   f_pll  = f_dco / OUTDIV
+    #   rate   = f_pll * 2          (the serialiser clocks on both edges)
+    _PLL_N_DIV = {0b00: 3, 0b01: 2, 0b10: 4, 0b11: 5}
+    _PLL_OUT_DIV = {0b00: 1, 0b01: 2, 0b11: 4}      # 0b10 is not generated
+
+    def pll_dividers(self):
+        """Read back (n1, n2, n3, outdiv) from the register file."""
+        f = self.rd_fields(['PLL_MAIN_DIVSEL', 'PLL_OUT_DIVSEL'])
+        main = f['PLL_MAIN_DIVSEL']
+        n2 = self._PLL_N_DIV[main & 0b11]
+        n1 = 2 if (main >> 2) & 1 else 1
+        n3 = self._PLL_N_DIV[(main >> 3) & 0b11]
+        if n3 < 3:
+            raise ValueError(f'PLL_MAIN_DIVSEL=0x{main:02X} decodes to N3={n3}, '
+                            f'which is below the allowed range 3..5')
+        outdiv = self._PLL_OUT_DIV.get(f['PLL_OUT_DIVSEL'])
+        if outdiv is None:
+            raise ValueError(f'PLL_OUT_DIVSEL={f["PLL_OUT_DIVSEL"]} is reserved')
+        return n1, n2, n3, outdiv
+
+    def serdes_line_rate(self, ref_mhz=None, verbose=False):
+        """Line rate in bit/s, decoded from the ADPLL dividers.
+
+        ref_mhz defaults to the reference implied by SER_CLK_PERIOD_NS.
+        """
+        ref = ref_mhz if ref_mhz is not None else 1000.0 / SER_CLK_PERIOD_NS
+        n1, n2, n3, outdiv = self.pll_dividers()
+        f_dco = ref * n1 * n2 * n3
+        f_pll = f_dco / outdiv
+        rate = f_pll * 2e6
+        if verbose:
+            locked = self.rd_field('PLL_LOCKED')
+            print(f'INFO:  ADPLL N1={n1} N2={n2} N3={n3} OUTDIV={outdiv}  '
+                f'REF {ref_mhz:.0f} MHz  '
+                f'DCO {f_dco:.0f} MHz  PLL {f_pll:.0f} MHz  '
+                f'rate {rate / 1e6:.0f} Mbit/s  locked={int(locked)}')
+        return rate
 
     def reset_serdes_tx(self):
         print('INFO:  Resetting SerDes TX')
 
-        word = self.rd_regfile(addr=0x5C)
+        word = self.rd_regfile(args.idx, addr=0x5C)
         if (word[0] != 1 or word[2] != 1):
             print(f'ERROR: SerDes not enabled or in testmode. 0x5C=0x{int(word):04X}')
             return
 
         # TX reset
-        self.wr_regfile(addr=0x3F, data=0xC000, mask=0xC000) # TX_RESET_OVR=1, TX_RESET=1
-        self.wr_regfile(addr=0x3F, data=0x0000, mask=0xC000) # TX_RESET_OVR=0, TX_RESET=0
-        word = self.rd_regfile(addr=0x41)
+        self.wr_regfile(idx=args.idx, addr=0x3F, data=0xC000, mask=0xC000) # TX_RESET_OVR=1, TX_RESET=1
+        self.wr_regfile(idx=args.idx, addr=0x3F, data=0x0000, mask=0xC000) # TX_RESET_OVR=0, TX_RESET=0
+        word = self.rd_regfile(args.idx, addr=0x41)
         timeout = 5
         while timeout > 0:
             if (int(word[14]) != 1): # TX_RESET_DONE
@@ -841,40 +1055,40 @@ class SerdesTool:
 
     def set_serdes_datapath(self, mode=80):
         if mode == 0 or mode == 20:
-            self.wr_regfile(addr=0x2A, data=0x0000, mask=0x000C) # RX_DATAPATH_SEL=0
-            self.wr_regfile(addr=0x40, data=0x0000, mask=0x0018) # TX_DATAPATH_SEL=0 (16/20)
+            self.wr_regfile(idx=args.idx, addr=0x2A, data=0x0000, mask=0x000C) # RX_DATAPATH_SEL=0
+            self.wr_regfile(idx=args.idx, addr=0x40, data=0x0000, mask=0x0018) # TX_DATAPATH_SEL=0 (16/20)
         elif mode == 1 or mode == 40:
             datapath_sel = 1
-            self.wr_regfile(addr=0x2A, data=0x0001, mask=0x000C) # RX_DATAPATH_SEL=1
-            self.wr_regfile(addr=0x40, data=0x0008, mask=0x0018) # TX_DATAPATH_SEL=1 (32/40)
+            self.wr_regfile(idx=args.idx, addr=0x2A, data=0x0001, mask=0x000C) # RX_DATAPATH_SEL=1
+            self.wr_regfile(idx=args.idx, addr=0x40, data=0x0008, mask=0x0018) # TX_DATAPATH_SEL=1 (32/40)
         elif mode == 2 or mode == 3 or mode == 80:
             datapath_sel = 3
-            self.wr_regfile(addr=0x2A, data=0x000C, mask=0x000C) # RX_DATAPATH_SEL=3
-            self.wr_regfile(addr=0x40, data=0x0018, mask=0x0018) # TX_DATAPATH_SEL=3 (64/80)
+            self.wr_regfile(idx=args.idx, addr=0x2A, data=0x000C, mask=0x000C) # RX_DATAPATH_SEL=3
+            self.wr_regfile(idx=args.idx, addr=0x40, data=0x0018, mask=0x0018) # TX_DATAPATH_SEL=3 (64/80)
         else:
             print(f'ERROR: Invalid datapath configruation {mode}')
 
     def check_serdes_datapath(self, mode):
         check = 3 if mode == 80 else 1 if mode == 40 else 0 if mode == 20 else mode
-        word = self.rd_regfile(addr=0x2A)
+        word = self.rd_regfile(args.idx, addr=0x2A)
         if (int(word[2:3+1]) != check):
             print(f'ERROR: RX_DATAPATH_SEL != {check} ({int(word[2:3+1]):2X})')
-        word = self.rd_regfile(addr=0x40)
+        word = self.rd_regfile(args.idx, addr=0x40)
         if (int(word[3:4+1]) != check):
             print(f'ERROR: TX_DATAPATH_SEL != {check} ({int(word[3:4+1]):2X})')
 
     def reset_serdes_rx(self):
         print('INFO:  Resetting SerDes RX')
 
-        word = self.rd_regfile(addr=0x5C)
+        word = self.rd_regfile(args.idx, addr=0x5C)
         if (word[0] != 1 or word[2] != 1):
             print(f'ERROR: SerDes not enabled or in testmode. 0x5C=0x{int(word):04X}')
             return
 
         # RX reset
-        self.wr_regfile(addr=0x2B, data=0x0003, mask=0x0003) # RX_RESET_OVR=1, RX_RESET=1
-        self.wr_regfile(addr=0x3F, data=0x0000, mask=0x0003) # RX_RESET_OVR=0, RX_RESET=0
-        word = self.rd_regfile(addr=0x2C)
+        self.wr_regfile(idx=args.idx, addr=0x2B, data=0x0003, mask=0x0003) # RX_RESET_OVR=1, RX_RESET=1
+        self.wr_regfile(idx=args.idx, addr=0x3F, data=0x0000, mask=0x0003) # RX_RESET_OVR=0, RX_RESET=0
+        word = self.rd_regfile(args.idx, addr=0x2C)
         timeout = 5
         while timeout > 0:
             if (int(word[10]) != 1): # RX_RESET_DONE
@@ -906,12 +1120,10 @@ class SerdesTool:
 
         dco = 1000.0 / SER_CLK_PERIOD_NS * n1 * n2 * n3
         freq = dco / outdiv
-        print(f'INFO:  SerDes ADPLL frequency / data rate is {freq} MHz / {freq*2} Mbit/s')
 
-        status = self.rd_regfile_pll_status()
-        if (status[0] == 1):
-            print('INFO:  Disabling SerDes ADPLL')
-            self.wr_regfile(addr=0x50, data=0x0000, mask=0x0001)
+        en_adpll = self.rd_field('PLL_EN_ADPLL_CTRL')
+        if en_adpll:
+            self.wr_regfile(idx=args.idx, addr=0x50, data=0x0000, mask=0x0001)
 
         if outdiv == 1:
             pll_div = 0x0000
@@ -932,38 +1144,35 @@ class SerdesTool:
         elif n3 == 4:
             pll_div = (pll_div & ~(0b11 << 9)) | (0b10 << 9)
 
-        print('INFO:  Writing SerDes ADPLL divider settings')
-        self.wr_regfile(addr=0x51, data=pll_div, mask=0x3FC0)
+        self.wr_regfile(idx=args.idx, addr=0x51, data=pll_div, mask=0x3FC0)
 
         if (calib):
-            print('INFO:  Stopping SerDes ADPLL self-calibration')
-            self.wr_regfile(addr=0x57, data=0x0004, mask=0x0007)
-            self.wr_regfile(addr=0x57, data=
+            self.wr_regfile(idx=args.idx, addr=0x57, data=0x0004, mask=0x0007)
+            self.wr_regfile(idx=args.idx, addr=0x57, data=
                 ((self.ADPLL_PFDAC_TIMER    & 0x000F) <<  3) |
                 ((self.ADPLL_PFDAC_COR_DLY  & 0x0007) << 10) |
                 ((self.ADPLL_PFDAC_CAL_SIGN & 0x0001) << 13) |
                 ((self.ADPLL_PFDAC_AUTO_CAL & 0x0001) << 14),
                 mask=0xFFF8)
-            self.wr_regfile(addr=0x58, data=
+            self.wr_regfile(idx=args.idx, addr=0x58, data=
                 ((self.ADPLL_PFDAC_COR_DLY  & 0x001F) << 0) |
                 ((self.ADPLL_PFDAC_CAL_SIGN & 0x001F) << 5) |
                 ((self.ADPLL_PFDAC_AUTO_CAL & 0x001F) << 10),
                 mask=0xFFFF)
 
         print('INFO:  Starting SerDes ADPLL')
-        self.wr_regfile(addr=0x50, data=0x0002, mask=0x0007)
-        self.wr_regfile(addr=0x50, data=0x0003, mask=0x0003)
+        self.wr_regfile(idx=args.idx, addr=0x50, data=0x0002, mask=0x0007)
+        self.wr_regfile(idx=args.idx, addr=0x50, data=0x0003, mask=0x0003)
 
         if (calib):
-            print('INFO:  Starting SerDes ADPLL self-calibration')
-            self.wr_regfile(addr=0x57, data=0x0004, mask=0x0007)
-            self.wr_regfile(addr=0x57, data=0x0005, mask=0x0007) # BISC mode B, enable
+            self.wr_regfile(idx=args.idx, addr=0x57, data=0x0004, mask=0x0007)
+            self.wr_regfile(idx=args.idx, addr=0x57, data=0x0005, mask=0x0007) # BISC mode B, enable
 
         timeout = 5
         while timeout > 0:
             sleep(0.5)
-            status = self.rd_regfile_pll_status()
-            if (status[0] == 0):
+            locked = self.rd_field('PLL_LOCKED')
+            if not locked:
                 timeout = timeout - 1
                 print(f'INFO:  LCK: {int(status[0]):1d} FTO: {int(status[1]):1d} FTU: {int(status[2]):1d} FT: {int(status[3:12+1]):4d} SY: {int(status[16:23+1]):3d} ST: {int(status[13:14+1]):1d}')
                 if timeout == 0:
@@ -981,7 +1190,7 @@ class SerdesTool:
     def tc_prbs(self, force_err=False):
         print(f'INFO:  Starting SerDes PRBS testcases')
 
-        word = self.rd_regfile(addr=0x5C)
+        word = self.rd_regfile(args.idx, addr=0x5C)
         if (word[0] != 1 or word[2] != 1):
             print(f'ERROR: SerDes not enabled or in testmode. 0x5C=0x{int(word):04X}')
             return
@@ -996,21 +1205,21 @@ class SerdesTool:
         self.check_serdes_datapath(80)
 
         # disable testmode?
-        self.wr_regfile(addr=0x2A, data=0x0210, mask=0x02F0) # RX_PRBS_OVR=1, RX_PRBS_SEL=0, RX_PRBS_CNT_RESET=1
+        self.wr_regfile(idx=args.idx, addr=0x2A, data=0x0210, mask=0x02F0) # RX_PRBS_OVR=1, RX_PRBS_SEL=0, RX_PRBS_CNT_RESET=1
 
         for i in range(0, 2):
             prbs = 7 if i == 0 else 15 if i == 1 else 23 if i == 2 else 31 if i == 3 else 0
             print(f'INFO:  Setting up PRBS-{prbs}')
 
-            self.wr_regfile(addr=0x40, data=((i+1) << 6) | (1 << 5), mask=0x01E0) # TX_PRBS_OVR=1, TX_PRBS_SEL=i
-            word = self.rd_regfile(addr=0x40)
+            self.wr_regfile(idx=args.idx, addr=0x40, data=((i+1) << 6) | (1 << 5), mask=0x01E0) # TX_PRBS_OVR=1, TX_PRBS_SEL=i
+            word = self.rd_regfile(args.idx, addr=0x40)
             #if (word[5] == 1):
             #    print(f'ERROR: TX PRBS overwrite is not disabled')
             if (int(word[6:8+1]) != i+1):
                 print(f'ERROR: TX PRBS mode is invalid')
 
-            self.wr_regfile(addr=0x2A, data=((i+1) << 5) | (1 << 4), mask=0x00F0) # RX_PRBS_OVR=1, RX_PRBS_SEL=i
-            word = self.rd_regfile(addr=0x2A)
+            self.wr_regfile(idx=args.idx, addr=0x2A, data=((i+1) << 5) | (1 << 4), mask=0x00F0) # RX_PRBS_OVR=1, RX_PRBS_SEL=i
+            word = self.rd_regfile(args.idx, addr=0x2A)
             #if (word[4] == 1):
             #    print(f'ERROR: RX PRBS overwrite is not disabled')
             if (word[9] == 1):
@@ -1025,7 +1234,7 @@ class SerdesTool:
                 print(f'INFO:  {i}/{n}')
                 sleep(1)
 
-            word = self.rd_regfile(addr=0x1F)
+            word = self.rd_regfile(args.idx, addr=0x1F)
             print(f'INFO:  RX_PRBS_LOCKED: {int(word[15]):1d}, RX_PRBS_ERR_CNT: {int(word[0:14+1]):X}')
             if (word[15] == 0):
                 print(f'ERROR: RX PRBS did not lock')
@@ -1034,14 +1243,14 @@ class SerdesTool:
 
             if (force_err):
                 print(f'INFO:  Starting error injection')
-                self.wr_regfile(addr=0x40, data=0x0200, mask=0x0200) # TX_PRBS_FORCE_ERR=1
-                word = self.rd_regfile(addr=0x1F)
+                self.wr_regfile(idx=args.idx, addr=0x40, data=0x0200, mask=0x0200) # TX_PRBS_FORCE_ERR=1
+                word = self.rd_regfile(args.idx, addr=0x1F)
                 print(f'INFO:  RX_PRBS_LOCKED: {int(word[15]):1d}, RX_PRBS_ERR_CNT: {int(word[0:14+1]):X}')
                 if (int(word[0:14+1]) == 0):
                     print(f'ERROR: RX PRBS error detection failed')
 
-            self.wr_regfile(addr=0x2A, data=0x0210, mask=0x02F0) # RX_PRBS_CNT_RESET=1, RX_PRBS_OVR=1, RX_PRBS_SEL=0
-            self.wr_regfile(addr=0x40, data=0x0020, mask=0x01E0) # TX_PRBS_OVR=1, TX_PRBS_SEL=0
+            self.wr_regfile(idx=args.idx, addr=0x2A, data=0x0210, mask=0x02F0) # RX_PRBS_CNT_RESET=1, RX_PRBS_OVR=1, RX_PRBS_SEL=0
+            self.wr_regfile(idx=args.idx, addr=0x40, data=0x0020, mask=0x01E0) # TX_PRBS_OVR=1, TX_PRBS_SEL=0
         return
 
     def tc_uipattern(self, mode=0):
@@ -1051,7 +1260,7 @@ class SerdesTool:
             print(f'ERROR: Invalid UI pattern mode ({mode}), must be in [0,2,20,40,80]')
             return
 
-        word = self.rd_regfile(addr=0x5C)
+        word = self.rd_regfile(args.idx, addr=0x5C)
         if (word[0] != 1 or word[2] != 1):
             print(f'ERROR: SerDes not enabled or in testmode. 0x5C=0x{int(word):04X}')
             return
@@ -1066,20 +1275,20 @@ class SerdesTool:
         self.check_serdes_datapath(mode)
 
         # disable testmode?
-        self.wr_regfile(addr=0x2A, data=0x0210, mask=0x02F0) # RX_PRBS_OVR=1, RX_PRBS_SEL=0, RX_PRBS_CNT_RESET=1
+        self.wr_regfile(idx=args.idx, addr=0x2A, data=0x0210, mask=0x02F0) # RX_PRBS_OVR=1, RX_PRBS_SEL=0, RX_PRBS_CNT_RESET=1
 
         print(f'INFO:  Setting up {mode} UI square wave')
 
         i = 5 if mode == 2 else 6 if mode in [20,40,80] else 0
-        self.wr_regfile(addr=0x40, data=((i+1) << 6) | (1 << 5), mask=0x01E0) # TX_PRBS_OVR=1, TX_PRBS_SEL=i
-        word = self.rd_regfile(addr=0x40)
+        self.wr_regfile(idx=args.idx, addr=0x40, data=((i+1) << 6) | (1 << 5), mask=0x01E0) # TX_PRBS_OVR=1, TX_PRBS_SEL=i
+        word = self.rd_regfile(args.idx, addr=0x40)
         if (int(word[6:8+1]) != i+1):
             print(f'ERROR: TX PRBS mode is invalid')
 
-    def tc_eyemeas(self):
+    def tc_eyemeas(self, window=512, repeats=1, monitor=2, sel_tap=0, phase_step=1, tapw_sweep=False, setup=True):
         print(f'INFO:  Starting SerDes eye measurement')
 
-        word = self.rd_regfile(addr=0x5C)
+        word = self.rd_regfile(args.idx, addr=0x5C)
         if (word[0] != 1 or word[2] != 1):
             print(f'ERROR: SerDes not enabled or in testmode. 0x5C=0x{int(word):04X}')
             return
@@ -1087,7 +1296,7 @@ class SerdesTool:
     def tc_loopback(self):
         print(f'INFO:  Starting SerDes loopback testcases')
 
-        word = self.rd_regfile(addr=0x5C)
+        word = self.rd_regfile(args.idx, addr=0x5C)
         if (word[0] != 1 or word[2] != 1):
             print(f'ERROR: SerDes not enabled or in testmode. 0x5C=0x{int(word):04X}')
             return
@@ -1104,8 +1313,8 @@ class SerdesTool:
                 print(f'\nINFO:  Enabling TX PCS Loopback')
 
             # TX_LOOPBACK_OVR=1 | TX_PMA_LOOPBACK=(001=pma-drv, 011=pma-drv, 010=pma-pad, 100=pcs)
-            self.wr_regfile(addr=0x40, data=(0x0400 | (j+1) & 0x7), mask=0x0407)
-            word = self.rd_regfile(addr=0x40)
+            self.wr_regfile(idx=args.idx, addr=0x40, data=(0x0400 | (j+1) & 0x7), mask=0x0407)
+            word = self.rd_regfile(args.idx, addr=0x40)
             if (word[10] == 0):
                 print(f'ERROR: TX loopback overwrite is not enabled')
             if (int(word[0:1+1]) != j+1 and j < 3):
@@ -1115,45 +1324,50 @@ class SerdesTool:
 
             # turn tx driver off
             if (j == 1 or j == 3):
-                self.wr_regfile(addr=0x30, data=0x0000, mask=0x001F) # TODO TX_SEL_PRE=0, TX_SEL_POST=x, TX_AMP=x
-                self.wr_regfile(addr=0x31, data=0x07E0, mask=0x07E0) # TX_BRANCH_EN_MAIN=63
-                word = self.rd_regfile(addr=0x30)
+                self.wr_regfile(idx=args.idx, addr=0x30, data=0x0000, mask=0x001F) # TODO TX_SEL_PRE=0, TX_SEL_POST=x, TX_AMP=x
+                self.wr_regfile(idx=args.idx, addr=0x31, data=0x07E0, mask=0x07E0) # TX_BRANCH_EN_MAIN=63
+                word = self.rd_regfile(args.idx, addr=0x30)
                 if (int(word[0:4+1]) != 0):
                     print(f'ERROR: Invalid TX_SEL_PRE driver setting')
-                word = self.rd_regfile(addr=0x31)
+                word = self.rd_regfile(args.idx, addr=0x31)
                 if (int(word[5:10+1]) != 63):
                     print(f'ERROR: Invalid TX_BRANCH_EN_MAIN setting')
             else:
-                self.wr_regfile(addr=0x30, data=0x0001, mask=0x001F) # TODO TX_SEL_PRE=1, TX_SEL_POST=x, TX_AMP=x
-                self.wr_regfile(addr=0x31, data=0x0000, mask=0x07E0) # TX_BRANCH_EN_MAIN=0
-                word = self.rd_regfile(addr=0x30)
+                self.wr_regfile(idx=args.idx, addr=0x30, data=0x0001, mask=0x001F) # TODO TX_SEL_PRE=1, TX_SEL_POST=x, TX_AMP=x
+                self.wr_regfile(idx=args.idx, addr=0x31, data=0x0000, mask=0x07E0) # TX_BRANCH_EN_MAIN=0
+                word = self.rd_regfile(args.idx, addr=0x30)
                 if (int(word[0:4+1]) != 1):
                     print(f'ERROR: Invalid TX_SEL_PRE driver setting')
-                word = self.rd_regfile(addr=0x31)
+                word = self.rd_regfile(args.idx, addr=0x31)
                 if (int(word[5:10+1]) != 0):
                     print(f'ERROR: Invalid TX_BRANCH_EN_MAIN setting')
+
+            ## NOTE untested
+            word = self.rd_regfile(args.idx, addr=0x13)
+            if (word[11] != 0 and word[12] != 0):
+                print(f'ERROR: invalid RX_SLIDE_MODE (must be 2''b00)')
 
             self.start_serdes_pll(n1=1, n2=5, n3=5, outdiv=4, calib=True) # 1250 Mbit/s, PFDAC=on
             self.reset_serdes_trx()
 
-            self.wr_regfile(addr=0x41, data=0x00C0, mask=0x00C0) # TX_8B10B_EN_OVR=1, TX_8B10B_EN=1
-            self.wr_regfile(addr=0x2B, data=0xC000, mask=0xC000) # RX_8B10B_EN_OVR=1, RX_8B10B_EN=1
+            self.wr_regfile(idx=args.idx, addr=0x41, data=0x00C0, mask=0x00C0) # TX_8B10B_EN_OVR=1, TX_8B10B_EN=1
+            self.wr_regfile(idx=args.idx, addr=0x2B, data=0xC000, mask=0xC000) # RX_8B10B_EN_OVR=1, RX_8B10B_EN=1
 
             # 32-Bit comma alignment test
-            self.wr_regfile(addr=0x12, data=0x3000, mask=0x3000) # RX_ALIGN_COMMA_WORD=3 (32 bit)
+            self.wr_regfile(idx=args.idx, addr=0x12, data=0x3000, mask=0x3000) # RX_ALIGN_COMMA_WORD=3 (32 bit)
 
             # NOTE: Please define position of the k-word using the `TX_CHAR_IS_K_I` input: set to 8'h0000_0001
-            self.wr_regfile_tx_data(data=0x1284A1284A1284A128BC) # 64'h4A4A4A4A_4A4A4ABC
+            #self.wr_regfile_tx_data(data=0x1284A1284A1284A128BC) # 64'h4A4A4A4A_4A4A4ABC
 
-            self.wr_regfile(addr=0x11, data=0x0C00, mask=0x0C00) # RX_MCOMMA_ALIGN_OVR=1, RX_MCOMMA_ALIGN=1
-            self.wr_regfile(addr=0x12, data=0x0C00, mask=0x0C00) # RX_PCOMMA_ALIGN_OVR=1, RX_PCOMMA_ALIGN=1
-            self.wr_regfile(addr=0x13, data=0x3000, mask=0x3000) # RX_COMMA_DETECT_EN_OVR=1, RX_COMMA_DETECT_EN=1
+            self.wr_regfile(idx=args.idx, addr=0x11, data=0x0C00, mask=0x0C00) # RX_MCOMMA_ALIGN_OVR=1, RX_MCOMMA_ALIGN=1
+            self.wr_regfile(idx=args.idx, addr=0x12, data=0x0C00, mask=0x0C00) # RX_PCOMMA_ALIGN_OVR=1, RX_PCOMMA_ALIGN=1
+            self.wr_regfile(idx=args.idx, addr=0x13, data=0x3000, mask=0x3000) # RX_COMMA_DETECT_EN_OVR=1, RX_COMMA_DETECT_EN=1
 
             print(f'INFO:  Sending data (this might take a while) ...')
             sleep(2)
 
-            self.wr_regfile(addr=0x11, data=0x0000, mask=0x0C00) # RX_MCOMMA_ALIGN_OVR=1, RX_MCOMMA_ALIGN=0
-            self.wr_regfile(addr=0x12, data=0x0000, mask=0x0C00) # RX_PCOMMA_ALIGN_OVR=1, RX_PCOMMA_ALIGN=0
+            self.wr_regfile(idx=args.idx, addr=0x11, data=0x0000, mask=0x0C00) # RX_MCOMMA_ALIGN_OVR=1, RX_MCOMMA_ALIGN=0
+            self.wr_regfile(idx=args.idx, addr=0x12, data=0x0000, mask=0x0C00) # RX_PCOMMA_ALIGN_OVR=1, RX_PCOMMA_ALIGN=0
 
             print(f'INFO:  Checking 32-Bit comma alignment')
             rx_data, _ = self.rd_regfile_rx_data()
@@ -1167,20 +1381,20 @@ class SerdesTool:
 
             # 16-Bit comma alignment test
             self.reset_serdes_trx()
-            self.wr_regfile(addr=0x12, data=0x1000, mask=0x3000) # RX_ALIGN_COMMA_WORD=1 (16 bit)
+            self.wr_regfile(idx=args.idx, addr=0x12, data=0x1000, mask=0x3000) # RX_ALIGN_COMMA_WORD=1 (16 bit)
 
             # NOTE: Please define position of the k-word using the `TX_CHAR_IS_K_I` input: set to 8'h0000_0001
             self.wr_regfile_tx_data(data=0x1284A1284A1284A128BC) # 64'h4A4A4A4A_4A4A4ABC
 
-            self.wr_regfile(addr=0x11, data=0x0C00, mask=0x0C00) # RX_MCOMMA_ALIGN_OVR=1, RX_MCOMMA_ALIGN=1
-            self.wr_regfile(addr=0x12, data=0x0C00, mask=0x0C00) # RX_PCOMMA_ALIGN_OVR=1, RX_PCOMMA_ALIGN=1
-            self.wr_regfile(addr=0x13, data=0x3000, mask=0x3000) # RX_COMMA_DETECT_EN_OVR=1, RX_COMMA_DETECT_EN=1
+            self.wr_regfile(idx=args.idx, addr=0x11, data=0x0C00, mask=0x0C00) # RX_MCOMMA_ALIGN_OVR=1, RX_MCOMMA_ALIGN=1
+            self.wr_regfile(idx=args.idx, addr=0x12, data=0x0C00, mask=0x0C00) # RX_PCOMMA_ALIGN_OVR=1, RX_PCOMMA_ALIGN=1
+            self.wr_regfile(idx=args.idx, addr=0x13, data=0x3000, mask=0x3000) # RX_COMMA_DETECT_EN_OVR=1, RX_COMMA_DETECT_EN=1
 
             print(f'INFO:  Sending data (this might take a while) ...')
             sleep(2)
 
-            self.wr_regfile(addr=0x11, data=0x0000, mask=0x0C00) # RX_MCOMMA_ALIGN_OVR=1, RX_MCOMMA_ALIGN=0
-            self.wr_regfile(addr=0x12, data=0x0000, mask=0x0C00) # RX_PCOMMA_ALIGN_OVR=1, RX_PCOMMA_ALIGN=0
+            self.wr_regfile(idx=args.idx, addr=0x11, data=0x0000, mask=0x0C00) # RX_MCOMMA_ALIGN_OVR=1, RX_MCOMMA_ALIGN=0
+            self.wr_regfile(idx=args.idx, addr=0x12, data=0x0000, mask=0x0C00) # RX_PCOMMA_ALIGN_OVR=1, RX_PCOMMA_ALIGN=0
 
             print(f'INFO:  Checking 16-Bit comma alignment')
             rx_data, _ = self.rd_regfile_rx_data()
@@ -1198,20 +1412,20 @@ class SerdesTool:
 
             # 8-Bit comma alignment test
             self.reset_serdes_trx()
-            self.wr_regfile(addr=0x12, data=0x0000, mask=0x3000) # RX_ALIGN_COMMA_WORD=0 (8 bit)
+            self.wr_regfile(idx=args.idx, addr=0x12, data=0x0000, mask=0x3000) # RX_ALIGN_COMMA_WORD=0 (8 bit)
 
             # NOTE: Please define position of the k-word using the `TX_CHAR_IS_K_I` input: set to 8'h0000_0001
             self.wr_regfile_tx_data(data=0x1284A1284A1284A128BC) # 64'h4A4A4A4A_4A4A4ABC
 
-            self.wr_regfile(addr=0x11, data=0x0C00, mask=0x0C00) # RX_MCOMMA_ALIGN_OVR=1, RX_MCOMMA_ALIGN=1
-            self.wr_regfile(addr=0x12, data=0x0C00, mask=0x0C00) # RX_PCOMMA_ALIGN_OVR=1, RX_PCOMMA_ALIGN=1
-            self.wr_regfile(addr=0x13, data=0x3000, mask=0x3000) # RX_COMMA_DETECT_EN_OVR=1, RX_COMMA_DETECT_EN=1
+            self.wr_regfile(idx=args.idx, addr=0x11, data=0x0C00, mask=0x0C00) # RX_MCOMMA_ALIGN_OVR=1, RX_MCOMMA_ALIGN=1
+            self.wr_regfile(idx=args.idx, addr=0x12, data=0x0C00, mask=0x0C00) # RX_PCOMMA_ALIGN_OVR=1, RX_PCOMMA_ALIGN=1
+            self.wr_regfile(idx=args.idx, addr=0x13, data=0x3000, mask=0x3000) # RX_COMMA_DETECT_EN_OVR=1, RX_COMMA_DETECT_EN=1
 
             print(f'INFO:  Sending data (this might take a while) ...')
             sleep(2)
 
-            self.wr_regfile(addr=0x11, data=0x0000, mask=0x0C00) # RX_MCOMMA_ALIGN_OVR=1, RX_MCOMMA_ALIGN=0
-            self.wr_regfile(addr=0x12, data=0x0000, mask=0x0C00) # RX_PCOMMA_ALIGN_OVR=1, RX_PCOMMA_ALIGN=0
+            self.wr_regfile(idx=args.idx, addr=0x11, data=0x0000, mask=0x0C00) # RX_MCOMMA_ALIGN_OVR=1, RX_MCOMMA_ALIGN=0
+            self.wr_regfile(idx=args.idx, addr=0x12, data=0x0000, mask=0x0C00) # RX_PCOMMA_ALIGN_OVR=1, RX_PCOMMA_ALIGN=0
 
             print(f'INFO:  Checking 8-Bit comma alignment')
             rx_data, _ = self.rd_regfile_rx_data()
@@ -1237,7 +1451,7 @@ class SerdesTool:
 
     def calc_rxterm_vcm(self, vddio=1.0, vcmsel=None) -> float:
         if vcmsel is None:
-            vcmsel = self.rd_regfile(addr=0x02)
+            vcmsel = self.rd_regfile(args.idx, addr=0x02)
             vcmsel = int(vcmsel[11:13+1])
         return (vcmsel/29) * vddio
 
@@ -1248,7 +1462,7 @@ class SerdesTool:
                 #for param in self.regfile.fields:
                 #    self.regfile.fields[param]['val'] = random.randint(0, 16)
                 for addr in chain(range(0x00, 0x30), range(0x30, 0x43), range(0x50, 0x5D)):
-                    word = self.rd_regfile(addr)
+                    word = self.rd_regfile(args.idx, addr)
                     filtered_entries = {key: value for key, value in self.regfile.fields.items() if value['addr'] == addr}
                     for (key, value) in filtered_entries.items():
                         val = word[value['lbit']:value['hbit']+1]
@@ -1274,7 +1488,7 @@ class SerdesTool:
         signal.signal(signal.SIGWINCH, handle_resize)
 
         selected_index = 0
-        show_hex = False
+        show_hex = True
         search_results = []
         search_index = 0
 
@@ -1297,23 +1511,70 @@ class SerdesTool:
             N2 = {0b00: 3, 0b01: 2, 0b10: 4, 0b11: 5}.get(PLL_MAIN_DIVSEL & 0b11, None)
             OUTDIV = {0b00: 1, 0b01: 2, 0b11: 4}.get(PLL_OUT_DIVSEL, None)
 
-            bit_rate_clock = 2 * 100e6 * N1 * N2 * N3 / OUTDIV if None not in (N1, N2, N3, OUTDIV) else None
+            bit_rate_clock = 2 * args.refclk * N1 * N2 * N3 / OUTDIV if None not in (N1, N2, N3, OUTDIV) else None
 
             # Decode TX_DATAPATH_SEL
-            datapath_mode = (TX_DATAPATH_SEL & 0b10) >> 1  # Extract MSB
-            is_64_bit = datapath_mode == 1  # If `1x`, it is 64-bit
+            if (TX_DATAPATH_SEL == 0):
+                datapath_width = 20
+            elif (TX_DATAPATH_SEL == 1):
+                datapath_width = 40
+            else:
+                datapath_width = 80
 
             # Determine AddDiv based on OUTDIV
-            if is_64_bit:
+            if datapath_width == 80:
                 AddDiv = {0b00: 2, 0b01: 4, 0b11: 8}.get(PLL_OUT_DIVSEL, None)
             else:
                 AddDiv = {0b00: 1, 0b01: 2, 0b11: 4}.get(PLL_OUT_DIVSEL, None)
 
             PLL_FCNTRL = self.regfile.fields.get("PLL_FCNTRL", {}).get("val", 0x0)
-            data_path_clock = (100e6 * N1 * N2 * N3) / (self.olclkg[PLL_FCNTRL] * AddDiv) if None not in (N1, N2, N3, OUTDIV, AddDiv) else None
+            fDCO = args.refclk * N1 * N2 * N3
+            data_path_clock = fDCO / (self.olclkg[PLL_FCNTRL] * AddDiv) if None not in (N1, N2, N3, OUTDIV, AddDiv) else None
 
-            bit_rate_str = f"Bit Rate Clock: {bit_rate_clock / 1e6:.2f} MHz" if bit_rate_clock else "Invalid PLL Config"
-            data_path_str = f"TX Data Path Clock: {data_path_clock / 1e6:.2f} MHz" if data_path_clock else "Invalid Data Path Config"
+            refclk_str =    f"Reference Clock:  {args.refclk / 1e6:.3f} MHz"
+            dcoclk_str =    f"DCO Frequency:   {fDCO / 1e6:.3f} MHz"
+            bit_rate_str =  f"Bit Rate Clock:  {bit_rate_clock / 1e6:.3f} MHz" if bit_rate_clock else "Invalid PLL Config"
+            data_path_str = f"TX Datapath Clock: {data_path_clock / 1e6:.3f} MHz" if data_path_clock else "Invalid Data Path Config"
+
+            txuc = (self.regfile.fields.get("TX_TAIL_CASCODE", {}).get("val", 0) + 10) * (self.regfile.fields.get("TX_AMP", {}).get("val", 0) + 1) * 9.375 # uA
+
+            branch_pre  = self.regfile.fields.get("TX_BRANCH_EN_PRE", {}).get("val", 0x0)
+            brach_main  = self.regfile.fields.get("TX_BRANCH_EN_MAIN", {}).get("val", 0x0)
+            branch_post = self.regfile.fields.get("TX_BRANCH_EN_POST", {}).get("val", 0x0)
+
+            total_number_of_branches = branch_pre + brach_main + branch_post
+            pre_cursor  = self.regfile.fields.get("TX_SEL_PRE", {}).get("val", 0x0)
+            post_cursor = self.regfile.fields.get("TX_SEL_POST", {}).get("val", 0x0)
+            main_cursor = total_number_of_branches - pre_cursor - post_cursor
+
+            vd = total_number_of_branches * txuc * 0.000001 * 50 # Ohm
+            vb = (main_cursor - pre_cursor - post_cursor) * txuc * 0.000001 * 50 # Ohm
+            vc = (main_cursor + pre_cursor - post_cursor) * txuc * 0.000001 * 50 # Ohm
+            va = (main_cursor - pre_cursor + post_cursor) * txuc * 0.000001 * 50 # Ohm
+
+            txuc_str = f"TX Unit Current:      {txuc} uA"
+            txvd_str = f"TX Boost Voltage:     {vd:.3f} V"
+            txvc_str = f"TX Pre-emph. Voltage: {vc:.3f} V"
+            txvb_str = f"TX De-emph. Voltage:  {vb:.3f} V"
+            txva_str = f"TX Signal Voltage:    {va:.3f} V"
+
+            vcm_sel = self.regfile.fields.get("RX_RTERM_VCMSEL", {}).get("val", 0x0)
+            rx_rterm_vcm = args.vcore * (18 + vcm_sel) / 29
+
+            rx_rterm_vcm_str = f"RX RTERM VCM:     {rx_rterm_vcm:.3f} V"
+
+            # Extract RX data
+            word80 = self.regfile.fields.get("RX_DATA[79:64]", {}).get("val", 0x0)
+            word80 = (word80 << 16) | self.regfile.fields.get("RX_DATA[63:48]", {}).get("val", 0x0)
+            word80 = (word80 << 16) | self.regfile.fields.get("RX_DATA[47:32]", {}).get("val", 0x0)
+            word80 = (word80 << 16) | self.regfile.fields.get("RX_DATA[31:16]", {}).get("val", 0x0)
+            word80 = (word80 << 16) | self.regfile.fields.get("RX_DATA[15:0]",  {}).get("val", 0x0)
+            rx_data_80bit_str = f"RX_DATA[79:0]: 0x{word80:0{int(datapath_width/4)}X}"
+
+            word64 = 0
+            for bit_offset in range(0, 80, 10):
+                word64 |= ((word80 >> bit_offset) & 0xFF) << int((bit_offset * 8)/10)
+            rx_data_64bit_str = f"RX_DATA[63:0]: 0x{word64:016X}"
 
             stdscr.clear()
             stdscr.addstr(0, 2, " FPGA SerDes Parameters (Auto-Update Enabled) ", curses.A_BOLD | curses.A_REVERSE)
@@ -1348,9 +1609,20 @@ class SerdesTool:
                             # Print value in color
                             stdscr.addstr(y_pos, x_pos + max_name_length + 1, f"{formatted_value:<8}", curses.color_pair(color_pair))
 
+            stdscr.addstr(max_y - 10, 2, refclk_str)
+            stdscr.addstr(max_y -  9, 2, dcoclk_str)
+            stdscr.addstr(max_y -  8, 2, bit_rate_str)
+            stdscr.addstr(max_y -  7, 2, data_path_str)
+            stdscr.addstr(max_y -  5, 2, rx_data_80bit_str)
+            stdscr.addstr(max_y -  4, 2, rx_data_64bit_str)
 
-            stdscr.addstr(max_y - 5, 2, bit_rate_str)
-            stdscr.addstr(max_y - 4, 2, data_path_str)
+            stdscr.addstr(max_y - 10, 60, txuc_str)
+            stdscr.addstr(max_y -  9, 60, txvd_str)
+            stdscr.addstr(max_y -  8, 60, txvc_str)
+            stdscr.addstr(max_y -  7, 60, txvb_str)
+            stdscr.addstr(max_y -  6, 60, txva_str)
+
+            stdscr.addstr(max_y - 10, 100, rx_rterm_vcm_str)
 
             search_hint = "[n] Next match  |  " if search_results else ""
             stdscr.addstr(max_y - 2, 2, f"{search_hint}[Arrow Keys] Navigate | [Enter] Edit | [/] Find | [h] Toggle HEX/DEC | [q] Quit", curses.A_BOLD)
@@ -1362,7 +1634,7 @@ class SerdesTool:
             except curses.error:
                 key = -1  # No input
 
-            if key == ord("h"):
+            if key == ord("h") or key == ord("d"):
                 show_hex = not show_hex
             elif key == curses.KEY_UP and selected_index - 1 >= 0:
                 selected_index -= 1
@@ -1384,8 +1656,49 @@ class SerdesTool:
             elif key == ord("n") and search_results:
                 search_index = (search_index + 1) % len(search_results)
                 selected_index = search_results[search_index]
+            elif key == ord("r"):
+                self.push_button(self.regfile.fields["RX_PRBS_CNT_RESET"])
+            elif key == ord("b"):
+                self.push_button(self.regfile.fields["RX_SLIDE"])
+            elif key == ord("a"):
+                self.push_button(self.regfile.fields["TX_PRBS_SEL"], 2)
+            elif key == ord("s"):
+                self.push_button(self.regfile.fields["RX_PRBS_SEL"], 2)
+            elif key == ord("+"):
+                self.push_inc(param_list[selected_index])
+            elif key == ord("-"):
+                self.push_dec(param_list[selected_index])
+            elif key == ord("p"):
+                self.push_dec([None, self.regfile.fields["PLL_EN_ADPLL_CTRL"]])
             elif key == ord("q"):
                 break
+
+    def push_button(self, field, val=1):
+        hbit, lbit = field['hbit'], field['lbit']
+        mask = ((1 << (hbit - lbit + 1)) - 1) << lbit
+        addr = field['addr']
+        self._tool.wr_serdes_regfile(idx=args.idx, addr=addr, data=int(val) << lbit, mask=mask, wren=1)
+        self._tool.rd_serdes_regfile(idx=args.idx)
+
+    def push_inc(self, param):
+        name, data = param
+
+        hbit, lbit = data['hbit'], data['lbit']
+        mask = ((1 << (hbit - lbit + 1)) - 1) << lbit
+        addr = data['addr']
+
+        self._tool.wr_serdes_regfile(idx=args.idx, addr=addr, data=int(data['val'])+1 << lbit, mask=mask, wren=1)
+        self._tool.rd_serdes_regfile(idx=args.idx)
+
+    def push_dec(self, param):
+        name, data = param
+
+        hbit, lbit = data['hbit'], data['lbit']
+        mask = ((1 << (hbit - lbit + 1)) - 1) << lbit
+        addr = data['addr']
+
+        self._tool.wr_serdes_regfile(idx=args.idx, addr=addr, data=int(data['val'])-1 << lbit, mask=mask, wren=1)
+        self._tool.rd_serdes_regfile(idx=args.idx)
 
     def edit_value_popup(self, stdscr, param):
         name, data = param
@@ -1428,18 +1741,18 @@ class SerdesTool:
                     if min_value <= entered_value <= max_value:
                         with self.param_lock:
                             #data['val'] = entered_value  # Apply change if within range
-                            self._tool.wr_serdes_regfile(addr=addr, data=entered_value << lbit, mask=mask, wren=1)
-                            self._tool.rd_serdes_regfile()
+                            self._tool.wr_serdes_regfile(idx=args.idx, addr=addr, data=entered_value << lbit, mask=mask, wren=1)
+                            self._tool.rd_serdes_regfile(idx=args.idx)
                         break
                     else:
                         win.addstr(6, 2, "Out of range! Try again.", curses.A_BOLD | curses.color_pair(3))
                         win.refresh()
-                        time.sleep(1)
+                        sleep(1)
                         win.addstr(6, 2, " " * 30)  # Clear error message
                 except ValueError:
                     win.addstr(6, 2, "Invalid input!", curses.A_BOLD | curses.color_pair(3))
                     win.refresh()
-                    time.sleep(1)
+                    sleep(1)
                     win.addstr(6, 2, " " * 30)  # Clear error message
             elif key in (curses.KEY_BACKSPACE, 127):
                 new_val = new_val[:-1]
@@ -1523,9 +1836,12 @@ if __name__ == '__main__':
 
         p.add_argument('-l', '--list', dest='listdev', action='store_true', help='list available boards/programmers and exit')
         p.add_argument('-b', dest='board', type=str, metavar=Boards_e, default=Boards_e[0], required=False, help='select board (default: %(default)s)')
-        p.add_argument('--index-chain', dest='idx', default=0, required=False, help='device index in JTAG chain (default: %(default)s)')
+        p.add_argument('--serial', dest='serial', type=str, required=False, help='FTDI serial number')
+        p.add_argument('--index-chain', dest='idx', type=int, default=0, required=False, help='device index in JTAG chain (default: %(default)s)')
         p.add_argument('--freq', type=ArgHzRegex, default='20M', metavar="[0 - 30M]", required=False, help='frequency setting; append "k" to the argument for kilohertz or "M" for megahertz (default: %(default)s)')
         p.add_argument('-m', dest='genmod', type=str, required=False, help='generate verilog or vhdl module and exit; specify the file format with extension .v or .vhd')
+        p.add_argument('--refclk', dest='refclk', type=float, default=100e6, help='serdes reference clock frequency (default: %(default)s)')
+        p.add_argument('--vcore', dest='vcore', type=float, default=1.1, help='core voltage (default: %(default)s)')
         p.add_argument('--rdregrx', dest='rdregrx', action='store_true', help='read rx regfile')
         p.add_argument('--rdregrxdata', dest='rdregrxdata', action='store_true', help='read rx data')
         p.add_argument('--rdregtx', dest='rdregtx', action='store_true', help='read tx regfile')
@@ -1535,10 +1851,16 @@ if __name__ == '__main__':
         p.add_argument('--tcprbs', dest='tcprbs', action='store_true', help='testcase: prbs')
         p.add_argument('--tcloopback', dest='tcloopback', action='store_true', help='testcase: loopback')
         p.add_argument('--tcuipattern', dest='tcuipattern', choices=['0','2','20','40','80'], default=None, required=False, help='testcase: 2,20,40,80 UI square wave pattern')
+        p.add_argument('--tceyemeas', dest='tceyemeas', action='store_true', help='testcase: eyemeas')
 
         args = p.parse_args()
         usb  = UsbTools()
-        jtag = JtagEngine(frequency=ArgHzParse(args.freq))
+
+        # patch pyftdi's jtag engine
+        jtag = JtagEngine.__new__(JtagEngine)
+        jtag._ctrl = PatchedJtagController(False, frequency=ArgHzParse(args.freq))
+        jtag._sm = JtagStateMachine()
+        jtag._seq = bytearray()
 
         if args.listdev:
             vps_lst = list()
@@ -1548,37 +1870,38 @@ if __name__ == '__main__':
                 print(*line)
             sys.exit()
 
-        s = SerdesTool(args, jtag, hwinit=not args.genmod)
+        with SerdesTool(args, jtag, hwinit=not args.genmod) as s:
+            if args.genmod is not None:
+                filename = args.genmod.lower()
+                if filename.endswith('.v') or filename.endswith('.sv'):
+                    s.gen_module_vlog(filename)
+                elif filename.endswith('.vhd') or filename.endswith('.vhdl'):
+                    s.gen_module_vhdl(filename)
+                sys.exit()
 
-        if args.genmod is not None:
-            filename = args.genmod.lower()
-            if filename.endswith('.v') or filename.endswith('.sv'):
-                s.gen_module_vlog(filename)
-            elif filename.endswith('.vhd') or filename.endswith('.vhdl'):
-                s.gen_module_vhdl(filename)
-            sys.exit()
-
-        if args.gui:
-            update_thread = threading.Thread(target=s.update_values, daemon=True)
-            update_thread.start()
-            curses.wrapper(s.draw_parameters)
-        else:
-            if args.tcprbs:
-                s.tc_prbs(force_err=True)
-            if args.tcloopback:
-                s.tc_loopback()
-            if args.tcuipattern is not None:
-                s.tc_uipattern(int(args.tcuipattern))
-            if args.rdregrx:
-                s.rd_regfile_rx(verbose=2)
-            if args.rdregrxdata:
-                s.print_regfile_rx_data(verbose=2)
-            if args.rdregtx:
-                s.rd_regfile_tx(verbose=2)
-            if args.rdregpll:
-                s.rd_regfile_pll(verbose=2)
-            if args.rdstatuspll:
-                [s._tool.rd_status_pll(pll=i, verbose=1) for i in range(4)]
+            if args.gui:
+                update_thread = threading.Thread(target=s.update_values, daemon=True)
+                update_thread.start()
+                curses.wrapper(s.draw_parameters)
+            else:
+                if args.tcprbs:
+                    s.tc_prbs(force_err=True)
+                if args.tcloopback:
+                    s.tc_loopback()
+                if args.tcuipattern is not None:
+                    s.tc_uipattern(int(args.tcuipattern))
+                if args.tceyemeas:
+                    s.tc_eyemeas()
+                if args.rdregrx:
+                    s.rd_regfile_rx(verbose=2)
+                if args.rdregrxdata:
+                    s.print_regfile_rx_data(verbose=2)
+                if args.rdregtx:
+                    s.rd_regfile_tx(verbose=2)
+                if args.rdregpll:
+                    s.rd_regfile_pll(verbose=2)
+                if args.rdstatuspll:
+                    [s._tool.rd_status_pll(pll=i, verbose=1) for i in range(4)]
 
     except Exception as e:
         print(e)

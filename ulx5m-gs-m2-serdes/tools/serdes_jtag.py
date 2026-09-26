@@ -33,6 +33,20 @@ def _load_serdestool():
     return mod
 
 
+def _idx0_compat(s):
+    """serdestool >= 56aa48b takes the chain index first: rd_regfile(idx, addr), wr_regfile(idx, addr, data, mask).
+    Our tools call rd_regfile(addr=..) / wr_regfile(addr=.., data=.., mask=..) (one board per probe -> idx 0).
+    Both call styles keep working: an explicit idx (positional or keyword) goes straight through."""
+    rd, wr = s.rd_regfile, s.wr_regfile
+
+    def rd_regfile(*a, **k):
+        return rd(*a, **k) if ('idx' in k or len(a) + len(k) == 2) else rd(0, *a, **k)
+
+    def wr_regfile(*a, **k):
+        return wr(*a, **k) if ('idx' in k or len(a) + len(k) == 4) else wr(0, *a, **k)
+    s.rd_regfile, s.wr_regfile = rd_regfile, wr_regfile
+
+
 def probe_board(dev):
     """'gs'/'m2' from the probe serial number, '?' if unknown/unreadable."""
     try:
@@ -51,7 +65,7 @@ class Serdes:
         a = argparse.Namespace(board='auto', idx=0, freq='6M', genmod=None, listdev=False,
                                rdregrx=False, rdregrxdata=False, rdregtx=False, rdregpll=False,
                                rdstatuspll=False, gui=False, tcprbs=False, tcloopback=False,
-                               tcuipattern=None)
+                               tcuipattern=None, tceyemeas=False, serial=None)
         st.args = a
         st.FindAndFormatFtdiAddr = lambda i=0: 'dirtyjtag://'
         self.eng = DirtyJtagEngine(freq_khz=freq_khz)
@@ -59,6 +73,7 @@ class Serdes:
         self.busdev = self.eng.busdev
         self.st = st
         self.s = st.SerdesTool(a, self.eng, hwinit=True)   # reads IDCODE, no regfile write
+        _idx0_compat(self.s)
 
     def field(self, name):
         f = self.s.regfile.fields[name]

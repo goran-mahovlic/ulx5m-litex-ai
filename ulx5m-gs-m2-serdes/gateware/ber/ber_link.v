@@ -105,8 +105,12 @@ module ber_rx #(parameter [2:0] MY_ID = 3'd5, parameter [2:0] PEER_ID = 3'd2) (
     reg clr_q = 0; wire clr = clr_tgl ^ clr_q;
 
     // aux frame assembly
-    reg [255:0] fr = 0; reg fr_ok = 1'b0; reg [4:0] next_slot = 0;
-    reg a_ok = 1'b0; reg [4:0] a_slot = 0; reg [7:0] a_byte = 0;
+    // a_we is a registered one-hot write enable (no slot*8 index arithmetic between registers and the
+    // 256 frame bits: that ALU + demux was the rclk critical path at 2.5 Gb/s); a_inc = slot follows the last one
+    reg [255:0] fr = 0; reg fr_ok = 1'b0;
+    reg a_ok = 1'b0; reg [4:0] a_slot = 0; reg [7:0] a_byte = 0; reg [31:0] a_we = 0;
+    reg a_first = 1'b0, a_last = 1'b0, a_inc = 1'b0;
+    integer k;
 
     always @(posedge clk) begin
         clr_q <= clr_tgl;
@@ -135,12 +139,12 @@ module ber_rx #(parameter [2:0] MY_ID = 3'd5, parameter [2:0] PEER_ID = 3'd2) (
         // 40-bit compare so the compare and the 32-way byte demux are not one path
         a_ok <= good || (!synced && wv && id == PEER_ID && pay == expv);
         a_slot <= wslot; a_byte <= aux;
+        a_we <= 32'd1 << wslot; a_first <= wslot == 5'd0; a_last <= wslot == 5'd31; a_inc <= wslot == a_slot + 5'd1;
+        for (k = 0; k < 32; k = k + 1) if (a_ok && a_we[k]) fr[k*8 +: 8] <= a_byte;
         if (a_ok) begin
-            fr[a_slot*8 +: 8] <= a_byte;
-            if (a_slot == 5'd0) fr_ok <= 1'b1;
-            else if (a_slot != next_slot) fr_ok <= 1'b0;
-            next_slot <= a_slot + 5'd1;
-            if (a_slot == 5'd31 && fr_ok && next_slot == 5'd31) begin
+            if (a_first) fr_ok <= 1'b1;
+            else if (!a_inc) fr_ok <= 1'b0;
+            if (a_last && fr_ok && a_inc) begin
                 peer_frame <= {a_byte, fr[247:0]};
                 peer_frames <= peer_frames + 32'd1;
                 peer_stb <= 1'b1;

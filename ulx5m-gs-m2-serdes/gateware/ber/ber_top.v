@@ -10,7 +10,8 @@ module ber_top #(
     parameter [5:0] FCNTRL = 6'h3A,
     parameter RX_POL = 1'b1,
     parameter [2:0] LOOPBACK_SEL = 3'b000,
-    parameter SEC = 25_000_000             // clk_i cycles per report (sim: small)
+    parameter SEC = 25_000_000,            // clk_i cycles per report (sim: small)
+    parameter PROFILE = 0                  // analog/CDR set: 0 = serdes_lb.v (0.3-1.25 Gb/s proven), 1 = pu-cc 5G (ab7ce94)
 ) (
     input  wire clk_i,          // IO_SB_A8 (GS: 25 MHz)
     output wire uart_tx,
@@ -20,11 +21,33 @@ module ber_top #(
     localparam [2:0] PEER_ID = (ROLE == 0) ? 3'd3 : 3'd5;
     localparam [1:0] OD = (OUTDIV == 1) ? 2'd0 : (OUTDIV == 2) ? 2'd1 : 2'd3;
     localparam [7:0] CFG = {LOOPBACK_SEL, RX_POL[0], OD, ROLE[0], 1'b0};
-    localparam [7:0] VER = 8'hB1;
+    localparam [7:0] VER = 8'hB2 + PROFILE[3:0];   // B2 = one-hot aux frame write (TASK-5063); +PROFILE
 
     // ------------------------------------------------ reset (as serdes_lb.v: POR on clk_i)
     reg [8:0] rst_cnt = 0; wire rst = ~&rst_cnt;
     always @(posedge clk_i) rst_cnt <= rst_cnt + rst;
+
+    // ------------------------------------------------ CC_SERDES analog/CDR profile
+    // PROFILE 1 = Patrick Urban's "prepare 5G tests" set (pu-cc/gm_serdes_lb ab7ce94): DFE adaption on, more AFE
+    // peaking, TX pre/post-cursor 5 of 12 branches, full TX current, TX termination calibration, faster CDR loop.
+    localparam P1 = (PROFILE == 1);
+    localparam [4:0] A_TIMER_PRESC  = P1 ? 5'h4  : 5'h0;
+    localparam [2:0] A_RTERM_VCMSEL = P1 ? 3'h3  : 3'h4;
+    localparam [0:0] A_EN_EQA       = P1 ? 1'h1  : 1'h0;
+    localparam [3:0] A_EQA_LOCK_CFG = P1 ? 4'hC  : 4'h0;
+    localparam [4:0] A_AFE_PEAK     = P1 ? 5'h18 : 5'hF;
+    localparam [3:0] A_AFE_GAIN     = P1 ? 4'h0  : 4'h8;
+    localparam [2:0] A_AFE_VCMSEL   = P1 ? 3'h3  : 3'h4;
+    localparam [7:0] A_CDR_CKP      = P1 ? 8'h3E : 8'hF8;
+    localparam [8:0] A_CDR_TRANS_TH = P1 ? 9'h08 : 9'h80;   // the primitive field is 7 bits (default 7'h08)
+    localparam [7:0] A_CDR_LOCK_CFG = P1 ? 8'hD5 : 8'h0B;
+    localparam [4:0] A_TX_SEL_PRE   = P1 ? 5'h5  : 5'h0;
+    localparam [4:0] A_TX_SEL_POST  = P1 ? 5'h5  : 5'h0;
+    localparam [4:0] A_TX_AMP       = P1 ? 5'h1F : 5'hF;
+    localparam [4:0] A_TX_BR_PRE    = P1 ? 5'hC  : 5'h0;
+    localparam [4:0] A_TX_BR_POST   = P1 ? 5'hC  : 5'h0;
+    localparam [6:0] A_TX_DC_ENABLE = P1 ? 7'h2B : 7'h3F;   // (12+63+12)/2 = 43 as in ab7ce94
+    localparam [0:0] A_TX_CALIB_EN  = P1 ? 1'h1  : 1'h0;
 
     // ------------------------------------------------ CC_SERDES (parameters as serdes_lb_dut.v)
     parameter [27:0] kChar = {8'hBC, 10'h283, 10'h17C};
@@ -174,15 +197,15 @@ module ber_top #(
 endmodule
 
 module top_gs #(parameter N1 = 1, N2 = 2, N3 = 3, OUTDIV = 4, parameter [5:0] FCNTRL = 6'h3A,
-                parameter RX_POL = 1'b1, parameter [2:0] LOOPBACK_SEL = 3'b000)
+                parameter RX_POL = 1'b1, parameter [2:0] LOOPBACK_SEL = 3'b000, parameter PROFILE = 0)
                (input wire clk_i, output wire uart_tx, input wire uart_rx);
     ber_top #(.ROLE(0), .N1(N1), .N2(N2), .N3(N3), .OUTDIV(OUTDIV), .FCNTRL(FCNTRL), .RX_POL(RX_POL),
-              .LOOPBACK_SEL(LOOPBACK_SEL)) u (.clk_i(clk_i), .uart_tx(uart_tx), .uart_rx(uart_rx));
+              .LOOPBACK_SEL(LOOPBACK_SEL), .PROFILE(PROFILE)) u (.clk_i(clk_i), .uart_tx(uart_tx), .uart_rx(uart_rx));
 endmodule
 
 module top_m2 #(parameter N1 = 1, N2 = 2, N3 = 3, OUTDIV = 4, parameter [5:0] FCNTRL = 6'h3A,
-                parameter RX_POL = 1'b1, parameter [2:0] LOOPBACK_SEL = 3'b000)
+                parameter RX_POL = 1'b1, parameter [2:0] LOOPBACK_SEL = 3'b000, parameter PROFILE = 0)
                (input wire clk_i);
     ber_top #(.ROLE(1), .N1(N1), .N2(N2), .N3(N3), .OUTDIV(OUTDIV), .FCNTRL(FCNTRL), .RX_POL(RX_POL),
-              .LOOPBACK_SEL(LOOPBACK_SEL)) u (.clk_i(clk_i), .uart_tx(), .uart_rx(1'b1));
+              .LOOPBACK_SEL(LOOPBACK_SEL), .PROFILE(PROFILE)) u (.clk_i(clk_i), .uart_tx(), .uart_rx(1'b1));
 endmodule
