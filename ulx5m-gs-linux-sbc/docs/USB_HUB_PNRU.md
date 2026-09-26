@@ -5,8 +5,8 @@ the CM4 socket, and the same on the USB-C connector J5 of the board.
 
 Status (26.09.2026): phase 1 (gateware) and phase 2a (userspace driver) are implemented and verified in
 simulation, host tests and P&R (recommended build: §4.3); phase 2b (Buildroot + Linux 6.12) is built (§6.2),
-not booted; **phase 3 (board) has not been done** — nothing in this document has
-run on the board yet.
+not booted; **phase 3 (board) started** (§7.1): the PNRU build boots Linux on the board, the USB result is not
+read yet because the Pi went offline during the run.
 
 ## 1. Hardware facts (from the schematics)
 
@@ -20,6 +20,22 @@ run on the board yet.
 | Mux | the FSUSB42 on the IO board disconnects the hub only while the micro-USB J11 is plugged in |
 | Sharing | J5 and the hub share the lines: **do not use both at the same time** |
 | Speeds | the hub talks **full speed** to the host; a low-speed keyboard behind it needs FS **PRE** preambles, so the PHY must do FS + PRE. LS alone works only directly on J5. |
+
+### 1.1 Lab baseboard: Waveshare CM5-IO-BASE-A (instructions #80/#81, 26.09.2026)
+
+The ULX5M-GS in the lab sits on a **Waveshare CM5-IO-BASE-A** ("Mini Base Board (A)",
+[schematic](https://files.waveshare.com/wiki/CM5-IO-BASE-A/CM5-IO-BASE-A_Sch.pdf)), not on the official CM4 IO board:
+
+| Item | Fact (Waveshare schematic) | Consequence |
+|---|---|---|
+| USB-C connector | DP1/DP2, DN1/DN2 = USB0_P/N = module pins 105/103 = the FPGA USB lines IO_EA_A0/B0 directly (parallel to J5), **no hub** | a keyboard on the USB-C is on the root port of the FPGA host |
+| USB-C VBUS | = CM4_5V, the 5 V rail of the baseboard (fed through the 40-pin header) | the keyboard has 5 V whenever the board is powered |
+| CC1/CC2 | R4/R9 not fitted, go only to module pins 94/96 (not connected on the ULX5M-GS) | — |
+| USB0_ID (module pin 101) | tied to GND through R17 (0 R) | **IO_EA_A3 (USB_OTG_ID) must never be driven high** (short to GND); it stays an input |
+| Hub CH334F | upstream on USB3-1-D (module pins 163/165), not connected on the ULX5M-GS | hub and USB-A ports are not reachable from the FPGA; USB-A VBUS switch is VBUS_EN (pin 111), floating on the ULX5M-GS (R140) |
+
+So on this board no hub is involved: the PNRU host (LS + FS) or Emard's LS host sees the device on the USB-C
+directly. The hub path (PRE) remains for the CM4 IO board and later boards.
 
 ## 2. Why the PNRU core, and what was done with it
 
@@ -208,7 +224,7 @@ firmware.
     cc -O1 -Wall -I../usbhidd -o test_usbh test_usbh.c && ./test_usbh          # in tools/usbhostd
     make -C tools/doom_linux usbhostd                                          # rv32 static binary
 
-`test_usbh`: 14/14 PASS — hub enumerated (addr 1, VID 0424 PID 2514), LS keyboard behind hub port 2 enumerated
+`test_usbh`: 18/18 PASS (14 + FS composite receiver, §7.1) — hub enumerated (addr 1, VID 0424 PID 2514), LS keyboard behind hub port 2 enumerated
 (addr 2); hub transactions in FS mode (xcvrsel 1), keyboard in PRE mode (xcvrsel 3), none in a wrong mode; "hi⏎"
 typed through the hub; unplug frees the device, replug re-enumerates (addr 3) and types again; an LS keyboard
 directly on the root port (J5) works in LS mode (xcvrsel 2); root disconnect detected; HID → input events.
@@ -242,7 +258,31 @@ booted on the board yet.
 A kernel HCD driver for the engine is not part of this step (not needed: `usbhostd` + uinput give real input
 devices).
 
-## 7. Phase 3: board test (not done)
+## 7. Phase 3: board test
+
+### 7.1 First run on the Waveshare board (26.09.2026, instructions #80–#85)
+
+Device on the USB-C: Goran's **2.4 GHz wireless keyboard + mouse receiver** (dongle). Such receivers are usually
+**full speed** and **composite** (keyboard and mouse interfaces), so Emard's LS-only host (`…USBHID_rec1.bit`,
+6 MHz, one interface) most likely cannot enumerate it; the PNRU host handles LS and FS and every boot interface.
+The first run therefore used the PNRU build, which answers both questions in one boot:
+
+- `usbhostd` now logs the idle line state at start (`usbh: line state D+ 1 D- 0 (FS device)` / `D+ 0 D- 1 (LS
+  device)`) and hex-dumps the device and configuration descriptors of every device (`usbh: dev …`, `usbh: cfg …`).
+- Host test `test_usbh` case 3: an FS composite receiver on the root port (boot keyboard on EP1, boot mouse on EP2)
+  enumerates in FS mode, types "hi⏎" and delivers a mouse report: **18/18 PASS**.
+- Boot: `tools/linux/lxrun.sh <bit> rv32_usb2.dtb rootfs_usb.cpio 720 "cat /var/log/usbhostd.log" …` on the Pi
+  (rootfs: the REGOČ rootfs + `usbhostd`, padded to 12 MiB for the initrd window).
+
+Result: the pll48 s1 bitstream (sha256 `1d62ac96…`) loaded, **Linux 5.14 booted to `/init` (syslogd, klogd
+started)** — first board evidence that the SoC with the PNRU engine runs. At about that moment (init scripts:
+network, `S90usbhostd` enumerating the receiver) **the Pi 192.168.10.14 stopped answering** (LAN and Tailscale,
+ssh and the 8090 stream; other hosts on the LAN fine). The line-state/descriptor log was not read. Suspects, not
+yet measured: the baseboard is fed with 5 V through the 40-pin header — if that is the Pi's 5 V, the receiver
+drawing its configured current plus the FPGA may brown out the Pi; or an unrelated Pi hang. Nothing was
+power-cycled; waiting for Goran.
+
+### 7.2 Remaining order
 
 Order (FPGA rules: do not power-cycle the board, only `openFPGALoader -r`; every bitstream is packed with
 `gmpack --reset` — the build script of these builds runs `gmpack --reset`, target_soc.py adds it; on instability
