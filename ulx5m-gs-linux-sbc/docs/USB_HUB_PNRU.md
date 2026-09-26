@@ -4,8 +4,8 @@ Goal: a USB keyboard (and mouse) behind the USB2514B hub of the Raspberry Pi CM4
 the CM4 socket, and the same on the USB-C connector J5 of the board.
 
 Status (26.09.2026): phase 1 (gateware) and phase 2a (userspace driver) are implemented and verified in
-simulation, host tests and P&R (recommended build: §4.3); phase 2b (Buildroot + Linux 6.12) recipe is written
-and was building at the time of writing; **phase 3 (board) has not been done** — nothing in this document has
+simulation, host tests and P&R (recommended build: §4.3); phase 2b (Buildroot + Linux 6.12) is built (§6.2),
+not booted; **phase 3 (board) has not been done** — nothing in this document has
 run on the board yet.
 
 ## 1. Hardware facts (from the schematics)
@@ -229,6 +229,15 @@ OpenSBI 1.3.1, VexRiscv-SMP rv32ima ilp32) + `linux_sbc.fragment`:
 
 The build container has no root: `file`, `rsync`, `bc`, `cpio` come from Debian packages unpacked with `dpkg -x`
 (`BR_HOSTTOOLS`), and Buildroot's check for exactly `/usr/bin/file` is relaxed to `file`.
+
+**Build result (26.09.2026, 13:38):** `Image` (Linux 6.12.0, SMP, gcc 13.4.0, 8.99 MB), `fw_jump.bin` (OpenSBI,
+264 KB), `rootfs.cpio` (11.2 MB, contains `usr/bin/usbhostd` and `etc/init.d/S90usbhostd`) in
+`~/app/raid/t5051/buildroot/output/images/` on the build machine. Checked in the kernel `.config`: INPUT_UINPUT,
+INPUT_EVDEV, FONT_MINI_4x6, FONT_6x8, FRAMEBUFFER_CONSOLE, FB_SIMPLE, IP_PNP, DEVMEM, MMC_SPI, SPI_LITESPI,
+LITEX_LITEETH, SERIAL_LITEUART = y, STRICT_DEVMEM off. The first run stopped only in upstream's SD-image
+post-image script (it needs `boot.json`/`rv32.dtb` from its `make.py`); the recipe now disables it. The rootfs
+(11.2 MB) needs the 12 MB initrd window of the DVI DTS (`mkdts.py` sets `linux,initrd-end = <0x41c00000>`). Not
+booted on the board yet.
 
 A kernel HCD driver for the engine is not part of this step (not needed: `usbhostd` + uinput give real input
 devices).

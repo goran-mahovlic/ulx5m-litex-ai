@@ -31,7 +31,10 @@ cat >> "$DEF" <<EOT
 BR2_LINUX_KERNEL_CONFIG_FRAGMENT_FILES="$HERE/linux_sbc.fragment"
 BR2_ROOTFS_OVERLAY="\$(BR2_EXTERNAL_LITEX_VEXRISCV_PATH)/board/litex_vexriscv/rootfs_overlay $OVL"
 BR2_TARGET_ROOTFS_EXT2=n
+BR2_ROOTFS_POST_IMAGE_SCRIPT=""
 EOT
+# (upstream post-image.sh builds an SD image and needs boot.json/rv32.dtb from its make.py; we boot by TFTP/serial
+#  with the DTB of tools/linux/mkdts.py)
 cd buildroot
 make BR2_EXTERNAL="$EXT" BR2_DEFCONFIG="$DEF" defconfig
 make -j"$(nproc)"
