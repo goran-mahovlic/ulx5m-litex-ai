@@ -190,6 +190,29 @@ Final version (one-hot FSMs), seeds 1–3, all placed at **30 975–30 977 CPE_L
 With the one-hot FSMs the USB domain has 16–32 % margin on every routed seed; what decides a seed is, as in
 every grec build, sys and grx.
 
+### 4.2.1 60 MHz engine clock (after the board test, §7.1)
+
+`--usb-pnru-clk pll48 --usb-pnru-freq 60e6` (same local PLL output, no global net), RX buffer in `sys`, TX RAM
+output registered. Seeds 1–8, post-route, all at **30 796–30 818 CPE_LT (75 %)**, RAM_HALF 50/64:
+
+| Seed | usb (60) | sys (20) | grx (125) |
+|---|---|---|---|
+| **1** | **64.61** | **24.89** | 121.36 FAIL |
+| 2 | 64.35 | 21.25 | 122.47 FAIL |
+| 3 | 52.75 FAIL | 25.25 | 124.16 FAIL |
+| 4 | 61.77 | 22.91 | 114.04 FAIL |
+| 5 | 55.42 FAIL | 24.26 | 128.35 |
+| 6 | 61.28 | 22.07 | 112.70 FAIL |
+| 7 | 64.28 | 24.42 | 105.98 FAIL |
+| 8 | 66.14 | 24.66 | 110.99 FAIL |
+
+The TX RAM → usb path went from 56.75 MHz (FAIL, first 60 MHz build) to 243 MHz with the output register. No seed
+passes all three; grx misses by 2.5–19 %. On the board seed 1 (sha256 `9aeda4dc…`) receives over 1G (BIOS TFTP of
+Image, DTB, rootfs; Linux to the login prompt). Seed 4 of the first 60 MHz build (grx 113.4) stopped at "ARP failed", but in the same
+hour the proven pll48 s1 bitstream also failed ARP at the first attempts (the Pi's network was unstable that
+evening), so that result is not conclusive. As with the earlier grec builds, a grx FAIL of a few percent can work
+on the board; it is checked per bitstream.
+
 ### 4.3 Recommendation
 
 | Option | Timing | Risk | Verdict |

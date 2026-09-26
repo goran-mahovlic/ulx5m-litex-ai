@@ -1,0 +1,18 @@
+#!/bin/sh
+# S91usbdiag (TASK-5051, board test without typing): the serial console of the SoC drops typed characters under
+# load, but its output is reliable. This script prints a usbdiag register trace, then starts usbhostd -v and copies
+# its log (enumeration, descriptors, HID reports) to the console, where the Pi's capture (lxrun.sh) records it.
+# Keys typed on the USB keyboard also go to tty1 (the DVI console). Only in the diagnostic rootfs.
+case "$1" in
+  start|"")
+    for n in /proc/device-tree/usbhost@*; do
+      [ -e "$n" ] || continue
+      (sleep 5
+       echo "=== usbdiag"; /usr/bin/usbdiag 0x${n##*@}
+       echo "=== usbhostd -v"
+       /usr/bin/usbhostd -v 0x${n##*@} > /var/log/usbhostd.log 2>&1 &
+       sleep 2; tail -f /var/log/usbhostd.log) > /dev/console 2>&1 &
+    done
+    ;;
+esac
+exit 0

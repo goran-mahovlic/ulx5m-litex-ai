@@ -1,4 +1,4 @@
-/* usbhostd [CSR_BASE] [TTY] (TASK-5051): USB keyboard (and mouse) through the usb_pnru host controller
+/* usbhostd [-t] [-v] [CSR_BASE] [TTY] (TASK-5051): USB keyboard (and mouse) through the usb_pnru host controller
  * (gateware/usb_pnru.py) - directly on USB-C J5 or behind the USB2514B hub of the CM4 IO board - into the Linux
  * console, without a kernel USB stack. The stack (usbh.c) runs in this process on the CSRs mapped from /dev/mem;
  * with /dev/uinput (Buildroot kernel, tools/linux/buildroot) keyboard and mouse become real input devices (the
@@ -45,6 +45,7 @@ static void sleep_ms(int ms)
 
 struct ctx {
 	int tty, ui;                    /* ui: /dev/uinput fd, -1 = TIOCSTI mode */
+	int verbose;                    /* -v: log every keyboard/mouse report */
 	uint8_t btn;
 	uint8_t prev[8];
 	char rep[4];
@@ -102,6 +103,10 @@ static void c_kbd(void *cv, const uint8_t r[8])
 {
 	struct ctx *c = cv;
 	char out[24];
+	if (c->verbose && memcmp(c->prev, r, 8)) {
+		printf("kbd: %02x %02x %02x %02x %02x %02x %02x %02x\n", r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7]);
+		fflush(stdout);
+	}
 	if (c->ui >= 0) {                       /* the kernel does the typematic repeat */
 		struct hid_ev ev[20];
 		ui_emit(c->ui, ev, hid_kbd_events(c->prev, r, ev, 20));
@@ -123,6 +128,8 @@ static void c_kbd(void *cv, const uint8_t r[8])
 static void c_mouse(void *cv, const uint8_t *r, int len)
 {
 	struct ctx *c = cv;
+	if (c->verbose && c->ui >= 0)
+		printf("mouse: buttons %x dx %d dy %d\n", r[0], (int8_t)r[1], len > 2 ? (int8_t)r[2] : 0);
 	if (c->ui >= 0) {
 		struct hid_ev ev[8];
 		ui_emit(c->ui, ev, hid_mouse_events(&c->btn, r, len, ev));
@@ -133,8 +140,13 @@ static void c_mouse(void *cv, const uint8_t *r, int len)
 
 int main(int argc, char **argv)
 {
-	int force_tty = argc > 1 && strcmp(argv[1], "-t") == 0;  /* -t: TIOCSTI even if /dev/uinput exists */
-	if (force_tty) { argc--; argv++; }
+	int force_tty = 0, verbose = 0;
+	for (; argc > 1 && argv[1][0] == '-'; argc--, argv++) {
+		if (strcmp(argv[1], "-t") == 0)
+			force_tty = 1;                  /* TIOCSTI even if /dev/uinput exists */
+		else if (strcmp(argv[1], "-v") == 0)
+			verbose = 1;                    /* log the HID reports */
+	}
 	uint32_t base = argc > 1 ? strtoul(argv[1], 0, 0) : 0xf0003800;
 	const char *ttyname = argc > 2 ? argv[2] : "/dev/tty1";
 	static struct ctx c;
@@ -143,6 +155,7 @@ int main(int argc, char **argv)
 	if (fd < 0) { printf("usbhostd: open /dev/mem failed\n"); return 1; }
 	long m = sys6(222, 0, 4096, 3, 1, fd, base >> 12);     /* mmap2 RW, MAP_SHARED */
 	if (m < 0 && m > -4096) { printf("usbhostd: mmap failed %ld\n", m); return 1; }
+	c.verbose = verbose;
 	c.ui = force_tty ? -1 : ui_open();
 	c.tty = c.ui >= 0 ? -1 : open(ttyname, O_RDWR);
 	if (c.ui < 0 && c.tty < 0) { printf("usbhostd: open %s failed\n", ttyname); return 1; }
