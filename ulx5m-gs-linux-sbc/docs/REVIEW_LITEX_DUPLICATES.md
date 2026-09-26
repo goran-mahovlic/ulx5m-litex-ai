@@ -1,173 +1,173 @@
-# Revizija: duplikati LiteX-a i nepotrebne datoteke (26. 9. 2026.)
+# Review: LiteX duplicates and unneeded files (2026-09-26)
 
-Pitanje: LiteX projekti obično imaju malo datoteka, jer je većina već u LiteX-u. Što je u `ulx5m-gs-linux-sbc/`
-duplo ili višak?
+Question: LiteX projects usually have few files, because most of the code is already in LiteX. What in `ulx5m-gs-linux-sbc/`
+is duplicated or surplus?
 
-Usporedba je rađena prema LiteX stablu `~/app/litex-1g-deps` (LiteX `b6ae9e0b2`, LiteEth `9654767`, LiteDRAM
-`51de2b0`, LiteX-Boards `8741034`, LiteSDCard `17718d9`, Migen `e19524c`). Kriterij „koristi se” = preporučeni build
-`grec_3` (naredba u korijenskom README.md) i build `ghrec_1` (isti + `--with-usb-hid`), jer su to jedina dva
-bitstreama u `bitstreams/`.
+The comparison was made against the LiteX tree `~/app/litex-1g-deps` (LiteX `b6ae9e0b2`, LiteEth `9654767`, LiteDRAM
+`51de2b0`, LiteX-Boards `8741034`, LiteSDCard `17718d9`, Migen `e19524c`). Criterion "is used" = the recommended build
+`grec_3` (command in the root README.md) and the build `ghrec_1` (same + `--with-usb-hid`), because these are the only two
+bitstreams in `bitstreams/`.
 
-Stanje prije čišćenja je sačuvano u tagu **`pre-cleanup-20260926`** (tamo su i CPU-less dizajni `target_eth.py`
-/ `target_gbe.py` i sva dijagnostika). Stari zapisnici u `docs/` i dalje spominju te datoteke. To je povijest i
-ne mijenja se, a datoteke se nalaze u tagu.
+The state before the cleanup is kept in the tag **`pre-cleanup-20260926`** (it also has the CPU-less designs `target_eth.py`
+/ `target_gbe.py` and all diagnostics). Old logs in `docs/` still mention these files. That is history and
+is not changed; the files can be found in the tag.
 
-## Sažetak
+## Summary
 
-| | prije | poslije |
+| | before | after |
 |---|---|---|
-| datoteka u `ulx5m-gs-linux-sbc/` (git) | 261 | 113 |
-| `gateware/` | 29 (Python 4 248 redaka + 2 Verilog modula) | 14 (Python 1 368 redaka, Verilog samo Emardov USB) |
+| files in `ulx5m-gs-linux-sbc/` (git) | 261 | 113 |
+| `gateware/` | 29 (Python 4,248 lines + 2 Verilog modules) | 14 (Python 1,368 lines, Verilog only Emard's USB) |
 | `sim/` | 27 | 6 |
 | `tools/` | 153 | 47 |
 | `test_script/` | 3 | 0 |
-| lokalne izmjene LiteX-a | 2 (patch) | **0** (čisti upstream `b6ae9e0b2`) |
+| local LiteX changes | 2 (patch) | **0** (clean upstream `b6ae9e0b2`) |
 
-(113 = 109 nakon brisanja + ovaj dokument + `tools/README.md` + `sim/tb_mdio_core_equiv.py` + `tools/dj_probe.sh`; `mdio_core.v` zamijenjen s `mdio_core.py`.)
+(113 = 109 after deletion + this document + `tools/README.md` + `sim/tb_mdio_core_equiv.py` + `tools/dj_probe.sh`; `mdio_core.v` replaced by `mdio_core.py`.)
 
-## Kako je provjereno da se dizajn nije promijenio
+## How we checked that the design did not change
 
-1. Elaboracija bez P&R (`target_soc.py` bez `--build`, tj. LiteX generira Verilog i prevede BIOS) s naredbom iz
-   korijenskog README-a, uz `SOURCE_DATE_EPOCH` i `--no-ident-version`, da datum ne ulazi u izlaz. Dva uzastopna
-   pokretanja daju bajt-identičan izlaz, pa je usporedba smislena.
-2. Usporedba svih datoteka u `build/<x>/gateware/` bez komentara (`/* … */` sadrži stablo hijerarhije kojemu se
-   poredak mijenja od pokretanja do pokretanja) i bez apsolutne putanje builda.
-3. Rezultat, korak A (brisanje i čišćenje koda, LiteX patch još aktivan):
+1. Elaboration without P&R (`target_soc.py` without `--build`, i.e. LiteX generates Verilog and compiles the BIOS) with the command from
+   the root README, with `SOURCE_DATE_EPOCH` and `--no-ident-version`, so the date does not end up in the output. Two consecutive
+   runs give byte-identical output, so the comparison is meaningful.
+2. Comparison of all files in `build/<x>/gateware/` without comments (`/* … */` contains the hierarchy tree, whose
+   order changes from run to run) and without the absolute build path.
+3. Result, step A (deletion and code cleanup, LiteX patch still active):
 
-   | build | `.v` (13 524 / 13 755 redaka) | `.ccf` | `.sdc` | `rom.init` | `mem.init` | VexRiscv `.v` | `csr.json` |
+   | build | `.v` (13,524 / 13,755 lines) | `.ccf` | `.sdc` | `rom.init` | `mem.init` | VexRiscv `.v` | `csr.json` |
    |---|---|---|---|---|---|---|---|
-   | grec_3 | isti | isti | isti | isti | isti | isti | isti |
-   | ghrec_1 (`--with-usb-hid`) | isti | isti | isti | isti | isti | isti | — |
+   | grec_3 | same | same | same | same | same | same | same |
+   | ghrec_1 (`--with-usb-hid`) | same | same | same | same | same | same | — |
 
-   Jedina razlika je u `.ys`: `read_verilog …/tools/uhello/mdio_core.v` → `…/gateware/verilog/mdio_core.v`
-   (datoteka je premještena s `git mv`, sadržaj je isti).
-4. Korak B (bez LiteX patcha, bez `CONFIG_BIOS_PRINT_IDENT`): logika je ista, a BIOS je 96 B manji (36 500 → 36 404 B),
-   pa ROM ima 9 101 umjesto 9 125 riječi. Razlika u `.v` je samo `reg [31:0] rom[0:9124]` → `rom[0:9100]`.
-   U BIOS-u nedostaje jedan redak ispisa („Ident: …”). Bitstreamovi u `bitstreams/` su izgrađeni prije toga i taj
-   redak još ispisuju.
-5. Simulacije koje su ostale: `tb_gbe_phy` ALL TESTS PASSED, `tb_scaler2x` PASS, `tb_sticky_lock` ALL PASS,
+   The only difference is in `.ys`: `read_verilog …/tools/uhello/mdio_core.v` → `…/gateware/verilog/mdio_core.v`
+   (the file was moved with `git mv`, the content is the same).
+4. Step B (without the LiteX patch, without `CONFIG_BIOS_PRINT_IDENT`): the logic is the same, and the BIOS is 96 B smaller (36,500 → 36,404 B),
+   so the ROM has 9,101 instead of 9,125 words. The only difference in `.v` is `reg [31:0] rom[0:9124]` → `rom[0:9100]`.
+   The BIOS lacks one output line ("Ident: …"). The bitstreams in `bitstreams/` were built before this and
+   still print that line.
+5. Simulations that remain: `tb_gbe_phy` ALL TESTS PASSED, `tb_scaler2x` PASS, `tb_sticky_lock` ALL PASS,
    `tb_watchdog` PASS. `sim/test_boot_option.py` 5/5 PASS (none, serial, sdcard, netboot, sdnet).
-6. Puni P&R nije pokrenut: generirani Verilog, `.ccf` i `.sdc` su isti, pa bi s istim seedom i alatima dao isti
-   bitstream. Ništa nije flashano.
+6. A full P&R was not run: the generated Verilog, `.ccf` and `.sdc` are the same, so with the same seed and tools it would give the same
+   bitstream. Nothing was flashed.
 
-## Tablica: `gateware/`
+## Table: `gateware/`
 
-„U LiteX-u?” znači postoji li u LiteX stablu nešto što radi isti posao.
+"In LiteX?" means whether the LiteX tree has something that does the same job.
 
-| Datoteka | U LiteX-u? | Odluka | Razlog |
+| File | In LiteX? | Decision | Reason |
 |---|---|---|---|
-| `target_soc.py` | djelomično: `litex_boards/targets/intergalaktik_ulx5m_gs.py` | **ostaje, očišćen** (521 → 420 redaka) | Upstream target ima samo CPU, SDRAM i LED. Nema Ethernet, DVI ni USB, a CRG mu troši globalnu mrežu na `sys_ps` (`targets/intergalaktik_ulx5m_gs.py:48-50`), koje s 1G Ethernetom nema (4 mreže: sys, gtx, TXC, grx). Upstream koristi `IS42S16160` (32 MB, `:79`), a ploča ima IS42VM16320E (64 MB). Platforma se ne kopira: koristi se upstream `intergalaktik_ulx5m_gs.Platform`, a pinovi za ETH, DVI i USB dodaju se s `add_extension`, jer ih upstream platforma nema (`platforms/intergalaktik_ulx5m_gs.py:14-86`). Uklonjene opcije: hwstack (hardverski ARP/ICMP/Etherbone), dvotaktni DVI, `--video-terminal`, `--video-det-load`, `--video-pix-freq`, `--with-usb` (OHCI), `--sdram-drive`, `--sdram-slew`, `--sdram-clk ps90`, `--ip`. `--sdram-clk inv` i `--eth-mode mac` ostaju kao jedina vrijednost, da naredba iz README-a i dalje radi. |
-| `target_soc.py: IS42VM16320` | ne (`litedram/modules.py:448,457` imaju samo `IS42S16160`, `IS42S16320`) | ostaje | `IS42S16320` ima istu geometriju, ali je 3,3 V dio s drugim vremenima (tRP/tRCD 20 ns, tREFI 64 ms/8192). IS42VM16320E-75 je 1,8 V mobilni SDR: tRP/tRCD 22,5 ns, tRAS 45 ns, a tREFI je smanjen na 7,6 µs jer LiteDRAM zaokružuje prema gore (TASK-5047). Zamjena bi promijenila kontroler. |
-| `target_soc.py: add_cpu_mac_regions()` | da, dio `SoC.add_ethernet()` (`litex/soc/integration/soc.py:2618`) | ostaje | `add_ethernet(data_width=8)` gradi MAC s `dw=32` u domenama `eth_tx`/`eth_rx` (`soc.py:2656-2672`). `with_sys_datapath` uključuje samo za `data_width=32`, a to je isprobano: RX nikad ne preda okvir CPU-u (TASK-5033). Naš PHY nema domene `eth_tx`/`eth_rx`, radi u sys. Kombinacija `dw=8` + `with_sys_datapath=True` kroz `add_ethernet` ne postoji, pa se regije, IRQ i konstante dodaju ručno, istim pozivima kao u LiteX-u. |
-| `target_soc.py: _eth` (pinovi) | ne (platforma nema `eth`) | ostaje (premješten iz `target_gbe.eth_io()`) | Bez njega bi `target_soc.py` ovisio o CPU-less dizajnu. |
-| `gbe_phy.py` | ne (`liteeth/phy/` ima samo PHY-eve za ECP5, 7-series, US, Gowin, Efinix, Agilex; nijedan za GateMate) | ostaje | LiteEth RGMII PHY-evi drže asinkrone CDC FIFO-e u domenama od 125 MHz. Na GateMateu ti putovi nakon routinga rade samo na 52–65 MHz (`docs/GBE_FEASIBILITY_20260921_TASK-4961.md`). `gbe_phy.py` na 125 MHz drži samo IO registre i posmačni registar, a okvir prelazi u sys kroz BRAM. |
-| `pll_stdy.py` | djelomično: `GateMatePLL` (`litex/soc/cores/clock/colognechip.py`) | ostaje (32 retka, podklasa) | Upstream `GateMatePLL` spaja `USR_LOCKED_STDY_RST = 0` i `USR_PLL_LOCKED_STDY = Open()` (`colognechip.py:154,156`). Nama treba sticky flag za CSR `pll_stdy` (dijagnostika PLL šuma, TASK-5047). `lock_req` je već upstream (`colognechip.py:37,148`) i koristi se. |
-| `sticky_lock.py` | ne | ostaje | Upstream PLL resetira domene iz sirovog `USR_PLL_LOCKED` (`colognechip.py:104,157,162`). Na ovoj ploči flag trza (24/29 JTAG uzoraka), pa bi svaki trzaj resetirao sys. |
-| `video_sbc.py` | djelomično: `VideoHDMIPHY`, `VideoFrameBuffer`, `VideoTimingGenerator` (`litex/soc/cores/video.py:1237, 1022, 194`) | **ostaje, očišćen** (267 → 223 retka) | `VideoTimingGenerator` i `TMDSEncoder` se koriste iz LiteX-a. `VideoHDMIPHY` traži zasebnu domenu piksel-takta; ovdje su sve 4 globalne mreže zauzete, pa video radi u `gtx0` (125 MHz) s clock-enableom 1/5 (`DVIPHY`, `_Serializer10to2`). `VideoFrameBuffer` čita 640x480 rgb565: to je 92 % propusnosti 16-bitnog SDRAM-a na 20 MHz. `FrameBuffer2x` čita 320x240 i udvostručuje piksele u hardveru. Uklonjen je dvotaktni put (`Divide5`, grane bez CE), jer bez Etherneta nije u preporučenom buildu. |
-| `usb_hid.py` + `verilog/usbhost/*` (7) | djelomično: `USBOHCI` (`litex/soc/cores/usb_ohci.py:29`) | ostaje | Koristi ga `ghrec_1` (bitstream u `bitstreams/`). OHCI traži PLL od 48 MHz (5. globalna mreža uz 1G) i kernel s `CONFIG_USB_OHCI_HCD_PLATFORM`, a prebuilt 5.14 ga nema. Emardov low-speed HID host radi na 125 MHz/21 preko lokalnog routinga. Licenca GPL (`verilog/usbhost/README.md`). |
-| `verilog/mdio_core.v` → `mdio_core.py` | djelomično: `LiteEthPHYMDIO` (`liteeth/phy/common.py:34`) | **prepisan u Migen** (uputa #69), Verilog uklonjen | LiteEth ima samo bit-bang MDIO preko CSR-a, dakle PHY bi konfigurirao softver. KSZ9031 mora oglašavati samo 1000FD prije nego BIOS krene s netbootom, bez CPU-a. `MDIOCore` to radi u hardveru i daje registre za CSR `phy_status0/1`. Dokaz ekvivalencije i proba na ploči: odjeljak „MDIO: Verilog → Migen” niže. |
-| `__init__.py` | — | **uklonjen** | Oznaka paketa za `from gateware.eth_stack import …`. Nitko ne uvozi `gateware` kao paket. |
-| `eth_stack.py` | da: `LiteEthUDPIPCore` (liteeth) + `TXLastBE8` | **uklonjen** | Koristio se samo u hwstack načinu (`--eth-mode hwstack`), koji preporučeni build ne koristi. `TXLastBE8` je već bio ugašen (`tx_last_be_fix=False`), jer LiteX ≥ 7fca6dba sam postavlja `last_be`. |
-| `target_eth.py` | — | **uklonjen** | CPU-less 100 Mb/s dizajn (TASK-4999). Nije dio SBC-a. Bitstreamovi mu nisu u repozitoriju. U tagu `pre-cleanup-20260926`. |
-| `target_gbe.py` | — | **uklonjen** | CPU-less 1 Gb/s dizajn (ping bez CPU-a, TASK-5032). Iz njega je u `target_soc.py` prenesena samo lista pinova. U tagu. |
-| `phy_rgmii_gatemate.py` | da: kopija LiteEth RGMII PHY-a s GateMate primitivima | **uklonjen** | 100M PHY za `target_eth.py`. 1G koristi `gbe_phy.py`. |
-| `ulx5m_eth_platform.py` | ne | **uklonjen** | Pinovi za `target_eth.py`. |
-| `crg.py` | da: CRG iz `targets/intergalaktik_ulx5m_gs.py` | **uklonjen** | CRG za `target_eth.py`. `target_soc.py` ima svoj `SoCCRG`. |
-| `mdio_sequencer.py` | da: `LiteEthPHYMDIO` + softver | **uklonjen** | 100M upisi (TASK-4963). U 1G SoC-u to radi `mdio_core.v`. |
-| `mdio_diag.py`, `jtag_probe.py`, `verilog/jtag_mailbox.v`, `pll_serial.py`, `status_leds.py`, `beacon.py`, `l2_beacon.py`, `raw_tx.py` | — | **uklonjeni** | Dijagnostika iz faze traženja kvara (UART dump MDIO registara, JTAG mailbox, serijski PLL bitovi, LED-ovi, UDP/L2 beacon, sirovi TX okviri). Koristio ih je samo `target_eth.py` ili `target_gbe.py`. |
-| `pll_stdy.py`, `sticky_lock.py`, `gbe_phy.py`, `video_sbc.py`, `usb_hid.py` | vidi gore | ostaju | |
+| `target_soc.py` | partly: `litex_boards/targets/intergalaktik_ulx5m_gs.py` | **kept, cleaned** (521 → 420 lines) | The upstream target has only CPU, SDRAM and LED. It has no Ethernet, DVI or USB, and its CRG uses a global net for `sys_ps` (`targets/intergalaktik_ulx5m_gs.py:48-50`), which is not available with 1G Ethernet (4 nets: sys, gtx, TXC, grx). Upstream uses `IS42S16160` (32 MB, `:79`), but the board has IS42VM16320E (64 MB). The platform is not copied: the upstream `intergalaktik_ulx5m_gs.Platform` is used, and the ETH, DVI and USB pins are added with `add_extension`, because the upstream platform does not have them (`platforms/intergalaktik_ulx5m_gs.py:14-86`). Removed options: hwstack (hardware ARP/ICMP/Etherbone), two-clock DVI, `--video-terminal`, `--video-det-load`, `--video-pix-freq`, `--with-usb` (OHCI), `--sdram-drive`, `--sdram-slew`, `--sdram-clk ps90`, `--ip`. `--sdram-clk inv` and `--eth-mode mac` stay as the only value, so the command from the README still works. |
+| `target_soc.py: IS42VM16320` | no (`litedram/modules.py:448,457` only have `IS42S16160`, `IS42S16320`) | kept | `IS42S16320` has the same geometry, but it is a 3.3 V part with different timings (tRP/tRCD 20 ns, tREFI 64 ms/8192). IS42VM16320E-75 is a 1.8 V mobile SDR: tRP/tRCD 22.5 ns, tRAS 45 ns, and tREFI is reduced to 7.6 µs because LiteDRAM rounds up (TASK-5047). Replacing it would change the controller. |
+| `target_soc.py: add_cpu_mac_regions()` | yes, part of `SoC.add_ethernet()` (`litex/soc/integration/soc.py:2618`) | kept | `add_ethernet(data_width=8)` builds a MAC with `dw=32` in the `eth_tx`/`eth_rx` domains (`soc.py:2656-2672`). It enables `with_sys_datapath` only for `data_width=32`, and that was tried: RX never hands a frame to the CPU (TASK-5033). Our PHY has no `eth_tx`/`eth_rx` domains, it runs in sys. The combination `dw=8` + `with_sys_datapath=True` does not exist through `add_ethernet`, so the regions, IRQ and constants are added by hand, with the same calls as in LiteX. |
+| `target_soc.py: _eth` (pins) | no (the platform has no `eth`) | kept (moved from `target_gbe.eth_io()`) | Without it, `target_soc.py` would depend on the CPU-less design. |
+| `gbe_phy.py` | no (`liteeth/phy/` only has PHYs for ECP5, 7-series, US, Gowin, Efinix, Agilex; none for GateMate) | kept | The LiteEth RGMII PHYs keep asynchronous CDC FIFOs in 125 MHz domains. On GateMate these paths only reach 52–65 MHz after routing (`docs/GBE_FEASIBILITY_20260921_TASK-4961.md`). `gbe_phy.py` keeps only the IO registers and a shift register at 125 MHz, and the frame crosses into sys through BRAM. |
+| `pll_stdy.py` | partly: `GateMatePLL` (`litex/soc/cores/clock/colognechip.py`) | kept (32 lines, subclass) | Upstream `GateMatePLL` ties `USR_LOCKED_STDY_RST = 0` and `USR_PLL_LOCKED_STDY = Open()` (`colognechip.py:154,156`). We need a sticky flag for the CSR `pll_stdy` (PLL noise diagnostics, TASK-5047). `lock_req` is already upstream (`colognechip.py:37,148`) and is used. |
+| `sticky_lock.py` | no | kept | The upstream PLL resets the domains from the raw `USR_PLL_LOCKED` (`colognechip.py:104,157,162`). On this board the flag glitches (24/29 JTAG samples), so every glitch would reset sys. |
+| `video_sbc.py` | partly: `VideoHDMIPHY`, `VideoFrameBuffer`, `VideoTimingGenerator` (`litex/soc/cores/video.py:1237, 1022, 194`) | **kept, cleaned** (267 → 223 lines) | `VideoTimingGenerator` and `TMDSEncoder` are used from LiteX. `VideoHDMIPHY` needs a separate pixel-clock domain; here all 4 global nets are taken, so video runs in `gtx0` (125 MHz) with a 1/5 clock enable (`DVIPHY`, `_Serializer10to2`). `VideoFrameBuffer` reads 640x480 rgb565: that is 92% of the bandwidth of a 16-bit SDRAM at 20 MHz. `FrameBuffer2x` reads 320x240 and doubles the pixels in hardware. The two-clock path (`Divide5`, branches without CE) was removed, because without Ethernet it is not in the recommended build. |
+| `usb_hid.py` + `verilog/usbhost/*` (7) | partly: `USBOHCI` (`litex/soc/cores/usb_ohci.py:29`) | kept | Used by `ghrec_1` (bitstream in `bitstreams/`). OHCI needs a 48 MHz PLL (a 5th global net next to 1G) and a kernel with `CONFIG_USB_OHCI_HCD_PLATFORM`, which the prebuilt 5.14 does not have. Emard's low-speed HID host runs at 125 MHz/21 over local routing. License GPL (`verilog/usbhost/README.md`). |
+| `verilog/mdio_core.v` → `mdio_core.py` | partly: `LiteEthPHYMDIO` (`liteeth/phy/common.py:34`) | **rewritten in Migen** (instruction #69), Verilog removed | LiteEth only has bit-bang MDIO over CSR, so software would configure the PHY. KSZ9031 must advertise only 1000FD before the BIOS starts netboot, without the CPU. `MDIOCore` does this in hardware and provides the registers for CSR `phy_status0/1`. Equivalence proof and board test: section "MDIO: Verilog → Migen" below. |
+| `__init__.py` | — | **removed** | Package marker for `from gateware.eth_stack import …`. Nobody imports `gateware` as a package. |
+| `eth_stack.py` | yes: `LiteEthUDPIPCore` (liteeth) + `TXLastBE8` | **removed** | Used only in hwstack mode (`--eth-mode hwstack`), which the recommended build does not use. `TXLastBE8` was already disabled (`tx_last_be_fix=False`), because LiteX ≥ 7fca6dba sets `last_be` itself. |
+| `target_eth.py` | — | **removed** | CPU-less 100 Mb/s design (TASK-4999). Not part of the SBC. Its bitstreams are not in the repository. In tag `pre-cleanup-20260926`. |
+| `target_gbe.py` | — | **removed** | CPU-less 1 Gb/s design (ping without a CPU, TASK-5032). Only the pin list was moved from it into `target_soc.py`. In the tag. |
+| `phy_rgmii_gatemate.py` | yes: copy of the LiteEth RGMII PHY with GateMate primitives | **removed** | 100M PHY for `target_eth.py`. 1G uses `gbe_phy.py`. |
+| `ulx5m_eth_platform.py` | no | **removed** | Pins for `target_eth.py`. |
+| `crg.py` | yes: CRG from `targets/intergalaktik_ulx5m_gs.py` | **removed** | CRG for `target_eth.py`. `target_soc.py` has its own `SoCCRG`. |
+| `mdio_sequencer.py` | yes: `LiteEthPHYMDIO` + software | **removed** | 100M writes (TASK-4963). In the 1G SoC this is done by `mdio_core.v`. |
+| `mdio_diag.py`, `jtag_probe.py`, `verilog/jtag_mailbox.v`, `pll_serial.py`, `status_leds.py`, `beacon.py`, `l2_beacon.py`, `raw_tx.py` | — | **removed** | Diagnostics from the fault-finding phase (UART dump of MDIO registers, JTAG mailbox, serial PLL bits, LEDs, UDP/L2 beacon, raw TX frames). Used only by `target_eth.py` or `target_gbe.py`. |
+| `pll_stdy.py`, `sticky_lock.py`, `gbe_phy.py`, `video_sbc.py`, `usb_hid.py` | see above | kept | |
 
-Platforma ploče nije kopirana nigdje: svi dizajni koriste `litex_boards.platforms.intergalaktik_ulx5m_gs`.
+The board platform is not copied anywhere: all designs use `litex_boards.platforms.intergalaktik_ulx5m_gs`.
 
-`_status_leds` u `target_soc.py` ostaje. Upstream ima iste pinove kao `user_led_n` (aktivni u nuli, drugi redoslijed
-LED 4/5), a naš dizajn ih vozi izravno (bez inverzije) s `DRIVE=3`. Zamjena bi promijenila polaritet i redoslijed LED-ova.
+`_status_leds` in `target_soc.py` is kept. Upstream has the same pins as `user_led_n` (active low, different order of
+LED 4/5), while our design drives them directly (no inversion) with `DRIVE=3`. Replacing it would change the polarity and order of the LEDs.
 
-## Tablica: ostalo
+## Table: other
 
-| Datoteka / mapa | Odluka | Razlog |
+| File / folder | Decision | Reason |
 |---|---|---|
-| `docs/litex-b6ae9e0b2-local.patch` | **uklonjen** | Dio za tristate (`common.py`) je NO-OP. Python izraz `~a if c else ~b` isti je kao `~(a if c else b)`. Dokaz: build s vraćenim upstream `common.py` daje identičan `.v` (13 524 retka; `CC_IOBUF` se koristi 64 puta, dakle kod je stvarno bio izveden). Dio za BIOS ispisuje samo jedan redak („Ident: …”). Uputa #32 ga je uvela jer su se u bannerima vidjele dvije adrese (.212 hardver, .213 CPU). Hardverski stog je sada uklonjen, a BIOS pri netbootu sam ispisuje „Local IP: 192.168.10.213” (`bios/boot.c:848`) i ima naredbu `ident`. Zato patch više ne treba, i LiteX je čisti upstream. |
-| `docs/litex-bios-print-ident.patch` | **uklonjen** | Duplikat drugog dijela gornjeg patcha. |
-| `ter-u16b.bdf` | **uklonjen** | Terminus font (licenca OFL). Nijedna datoteka ga ne koristi (`grep -r ter-u16b` = 0 pogodaka). |
-| `build/Makefile` | **uklonjen** | Gradi i flasha `target_eth.py` (`build/eth/…`), dakle 100M dizajn. |
-| `build/s_grec_3/`, `build/s_ghrec_1/` (`csr.json`, `csr.csv`) | ostaju | `tools/linux/mkdts.py` iz njih radi DTS za dva bitstreama u `bitstreams/`. |
-| `test_script/` (3) | **uklonjen** | UDP echo i UART proba za CPU-less dizajne. |
-| `sim/tb_gbe_phy.py`, `tb_scaler2x.py`, `tb_watchdog.py`, `tb_sticky_lock.py`, `test_boot_option.py` | ostaju | Testiraju module koji su ostali. Iz `tb_sticky_lock.py` je izbačen dio s `mdio_sequencer`. `test_boot_option.py` je prilagođen: nema hwstacka, dodan `sdnet`. |
-| `sim/tb_beacon, tb_l2_beacon, tb_io50, tb_lastbe, tb_mdio_diag, tb_mdio_sequencer, tb_rgmii_tx_sf, tb_stack, tb_txc_phase`, `lastbe_env.sh`, `test_refclk_oe.sh`, `io50rtl/`, `postsynth/` | **uklonjeni** | Testiraju uklonjene module ili su jednokratne provjere (TASK-4999 100M, LiteX `last_be` regresija). |
-| `tools/soc_build.sh`, `tools/sbc_env.sh` | ostaju | `soc_build.sh` sada sourca `sbc_env.sh` (prije su obje imale iste putanje). Redak za `pythondata-misc-usb_ohci` je maknut: OHCI je uklonjen, a `env.sh` ionako dodaje sve `pythondata-*`. |
-| `tools/linux/` (`mkdts.py`, `netboot_app.sh`, `linux_boot.sh`, `lx_cmd.sh`, `README.md`) | ostaju | Linux: DTS, TFTP, boot na ploči. |
-| `tools/linux/rv32_grec_3.dts`, `rv32_ghrec_1.dts` | ostaju | DTS za dva bitstreama u repozitoriju. Korijenski README koristi `rv32_grec_3.dts`. |
-| `tools/linux/rv32_dvi_1, gcer_1, gdvi_1, gdvi_9, smp8_9, spisd_1.dts` | **uklonjeni** | DTS-ovi za buildove čiji bitstreamovi nisu u repozitoriju. `mkdts.py` ih napravi iz svakog builda. |
-| `tools/doom_linux/`, `tools/rootfs/`, `tools/usbhidd/` | ostaju (`.empty` uklonjen) | DOOM, rootfs i USB tipkovnica za Linux. |
-| `tools/speedtest/` | ostaje (duplikat `netboot_app.sh` uklonjen) | Mjerenje propusnosti (otvoreno pitanje „throughput under Linux”). `eth_speedtest.sh` više nema zadani bitstream kojeg nema u repozitoriju (`BIT=` je obavezan), a koristi `tools/linux/netboot_app.sh`. |
-| `tools/dvi/testimg_cmds.sh`, `tools/sd/bios_cmds.sh` | ostaju | Testna slika u framebufferu i upis BIOS naredbi. |
-| `tools/dvi/{idle_series,loadtest,lx_session,mitigation_sweep,pll_discriminator,vtest}.sh` | **uklonjeni** | Jednokratna mjerenja ispada slike (TASK-5040/5044/5047) s HDMI captureom na Piju. Rezultati su u `docs/SBC_DVI_USB_TASK-5040.md` i `…5047.md`. |
-| `tools/t5007/`, `fabtest/`, `pnr_probe/`, `uhello/`, `uloop/`, `gbe/`, `pll_*.py` (6), `jtag_bert.py`, `jtag_mailbox.py`, `mbprobe_top.*`, `nt_all.sh`, `rxstart.sh`, `gbe_build.sh` | **uklonjeni** | Jednokratni testovi iz traženja kvara (PLL, JTAG, MDIO, fabric, nextpnr bug repro) i build/prihvat CPU-less dizajna. Nalazi su u `docs/HW_DIAG_20260923_TASK-4999.md` i `docs/LESSONS_GATEMATE.md`, a skripte u tagu. |
+| `docs/litex-b6ae9e0b2-local.patch` | **removed** | The tristate part (`common.py`) is a NO-OP. The Python expression `~a if c else ~b` is the same as `~(a if c else b)`. EVIDENCE: a build with the upstream `common.py` restored gives an identical `.v` (13,524 lines; `CC_IOBUF` is used 64 times, so the code really was executed). The BIOS part only prints one line ("Ident: …"). Instruction #32 added it because the banners showed two addresses (.212 hardware, .213 CPU). The hardware stack is now removed, and on netboot the BIOS itself prints "Local IP: 192.168.10.213" (`bios/boot.c:848`) and has an `ident` command. So the patch is no longer needed, and LiteX is clean upstream. |
+| `docs/litex-bios-print-ident.patch` | **removed** | Duplicate of the second part of the patch above. |
+| `ter-u16b.bdf` | **removed** | Terminus font (OFL license). No file uses it (`grep -r ter-u16b` = 0 hits). |
+| `build/Makefile` | **removed** | Builds and flashes `target_eth.py` (`build/eth/…`), i.e. the 100M design. |
+| `build/s_grec_3/`, `build/s_ghrec_1/` (`csr.json`, `csr.csv`) | kept | `tools/linux/mkdts.py` uses them to make the DTS for the two bitstreams in `bitstreams/`. |
+| `test_script/` (3) | **removed** | UDP echo and UART test for the CPU-less designs. |
+| `sim/tb_gbe_phy.py`, `tb_scaler2x.py`, `tb_watchdog.py`, `tb_sticky_lock.py`, `test_boot_option.py` | kept | They test modules that remain. The `mdio_sequencer` part was removed from `tb_sticky_lock.py`. `test_boot_option.py` was adapted: no hwstack, `sdnet` added. |
+| `sim/tb_beacon, tb_l2_beacon, tb_io50, tb_lastbe, tb_mdio_diag, tb_mdio_sequencer, tb_rgmii_tx_sf, tb_stack, tb_txc_phase`, `lastbe_env.sh`, `test_refclk_oe.sh`, `io50rtl/`, `postsynth/` | **removed** | They test removed modules or are one-off checks (TASK-4999 100M, LiteX `last_be` regression). |
+| `tools/soc_build.sh`, `tools/sbc_env.sh` | kept | `soc_build.sh` now sources `sbc_env.sh` (before, both had the same paths). The line for `pythondata-misc-usb_ohci` was removed: OHCI is removed, and `env.sh` adds all `pythondata-*` anyway. |
+| `tools/linux/` (`mkdts.py`, `netboot_app.sh`, `linux_boot.sh`, `lx_cmd.sh`, `README.md`) | kept | Linux: DTS, TFTP, boot on the board. |
+| `tools/linux/rv32_grec_3.dts`, `rv32_ghrec_1.dts` | kept | DTS for the two bitstreams in the repository. The root README uses `rv32_grec_3.dts`. |
+| `tools/linux/rv32_dvi_1, gcer_1, gdvi_1, gdvi_9, smp8_9, spisd_1.dts` | **removed** | DTS files for builds whose bitstreams are not in the repository. `mkdts.py` generates them from any build. |
+| `tools/doom_linux/`, `tools/rootfs/`, `tools/usbhidd/` | kept (`.empty` removed) | DOOM, rootfs and USB keyboard for Linux. |
+| `tools/speedtest/` | kept (duplicate `netboot_app.sh` removed) | Throughput measurement (open question "throughput under Linux"). `eth_speedtest.sh` no longer has a default bitstream that is not in the repository (`BIT=` is required), and it uses `tools/linux/netboot_app.sh`. |
+| `tools/dvi/testimg_cmds.sh`, `tools/sd/bios_cmds.sh` | kept | Test image in the framebuffer and entry of BIOS commands. |
+| `tools/dvi/{idle_series,loadtest,lx_session,mitigation_sweep,pll_discriminator,vtest}.sh` | **removed** | One-off measurements of image dropouts (TASK-5040/5044/5047) with HDMI capture on the Pi. Results are in `docs/SBC_DVI_USB_TASK-5040.md` and `…5047.md`. |
+| `tools/t5007/`, `fabtest/`, `pnr_probe/`, `uhello/`, `uloop/`, `gbe/`, `pll_*.py` (6), `jtag_bert.py`, `jtag_mailbox.py`, `mbprobe_top.*`, `nt_all.sh`, `rxstart.sh`, `gbe_build.sh` | **removed** | One-off tests from fault finding (PLL, JTAG, MDIO, fabric, nextpnr bug repro) and build/acceptance of the CPU-less designs. The findings are in `docs/HW_DIAG_20260923_TASK-4999.md` and `docs/LESSONS_GATEMATE.md`, and the scripts are in the tag. |
 
-## Što nije dirano
+## What was not touched
 
-- `docs/` (osim dva patcha i ovog dokumenta): zapisnici mjerenja i istraživanja. Spominju uklonjene datoteke, a
-  one su u tagu `pre-cleanup-20260926`.
-- `gbe_phy.py` iznutra: `txc_bufg=False` grana i `txc_sel` ostaju. To je mali, testirani PHY (`tb_gbe_phy.py`).
-- `--with-sdcard` / `--sdcard spi` / `--boot sdnet`: SD kartica je u radu (korijenski README: „What does not work
-  yet”), pa te opcije ostaju.
-- `--video-640x240`: radna opcija (80x30 teksta) i pokrivena je s `tb_scaler2x.py`.
+- `docs/` (except the two patches and this document): measurement and research logs. They mention removed files, and
+  those are in the tag `pre-cleanup-20260926`.
+- The inside of `gbe_phy.py`: the `txc_bufg=False` branch and `txc_sel` stay. It is a small, tested PHY (`tb_gbe_phy.py`).
+- `--with-sdcard` / `--sdcard spi` / `--boot sdnet`: the SD card is work in progress (root README: "What does not work
+  yet"), so these options stay.
+- `--video-640x240`: a working option (80x30 text) and it is covered by `tb_scaler2x.py`.
 
-## MDIO: Verilog → Migen (uputa #69, #70)
+## MDIO: Verilog → Migen (instruction #69, #70)
 
-`gateware/verilog/mdio_core.v` je prepisan u `gateware/mdio_core.py` (`MDIOCore`, LiteXModule): isti parametri
-(`write_after`, `reg9`, `reg4`, `reg0`), isti `snap` (256 bita), isti `rst_n` PHY-a, svi registri bez reseta kao u
-Verilogu. Izbačeni su UART ispis i ulaz `dbg`, jer ih SoC nije spajao (pinovi pripadaju BIOS serialu).
+`gateware/verilog/mdio_core.v` was rewritten as `gateware/mdio_core.py` (`MDIOCore`, LiteXModule): same parameters
+(`write_after`, `reg9`, `reg4`, `reg0`), same `snap` (256 bits), same PHY `rst_n`, all registers without reset as in
+the Verilog. The UART output and the `dbg` input were removed, because the SoC did not connect them (the pins belong to the BIOS serial).
 
-### 1. Simulacija (prije ugradnje)
+### 1. Simulation (before integration)
 
-`sim/tb_mdio_core_equiv.py`: stari Verilog (iz gita, commit `251bcb7`) i Migen modul pretvoren u Verilog vrte se
-jedan do drugoga u Icarus Verilogu, svaki sa svojim modelom KSZ9031 MDIO slavea (ID 0x0022/0x1622, registri se
-resetiraju s RESET_N, upisi se pamte). Svaki sys takt uspoređuje se MDC, razriješena MDIO linija, `moe`, `mdo`,
-RESET_N i cijeli `snap`. RXC je asinkron, a RX_CTL pseudo-slučajan.
+`sim/tb_mdio_core_equiv.py`: the old Verilog (from git, commit `251bcb7`) and the Migen module converted to Verilog run
+side by side in Icarus Verilog, each with its own model of a KSZ9031 MDIO slave (ID 0x0022/0x1622, registers are
+reset by RESET_N, writes are stored). Every sys clock compares MDC, the resolved MDIO line, `moe`, `mdo`,
+RESET_N and the whole `snap`. RXC is asynchronous, and RX_CTL is pseudo-random.
 
-| slučaj | ciklusa | razlika | na kraju (snap) |
+| case | cycles | difference | at the end (snap) |
 |---|---|---|---|
-| SoC: WRITE_AFTER=0, REG9=0200, REG4=0001, REG0=1200, PHYAD 3 | 10 598 097 | **0** | 3456 MDC bridova, idm=08, r4=0001, r9=0200 (upis pročitan natrag) |
-| WRITE_AFTER=2, REG9=0000, REG4=0101, PHYAD 0 | 14 823 601 | **0** | 4416 MDC bridova, idm=01, r4=0101, r9=0000 |
-| negativna kontrola (`--mutate`: novi modul dobije REG4^0x0400) | 10 598 097 | 4 234 113 | usporedba stvarno hvata razliku (rc=1) |
+| SoC: WRITE_AFTER=0, REG9=0200, REG4=0001, REG0=1200, PHYAD 3 | 10 598 097 | **0** | 3456 MDC edges, idm=08, r4=0001, r9=0200 (write read back) |
+| WRITE_AFTER=2, REG9=0000, REG4=0101, PHYAD 0 | 14 823 601 | **0** | 4416 MDC edges, idm=01, r4=0101, r9=0000 |
+| negative control (`--mutate`: the new module gets REG4^0x0400) | 10 598 097 | 4 234 113 | the comparison really catches the difference (rc=1) |
 
-### 2. Ploča (ULX5M-GS, samo `fpga-jtag gs … -r`, konzola `/dev/serial/by-id/…E660583883501E2C-if01`)
+### 2. Board (ULX5M-GS, only `fpga-jtag gs … -r`, console `/dev/serial/by-id/…E660583883501E2C-if01`)
 
-Prvo mali SoC (VexRiscv standard + BIOS + 1G, `--boot none`, `--phy-snap-csr`), pa tek onda Linux SoC.
-Mapiranje kabel → ploča potvrđeno 26. 9. u 10:53: BIOS učitan s `fpga-jtag gs` ispisuje na by-id konzolu.
-Svi bitstreamovi imaju `gmpack --reset` (provjereno u `build_*.sh`).
+First a small SoC (VexRiscv standard + BIOS + 1G, `--boot none`, `--phy-snap-csr`), and only then the Linux SoC.
+Cable → board mapping confirmed on 2026-09-26 at 10:53: a BIOS loaded with `fpga-jtag gs` prints to the by-id console.
+All bitstreams have `gmpack --reset` (checked in `build_*.sh`).
 
-| korak | bitstream | kroz novi modul pročitano | zaključak |
+| step | bitstream | read through the new module | conclusion |
 |---|---|---|---|
-| kontrola | stari Verilog (`mdo_1`, isti mali SoC) | R1=796D, R1F=0348, RXC 125 MHz | referentni link 1000FD |
-| (a) ID | `mdt_3` (REG4=0001) | idm=0x08 → reg2 = 0x0022 na PHYAD 3 (addr=3) | MDIO čitanje radi |
-| (b) upis ≠ trenutno | `mdt_2` (REG4=0C01, upis u 255. prolazu) nakon dizajna koji piše 0001 | r4=0C01, r9=0200, wrote=1 | upis novim modulom, pročitan natrag |
-| (c) hardverski reset | `mdt_2` pa `mdt_4` (nikad ne piše) | poslije `mdt_2`: r4=0C01; u `mdt_4`: r0=1140, r4=01E1, r9=0300, wrote=0 | RESET_N novog modula vratio PHY na tvorničke vrijednosti |
-| link | `mdt_3` (produkcijski parametri) | R1=796D, R1F=0348, RA=3800, RXC 125 MHz | isto kao stari Verilog |
+| control | old Verilog (`mdo_1`, same small SoC) | R1=796D, R1F=0348, RXC 125 MHz | reference link 1000FD |
+| (a) ID | `mdt_3` (REG4=0001) | idm=0x08 → reg2 = 0x0022 at PHYAD 3 (addr=3) | MDIO read works |
+| (b) write ≠ current | `mdt_2` (REG4=0C01, write in the 255th pass) after a design that writes 0001 | r4=0C01, r9=0200, wrote=1 | write by the new module, read back |
+| (c) hardware reset | `mdt_2` then `mdt_4` (never writes) | after `mdt_2`: r4=0C01; in `mdt_4`: r0=1140, r4=01E1, r9=0300, wrote=0 | RESET_N of the new module returned the PHY to factory values |
+| link | `mdt_3` (production parameters) | R1=796D, R1F=0348, RA=3800, RXC 125 MHz | same as the old Verilog |
 
-Usput: s REG4=0x0C01 (pause bitovi) AN se na ovom switchu ne završi (R1=7949, RXC 25 MHz), sa 0x0001 i s tvorničkim
-0x01E1 završi. To je svojstvo testne vrijednosti, ne modula (A/B s istim SoC-om).
+Side note: with REG4=0x0C01 (pause bits) AN does not complete on this switch (R1=7949, RXC 25 MHz); with 0x0001 and with the factory
+0x01E1 it completes. This is a property of the test value, not of the module (A/B with the same SoC).
 
-Prva dva pokušaja (10:37, 10:45) odbačena su: na Pi je spojen drugi DirtyJTAG, a `openFPGALoader -c dirtyJtag`
-otvara prvu sondu i ignorira `--busdev-num`. Pi skripte u `tools/` zato učitavaju preko `fpga-jtag` (`tools/dj_probe.sh`).
+The first two attempts (10:37, 10:45) were discarded: a second DirtyJTAG is connected to the Pi, and `openFPGALoader -c dirtyJtag`
+opens the first probe and ignores `--busdev-num`. That is why the Pi scripts in `tools/` load through `fpga-jtag` (`tools/dj_probe.sh`).
 
-### 3. Timing i seed
+### 3. Timing and seed
 
-Svaka promjena netliste mijenja placement, pa seed nije prenosiv. Kriterij: 0 hold prekršaja i grx (RXC) PASS na
-125 MHz. Buildovi s hold prekršajima u VexRiscv D-cache BRAM putu vrte BIOS u petlji resetiranja na memtestu (mg_1:
-8 prekršaja, mdt_4 seed 1: 3); svi ispravni imaju 0. Linux SoC s novim modulom (naredba iz README-a, samo seed):
+Every netlist change changes the placement, so a seed is not portable. Criterion: 0 hold violations and grx (RXC) PASS at
+125 MHz. Builds with hold violations in the VexRiscv D-cache BRAM path run the BIOS in a reset loop at memtest (mg_1:
+8 violations, mdt_4 seed 1: 3); all good ones have 0. Linux SoC with the new module (command from the README, only the seed):
 
 | seed | hold | grx | CPU | P&R |
 |---|---|---|---|---|
-| 1 | 8 | 127,8 PASS | 22,7 | petlja resetiranja na ploči |
-| 2 | 0 | 123,4 FAIL | 21,7 | |
-| **3** | **0** | **138,7 PASS** | **25,4** | **na ploči: Linux login nakon 707 s, ping .213 5/5 i 10/10, iz Linuxa `csrpeek 0xf0002804 2` = `796d0348 38006400` (R1F=0348 = 1000FD, RXC 125 MHz)** |
-| 4 | 0 | 111,0 FAIL | 23,2 | |
-| 6 | 0 | 125,3 PASS | 21,3 | Linux se diže (init), rub timinga |
-| 7 / 8 / 12 | 0 | 121,5 / 123,2 / 124,0 FAIL | | |
-| 10 | 0 | 131,6 PASS | 21,5 | |
+| 1 | 8 | 127.8 PASS | 22.7 | reset loop on the board |
+| 2 | 0 | 123.4 FAIL | 21.7 | |
+| **3** | **0** | **138.7 PASS** | **25.4** | **on the board: Linux login after 707 s, ping .213 5/5 and 10/10, from Linux `csrpeek 0xf0002804 2` = `796d0348 38006400` (R1F=0348 = 1000FD, RXC 125 MHz)** |
+| 4 | 0 | 111.0 FAIL | 23.2 | |
+| 6 | 0 | 125.3 PASS | 21.3 | Linux boots (init), timing edge |
+| 7 / 8 / 12 | 0 | 121.5 / 123.2 / 124.0 FAIL | | |
+| 10 | 0 | 131.6 PASS | 21.5 | |
 
-Seed 3 je i dalje ispravan izbor za naredbu iz korijenskog README-a, pa se naredba ne mijenja. Bitstreamovi u
-`bitstreams/` ostaju oni izgrađeni prije ove revizije (stari Verilog MDIO, LiteX s patchem). Build iz sadašnjeg koda
-sa seedom 3 je provjeren na ploči (gore), ali nije dodan u `bitstreams/`.
+Seed 3 is still the right choice for the command from the root README, so the command does not change. The bitstreams in
+`bitstreams/` stay the ones built before this review (old Verilog MDIO, LiteX with the patch). A build from the current code
+with seed 3 was checked on the board (above), but was not added to `bitstreams/`.
