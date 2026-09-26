@@ -1,4 +1,4 @@
-/* usbhostd [-t] [-v] [CSR_BASE] [TTY] (TASK-5051): USB keyboard (and mouse) through the usb_pnru host controller
+/* usbhostd [-t] [-v] [-x SECS] [CSR_BASE] [TTY] (TASK-5051): USB keyboard (and mouse) through the usb_pnru host controller
  * (gateware/usb_pnru.py) - directly on USB-C J5 or behind the USB2514B hub of the CM4 IO board - into the Linux
  * console, without a kernel USB stack. The stack (usbh.c) runs in this process on the CSRs mapped from /dev/mem;
  * with /dev/uinput (Buildroot kernel, tools/linux/buildroot) keyboard and mouse become real input devices (the
@@ -141,11 +141,16 @@ static void c_mouse(void *cv, const uint8_t *r, int len)
 int main(int argc, char **argv)
 {
 	int force_tty = 0, verbose = 0;
+	uint32_t run_s = 0;
 	for (; argc > 1 && argv[1][0] == '-'; argc--, argv++) {
 		if (strcmp(argv[1], "-t") == 0)
 			force_tty = 1;                  /* TIOCSTI even if /dev/uinput exists */
 		else if (strcmp(argv[1], "-v") == 0)
 			verbose = 1;                    /* log the HID reports */
+		else if (strcmp(argv[1], "-x") == 0 && argc > 2) {
+			run_s = strtoul(argv[2], 0, 0); /* exit after run_s seconds with statistics (board test) */
+			argc--; argv++;
+		}
 	}
 	uint32_t base = argc > 1 ? strtoul(argv[1], 0, 0) : 0xf0003800;
 	const char *ttyname = argc > 2 ? argv[2] : "/dev/tty1";
@@ -163,7 +168,14 @@ int main(int argc, char **argv)
 	h.now_ms = c_now; h.sleep_ms = c_sleep; h.log = c_log; h.on_kbd = c_kbd; h.on_mouse = c_mouse; h.ctx = &c;
 	printf("usbhostd: usb_pnru CSR 0x%08x -> %s\n", (unsigned)base, c.ui >= 0 ? "/dev/uinput" : ttyname);
 	usbh_init(&h);
-	for (;;) {
+	uint32_t t_start = sys_ms(), loops = 0;
+	for (;; loops++) {
+		if (run_s && sys_ms() - t_start >= run_s*1000) {
+			printf("usbhostd: exit after %u s: %u loops, %u transactions, %u NAK, %u time-outs, %u CRC errors\n",
+			       (unsigned)run_s, (unsigned)loops, (unsigned)h.n_txn, (unsigned)h.n_nak, (unsigned)h.n_timeout,
+			       (unsigned)h.n_crc);
+			return 0;
+		}
 		usbh_poll(&h);
 		if (c.nrep && (int32_t)(sys_ms() - c.t_rep) >= 0) {
 			push(c.tty, c.rep, c.nrep);

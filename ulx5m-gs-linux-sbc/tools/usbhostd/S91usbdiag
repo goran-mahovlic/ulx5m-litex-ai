@@ -1,17 +1,19 @@
 #!/bin/sh
 # S91usbdiag (TASK-5051, board test without typing): the serial console of the SoC drops typed characters under
-# load, but its output is reliable. This script prints a usbdiag register trace, then starts usbhostd -v and copies
-# its log (enumeration, descriptors, HID reports) to the console, where the Pi's capture (lxrun.sh) records it.
-# Keys typed on the USB keyboard also go to tty1 (the DVI console). Only in the diagnostic rootfs.
+# load, but its output is reliable. This script prints a usbdiag register trace, runs usbhostd -v for 90 s (it exits
+# by itself with transaction statistics, so a stuck system recovers), then prints its log to the console, where
+# the Pi's capture records it; then usbhostd runs on normally. Keys also go to tty1 (DVI). Diagnostic rootfs only.
 case "$1" in
   start|"")
     for n in /proc/device-tree/usbhost@*; do
       [ -e "$n" ] || continue
       (sleep 5
        echo "=== usbdiag"; /usr/bin/usbdiag 0x${n##*@}
-       echo "=== usbhostd -v"
-       /usr/bin/usbhostd -v 0x${n##*@} > /var/log/usbhostd.log 2>&1 &
-       sleep 2; tail -f /var/log/usbhostd.log) > /dev/console 2>&1 &
+       echo "=== usbhostd -v -x 90"
+       /usr/bin/usbhostd -v -x 90 0x${n##*@} > /var/log/usbhostd.log 2>&1
+       cat /var/log/usbhostd.log
+       echo "=== usbhostd -v (running on, nice 10)"
+       nice -n 10 /usr/bin/usbhostd -v 0x${n##*@} > /dev/console 2>&1) > /dev/console 2>&1 &
     done
     ;;
 esac

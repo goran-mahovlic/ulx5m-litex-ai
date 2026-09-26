@@ -5,8 +5,8 @@ the CM4 socket, and the same on the USB-C connector J5 of the board.
 
 Status (26.09.2026): phase 1 (gateware) and phase 2a (userspace driver) are implemented and verified in
 simulation, host tests and P&R (recommended build: §4.3); phase 2b (Buildroot + Linux 6.12) is built (§6.2),
-not booted; **phase 3 (board) started** (§7.1): the PNRU build boots Linux on the board, the USB result is not
-read yet because the Pi went offline during the run.
+not booted; **phase 3 (board)**: on the Waveshare board the wireless receiver (Logitech 046d:c534, full speed)
+enumerates as boot keyboard + boot mouse with no transfer errors after two gateware fixes (§7.1).
 
 ## 1. Hardware facts (from the schematics)
 
@@ -340,6 +340,36 @@ characters; commands were typed at 0.1 s/char and long-running ones interrupted 
   The PHY's NCO makes any clock ≥ 48 MHz work (§2.1).
 - A line-capture block (1024 samples) was tried for the diagnosis but does not place in the full SoC (placer
   limit, 75 % CPE_LT, lesson J7); it is not in the source.
+
+#### 7.1.2 Board result with the fix (26.09.2026, 19:15–20:00, `pll60 s1`, sha256 `9aeda4dc…`)
+
+The diagnostic rootfs runs everything from an init script (`tools/usbhostd/S91usbdiag`), because typed input on
+the serial console is unreliable while the output is not; the Pi's capture (`tools/linux/lxrun.sh`) records it.
+
+`usbdiag` (GET_DESCRIPTOR, raw): no CRC error, the device descriptor arrives intact:
+
+    IN#1 (DATA1): rx_stat 104b0008   12 01 00 02 00 00 00 08
+    IN#2 (DATA0): rx_stat 10c30008   6d 04 34 c5 01 29 01 02
+
+`usbhostd -v -x 90` (runs 90 s, exits with statistics):
+
+    usbh: line state D+ 1 D- 0 (FS device)
+    usbh: root port: FS device
+    usbh: addr 1 FS VID 046d PID c534 class 0 ep0 8
+    usbh: cfg 000: 09 02 3b 00 02 01 04 a0 31 09 04 00 00 01 03 01 01 00 09 21 11 01 00 01
+    usbh: cfg 024: 22 3b 00 07 05 81 03 08 00 08 09 04 01 00 01 03 01 02 00 09 21 11 01 00
+    usbh: cfg 048: 01 22 b1 00 07 05 82 03 14 00 02
+    usbh: boot keyboard, EP1
+    usbh: boot mouse, EP2
+    usbhostd: exit after 90 s: 733 loops, 1498 transactions, 1464 NAK, 0 time-outs, 0 CRC errors
+
+The receiver is a Logitech nano receiver (046d:c534, full speed): interface 0 boot keyboard (EP1 IN, 8 bytes,
+8 ms), interface 1 boot mouse (EP2 IN, 20 bytes, 2 ms). Enumeration, SET_CONFIGURATION, SET_PROTOCOL(boot) and
+the interrupt polling work with no error in 1498 transactions.
+
+Open: 733 main-loop passes in 90 s (8 per second instead of ~400 with the 2 ms sleep) — the Linux system on this
+SoC is slow as a whole (boot to login 10–15 min, load average ≈ 3 already without usbhostd, see TASK-5047), so a
+key is picked up within ~125 ms. Key reports on the board: see §7.1.3.
 
 ### 7.2 Remaining order
 
