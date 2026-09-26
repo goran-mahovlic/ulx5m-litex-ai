@@ -1,0 +1,12 @@
+== sweep_od2_s1 2026-09-26 19:04:38 gs=<lab-dir>/02-verify/bit/gs_od2_s1.bit m2=<lab-dir>/02-verify/bit/m2_od2_s1.bit secs=180
+Done
+Done
+board=gs PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 10/10 distinct=10  expect=peer -> PASS
+board=m2 PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 10/10 distinct=10  expect=peer -> PASS
+ber_mon exit=1
+t=180.0s  rate gs_tx=600.00 Mb/s m2_tx=600.00 Mb/s  OUTDIV=2 RX_POL=1 LOOPBACK_SEL gs=0 m2=0
+  m2->gs synced=1 self=1 loss=2 words=1356858768 errw=889499 errb=12083858 code=1902793 BER=0.000223
+  gs->m2 synced=1 self=0 loss=0 words=1356859033 errw=6 errb=8 code=16 BER=1.47e-10
+board=gs PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 10/10 distinct=10  expect=peer -> PASS
+board=m2 PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 10/10 distinct=10  expect=peer -> PASS
+== END 19:07:55

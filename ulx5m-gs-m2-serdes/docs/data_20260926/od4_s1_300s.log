@@ -1,0 +1,10 @@
+== od4_s1_300s 2026-09-26 15:59:11 gs=- m2=- secs=300
+board=gs PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (RX_PMA=0 RX_PCS=0 TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 10/10 distinct=10  expect=peer -> PASS
+board=m2 PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (RX_PMA=0 RX_PCS=0 TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 10/10 distinct=10  expect=peer -> PASS
+ber_mon exit=0
+t=137.2s  rate gs_tx=675.66 Mb/s m2_tx=675.66 Mb/s  OUTDIV=4 RX_POL=1 LOOPBACK_SEL gs=0 m2=0
+  m2->gs synced=1 self=0 loss=0 words=1125251196 errw=0 errb=0 code=0 BER=0 (<6.7e-11 @95%)
+  gs->m2 synced=1 self=0 loss=0 words=1125251037 errw=0 errb=0 code=0 BER=0 (<6.7e-11 @95%)
+board=gs PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (RX_PMA=0 RX_PCS=0 TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 10/10 distinct=10  expect=peer -> PASS
+board=m2 PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (RX_PMA=0 RX_PCS=0 TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 10/10 distinct=10  expect=peer -> PASS
+== END 16:04:24

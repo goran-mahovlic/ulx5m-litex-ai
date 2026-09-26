@@ -1,0 +1,22 @@
+== prije 16:07:58
+GS=UP M2=UP  gs_rx: synced=1 new_words=7500061 new_errb=0 self=0 | m2_rx: synced=1 new_words=7500064 new_errb=0 fresh=1
+board=gs busdev=1:16 wr 2A 0101 0101 -> reg0x2A=0x290D reg0x2B=0x0000 reg0x40=0x1018 reg0x41=0x4000
+== gs loopback ON
+board=gs PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=1 (RX_PMA=1 RX_PCS=0 TX_PMA=0 TX_PCS=0 RX_OVR=1 TX_OVR=0; 0x2A=0x290D 0x40=0x1018)  !! LOOPBACK ACTIVE  rx: OTHER 9/10 PEER 1/10 distinct=10  expect=peer -> FAIL
+GS=DOWN M2=UNKNOWN  gs_rx: synced=0 new_words=0 new_errb=0 self=0 | m2_rx: synced=1 new_words=0 new_errb=0 fresh=0
+board=gs busdev=1:16 wr 2A 0000 0101 -> reg0x2A=0x280C reg0x2B=0x0000 reg0x40=0x1018 reg0x41=0x4000
+== gs loopback OFF
+board=gs PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (RX_PMA=0 RX_PCS=0 TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 10/10 distinct=10  expect=peer -> PASS
+GS=UP M2=DOWN  gs_rx: synced=1 new_words=7500061 new_errb=0 self=0 | m2_rx: synced=0 new_words=0 new_errb=0 fresh=1
+== recovery: gs reload 16:08:53
+Done
+GS=UP M2=UP  gs_rx: synced=1 new_words=7500061 new_errb=0 self=0 | m2_rx: synced=1 new_words=7500064 new_errb=0 fresh=1
+board=m2 PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (RX_PMA=0 RX_PCS=0 TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 10/10 distinct=10  expect=peer -> PASS
+== loop + rxpol0 16:09:12
+board=gs busdev=1:16 rxpol 0 -> reg0x2A=0x280C reg0x2B=0x1000 reg0x40=0x1018 reg0x41=0x4000
+board=gs busdev=1:16 wr 2A 0101 0101 -> reg0x2A=0x290D reg0x2B=0x1000 reg0x40=0x1018 reg0x41=0x4000
+board=gs PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=1 (RX_PMA=1 RX_PCS=0 TX_PMA=0 TX_PCS=0 RX_OVR=1 TX_OVR=0; 0x2A=0x290D 0x40=0x1018)  !! LOOPBACK ACTIVE  rx: PEER 10/10 distinct=10  expect=peer -> FAIL
+GS=DOWN M2=UNKNOWN  gs_rx: synced=0 new_words=0 new_errb=0 self=1 | m2_rx: synced=1 new_words=0 new_errb=0 fresh=0
+== restore (reload gs)
+Done
+GS=UP M2=UP  gs_rx: synced=1 new_words=7500061 new_errb=0 self=0 | m2_rx: synced=1 new_words=7500064 new_errb=0 fresh=1

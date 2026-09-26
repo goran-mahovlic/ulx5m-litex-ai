@@ -58,9 +58,9 @@ Older bitstreams are not in this repository.
 
 ULX5M-GS and ULX5M-M2 connected by their SerDes lane, with one JTAG probe per board.
 - An 8b10b link works in both directions, bit-exact, at 0.3 Gb/s (360/360 reads).
-- A fabric BER checker measured 1.1·10⁹ words per direction with 0 errors (BER < 6.7·10⁻¹¹).
+- A fabric BER checker measured 1.1·10⁹ words per direction at 0.3 Gb/s with 0 errors (BER < 6.6·10⁻¹¹).
 - A script proves step by step that the data goes over the external cable (idle tests, error injection, pulling the cable).
-- Higher rates (up to 2.5 Gb/s) are built but not yet measured.
+- Rate sweep with measured line rate: **0 errors at 1.25 Gb/s** too (in-spec ADPLL recipe 1·5·5; BER < 4·10⁻¹¹). 2.5 Gb/s does not work yet.
 
 Details: `ulx5m-gs-m2-serdes/README.md`.
 

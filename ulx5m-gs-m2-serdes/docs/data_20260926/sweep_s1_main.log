@@ -1,0 +1,36 @@
+board=gs PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 10/10 distinct=10  expect=peer -> PASS
+board=m2 PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 10/10 distinct=10  expect=peer -> PASS
+t=300.0s  rate gs_tx=300.00 Mb/s m2_tx=300.00 Mb/s  OUTDIV=4 RX_POL=1 LOOPBACK_SEL gs=0 m2=0
+  m2->gs synced=1 self=0 loss=0 words=1139615176 errw=0 errb=0 code=0 BER=0 (<6.6e-11 @95%)
+  gs->m2 synced=1 self=0 loss=0 words=1139615009 errw=0 errb=0 code=0 BER=0 (<6.6e-11 @95%)
+board=gs PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 10/10 distinct=10  expect=peer -> PASS
+board=m2 PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 10/10 distinct=10  expect=peer -> PASS
+board=gs PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 10/10 distinct=10  expect=peer -> PASS
+board=m2 PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 10/10 distinct=10  expect=peer -> PASS
+t=180.0s  rate gs_tx=600.00 Mb/s m2_tx=600.00 Mb/s  OUTDIV=2 RX_POL=1 LOOPBACK_SEL gs=0 m2=0
+  m2->gs synced=1 self=1 loss=2 words=1356858768 errw=889499 errb=12083858 code=1902793 BER=0.000223
+  gs->m2 synced=1 self=0 loss=0 words=1356859033 errw=6 errb=8 code=16 BER=1.47e-10
+board=gs PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 10/10 distinct=10  expect=peer -> PASS
+board=m2 PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 10/10 distinct=10  expect=peer -> PASS
+board=gs PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: OTHER 2/10 PEER 8/10 distinct=10  expect=peer -> FAIL
+board=m2 PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: OTHER 1/10 PEER 9/10 distinct=10  expect=peer -> FAIL
+t=124.0s  rate gs_tx=1200.01 Mb/s m2_tx=1199.99 Mb/s  OUTDIV=1 RX_POL=1 LOOPBACK_SEL gs=0 m2=0
+  m2->gs synced=1 self=1 loss=3 words=1790891733 errw=331051286 errb=316508539 code=542477264 BER=0.00442
+  gs->m2 synced=1 self=1 loss=10 words=1228069 errw=406549 errb=6512925 code=608925 BER=0.133
+board=gs PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: OTHER 2/10 PEER 8/10 distinct=10  expect=peer -> FAIL
+board=m2 PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: OTHER 3/10 PEER 7/10 distinct=10  expect=peer -> FAIL
+board=gs PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 10/10 distinct=10  expect=peer -> PASS
+board=m2 PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 10/10 distinct=10  expect=peer -> PASS
+t=126.0s  rate gs_tx=1250.01 Mb/s m2_tx=1250.01 Mb/s  OUTDIV=4 RX_POL=1 LOOPBACK_SEL gs=0 m2=0
+  m2->gs synced=1 self=0 loss=0 words=1885277946 errw=0 errb=0 code=0 BER=0 (<4e-11 @95%)
+  gs->m2 synced=1 self=0 loss=0 words=1885277765 errw=0 errb=0 code=0 BER=0 (<4e-11 @95%)
+board=gs PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 10/10 distinct=10  expect=peer -> PASS
+board=m2 PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 10/10 distinct=10  expect=peer -> PASS
+board=gs PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 10/10 distinct=10  expect=peer -> PASS
+board=m2 PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 10/10 distinct=10  expect=peer -> PASS
+t=124.0s  rate gs_tx=2500.02 Mb/s m2_tx=2500.02 Mb/s  OUTDIV=2 RX_POL=1 LOOPBACK_SEL gs=0 m2=0
+  m2->gs synced=1 self=1 loss=4 words=3761158511 errw=2464563 errb=27110400 code=5761118 BER=0.00018
+  gs->m2 synced=1 self=0 loss=0 words=4311794 errw=1008 errb=4553 code=2449 BER=2.64e-05
+board=gs PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 10/10 distinct=10  expect=peer -> PASS
+board=m2 PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 10/10 distinct=10  expect=peer -> PASS
+SWEEP DONE 19:14:50: both boards back on the 0.3 Gb/s BER design, lease released

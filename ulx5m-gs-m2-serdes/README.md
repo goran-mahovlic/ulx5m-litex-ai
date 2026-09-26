@@ -20,15 +20,20 @@ The only connection between the two FPGAs is this SerDes lane (TX and RX pairs).
   word). The checker counts injected errors exactly: 3 errors injected on gs TX were counted as 3 on m2, and
   5 injected on m2 TX were counted as 5 on gs. (Measured with the first version of `ber_top`. The sources here
   add pipelining for higher rates and change m2's ID from 2 to 3; that version is re-measured in the rate sweep.)
+- **1.25 Gb/s with 0 errors** using the in-spec ADPLL recipe N1·N2·N3 = 1·5·5 (DCO 2500 MHz), OUTDIV 4: 1.885·10⁹
+  words per direction, **BER < 4·10⁻¹¹**. The rate is measured from the clock counters: 1250.0 Mb/s in both directions.
 - **The data really goes over the cable** (see [How to check it yourself](#how-to-check-it-yourself)). Every
   word carries the sender's ID. If m2's TX is idled, gs loses the data, and the other way round.
 - **Every bitstream starts with a configuration reset** (`gmpack --reset`, CMD_CFGRST), checked with `tools/gm_cfgrst_check.py`.
 
 ## What does not work yet / not proven
 
-- **Only 0.3 Gb/s is proven.** With N1·N2·N3 = 1·2·3 the ADPLL's DCO runs at 600 MHz. The datasheet (DS1001,
-  September 2026) specifies 1250–2500 MHz. The rate sweep (0.6 / 1.2 Gb/s, and 1.25 / 2.5 Gb/s with the in-spec
-  1·5·5 recipe) is built but not yet measured on the boards.
+- **2.5 Gb/s does not work yet** (1·5·5, OUTDIV 2): BER ~10⁻⁴, and m2 keeps losing sync. The analog settings
+  (no TX pre-emphasis, RX equalizer off) and the 4 % timing margin of the gs checker at 31.25 MHz have not been
+  separated yet.
+- **The 1·2·3 recipe is only clean at 0.3 Gb/s.** Its DCO runs at 600 MHz, below the 1250–2500 MHz in DS1001.
+  At 0.6 Gb/s one direction has errors, and at 1.2 Gb/s both do. Use 1·5·5.
+- Rate sweep table: `docs/VERIFY_20260926.md` §6.
 - **The hard PRBS checker in CC_SERDES is not a BER instrument here.** PRBS select codes 3 and 4 are *reserved*
   (DS1001 p.70/p.86). Only 1 (PRBS-7) and 2 (PRBS-15) exist. Our old tests used 4, so the counter stayed at 0x7FFF.
   BER is measured with the fabric checker instead.
@@ -54,8 +59,16 @@ The only connection between the two FPGAs is this SerDes lane (TX and RX pairs).
 | File | Load on | What it does |
 |---|---|---|
 | `serdes_p1_rxpol1_CFGRST.bit` | **both** gs and m2 | 0.3 Gb/s, 8b10b, K28.5 + 7 × D10.2, `RX_POLARITY_I=1`. Check with `serdes_link_check.py` (expect `DATA_OK 30/30`). |
+| `ber_gs_0g3_CFGRST.bit` + `ber_m2_0g3_CFGRST.bit` | gs + m2 | BER design, 0.3 Gb/s. Used by `verify_external_link.sh --load`. |
+| `ber_gs_1g25_CFGRST.bit` + `ber_m2_1g25_CFGRST.bit` | gs + m2 | BER design, 1.25 Gb/s (1·5·5). |
 
-`gateware/baseline/build.sh 1` rebuilds `serdes_p1_rxpol1_CFGRST.bit` byte for byte (oss-cad-suite 2026-09-23).
+All of them are rebuilt byte for byte from the sources here (`gateware/baseline/build.sh 1`,
+`gateware/ber/build_ber.sh`; see `bitstreams/README.md`), with oss-cad-suite 2026-09-23.
+
+**Measure BER yourself** (BER design loaded, gs UART on the gs probe's interface 01):
+
+    python3 tools/ber_mon.py run --secs 300 --clear     # both directions + measured line rate
+    python3 tools/ber_mon.py inject e --n 3             # negative control: m2 must count exactly 3
 
 ## How to repeat it on another computer
 
@@ -111,8 +124,7 @@ pattern (gs must reject it) → **"pull the SerDes cable now"** (both sides must
 
 ## Next steps
 
-1. Rate sweep with the BER design: 0.6 and 1.2 Gb/s (1·2·3, DCO out of spec), then 1.25 and 2.5 Gb/s (1·5·5, DCO
-   2500 MHz, in spec). Measure the real line rate from the clock counters, not from the settings.
+1. 2.5 Gb/s: TX pre/post-emphasis and the RX equalizer (over the regfile first), plus a faster checker path on gs.
 2. Cable steps of `verify_external_link.sh` on the boards.
 3. Eye scan (CologneChip `gm_serdes_lb` has `tc_eyemeas`) at the highest rate that works.
 4. Trace the P/N swap in the schematics (GS → CM4 baseboard → PCIe slot → adapter → M2).
