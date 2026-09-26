@@ -4,9 +4,11 @@ Goal: a USB keyboard (and mouse) behind the USB2514B hub of the Raspberry Pi CM4
 the CM4 socket, and the same on the USB-C connector J5 of the board.
 
 Status (26.09.2026): phase 1 (gateware) and phase 2a (userspace driver) are implemented and verified in
-simulation, host tests and P&R (recommended build: §4.3); phase 2b (Buildroot + Linux 6.12) is built (§6.2),
-not booted; **phase 3 (board)**: on the Waveshare board the wireless receiver (Logitech 046d:c534, full speed)
-enumerates as boot keyboard + boot mouse with no transfer errors after two gateware fixes (§7.1).
+simulation, host tests and P&R (recommended build: §4.3); phase 2b (Buildroot + Linux 6.12) is built (§6.2)
+and **boots on the board** (§7.3); **phase 3 (board)**: on the Waveshare board the wireless receiver (Logitech
+046d:c534, full speed) enumerates as boot keyboard + boot mouse with no transfer errors after two gateware fixes
+(§7.1); under Linux 6.12 it runs 33 min with 200 546 transactions, 0 time-outs, 0 CRC errors and becomes a real
+input device through uinput (§7.3). Key presses on the board are still not verified (nobody typed).
 
 ## 1. Hardware facts (from the schematics)
 
@@ -275,8 +277,8 @@ The build container has no root: `file`, `rsync`, `bc`, `cpio` come from Debian 
 INPUT_EVDEV, FONT_MINI_4x6, FONT_6x8, FRAMEBUFFER_CONSOLE, FB_SIMPLE, IP_PNP, DEVMEM, MMC_SPI, SPI_LITESPI,
 LITEX_LITEETH, SERIAL_LITEUART = y, STRICT_DEVMEM off. The first run stopped only in upstream's SD-image
 post-image script (it needs `boot.json`/`rv32.dtb` from its `make.py`); the recipe now disables it. The rootfs
-(11.2 MB) needs the 12 MB initrd window of the DVI DTS (`mkdts.py` sets `linux,initrd-end = <0x41c00000>`). Not
-booted on the board yet.
+(11.2 MB) needs the 12 MB initrd window of the DVI DTS (`mkdts.py` sets `linux,initrd-end = <0x41c00000>`).
+Booted on the board on 26.09.2026 (§7.3).
 
 A kernel HCD driver for the engine is not part of this step (not needed: `usbhostd` + uinput give real input
 devices).
@@ -388,7 +390,7 @@ multimedia/system keys (inferred from the lengths, the report descriptor was not
   only the keyboard and the mouse work. Not needed for the SBC console.
 - Emard's host (`…USBHID_rec1.bit`) is LS-only; its FS mode would need a 48 MHz clock (the same clock problem as
   here) and handles one interface, so at most the keyboard of this set. Not pursued: the PNRU host already
-  enumerates both interfaces. A wired LS keyboard is still wanted for the LS path of the PHY (§7.2, step 1).
+  enumerates both interfaces. A wired LS keyboard is still wanted for the LS path of the PHY (§7.4, step 1).
 
 Open: 733 main-loop passes in 90 s (8 per second instead of ~400 with the 2 ms sleep) — the Linux system on this
 SoC is slow as a whole (boot to login 10–15 min, load average ≈ 3 already without usbhostd, see TASK-5047), so a
@@ -404,7 +406,88 @@ board stays in this state. To repeat: `lxrun.sh ETH_GateMateA1_2609_1646_Linux_G
 rv32_usb4.dtb rootfs_usb6.cpio 1500` + `tools/linux/cap.sh <out> 900`, then type on the wireless keyboard: expected
 `kbd: 00 00 0b 00 …` lines and characters on the DVI console.
 
-### 7.2 Remaining order
+### 7.3 Linux 6.12 on the board (26.09.2026, 22:52–23:49, instructions #97/#100)
+
+Goran (#97): typing on the 5.14 system worked, but the screen kept switching off, the console was very slow and
+only one or two typed letters showed up. Following #100 (Goran cannot type tonight) the Buildroot 6.12 system was
+booted and measured **without typing**; the key/login test is left for later.
+
+**Setup.** Bitstream `…USBPNRU_pll60s1.bit` (sha256 `9aeda4dc…`, build `s_usb5_pll60_s1`: 1G + DVI + PNRU at
+60 MHz), TFTP files next to the 5.14 ones so both stay usable:
+
+| TFTP file | From |
+|---|---|
+| `Image612` | `~/app/raid/t5051/buildroot/output/images/Image` (Linux 6.12.0) |
+| `opensbi612.bin` | `…/images/fw_jump.bin` (OpenSBI 1.3.1) |
+| `rootfs612.cpio` | `…/images/rootfs.cpio`, zero-padded to 12 MiB (initrd window) |
+| `rv32_k612.dtb` | `tools/linux/rv32_usb5_pll60_s1_k612.dts`, compiled with `dtc` on the Pi |
+
+    python3 tools/linux/mkdts.py build/s_usb5_pll60_s1 --font 6x8 \
+        --append "consoleblank=0 usbhostd=-v,-s,60 sbcdiag=0xf0002800" > tools/linux/rv32_usb5_pll60_s1_k612.dts
+    # on the Pi:
+    IMAGE=Image612 SBI=opensbi612.bin bash lxrun.sh ~/FPGA/…USBPNRU_pll60s1.bit rv32_k612.dtb rootfs612.cpio 900 "uname -a"
+
+`lxrun.sh` writes `boot.json` with these names (`IMAGE`/`SBI`, defaults `Image`/`opensbi.bin`) and restores the
+5.14 `linux` mode at the end. Kernel arguments read by the rootfs: `usbhostd=` (options for `usbhostd`, commas =
+spaces), `sbcdiag=<video_recoveries CSR>` (enables `S89fbperf` and `S92sbcdiag`). `S20console` switches off the
+blinking fbcon cursor.
+
+**Fault found and fixed on the way — uinput never worked from `usbhostd`.** The static binaries use newlib headers and raw syscalls
+   (`tools/doom_linux/sys_linux.c`); newlib's `O_NONBLOCK` is 0x4000, which is Linux `O_DIRECT`, so
+   `open("/dev/uinput", O_WRONLY|O_NONBLOCK)` failed with EINVAL and `usbhostd` fell back to TIOCSTI (log line
+   `-> /dev/tty1`, no `/dev/input`). `_open` now translates the flags (`openflags.h`, host test
+   `test_openflags.c` 5/5). After the fix: `input: usb_pnru boot keyboard/mouse as /devices/virtual/input/input0`
+   and `usbhostd: … -> /dev/uinput`. `getty 38400 tty1` runs (started by `S90usbhostd`).
+
+**Measurements** (logs in `docs/linux/k612_20260926/`):
+
+| Item | Result |
+|---|---|
+| Boot | `openFPGALoader -r` → login prompt **266 s** (5.14: 10–15 min); `/init` at 55 s, uinput device at 174 s |
+| Stability | uptime 2017 s+ with no panic/oops, load average ≈ 2.0 |
+| 1G network | `ping -i 1` from the Pi for 30 min: **1800/1800, 0 % loss**, RTT 6.3/13.2/36.4 ms (min/avg/max) |
+| USB (33 min) | `stat 1980 s: 144051 loops, 200546 transactions, 200512 NAK, 0 time-outs, 0 CRC errors, 1 device(s)` |
+| USB polling | ≈ 73 main-loop passes per second (5.14: 8/s) → a key is picked up within ~15 ms |
+| Re-enumeration | `killall usbhostd; usbhostd -v -s 30 …`: port reset, same device (addr 1, 046d:c534, same descriptors), new `input1`, `stat 30 s: 3340 transactions, 0 time-outs, 0 CRC errors` |
+| Screen blanking | `consoleblank=0`: `/sys/module/kernel/parameters/consoleblank` = 0 in all 32 samples |
+| DVI watchdog | `video_recoveries` CSR = 0 in all 32 samples (`--video-recover` never fired); FrameBuffer2x DMA enabled, base 0x43F00000, read offset moving |
+| fbcon speed (6x8 font, 53×30 characters) | 1000 characters in one write: **1070 ms** (≈ 1.1 ms per glyph); 100 one-character writes: 7620 ms, the same loop to `/dev/null` 3460 ms → **≈ 42 ms per echoed character**; 40 lines with scrolling: **6100 ms** |
+| Process start | the 10 s diag loop runs every 74–90 s: every external command (grep, devmem, wc…) costs seconds on this CPU |
+
+What this means for Goran's three observations:
+
+- **Screen switching off.** Linux's default `consoleblank` is 600 s. On 5.14 the keys were pushed into the tty
+  with TIOCSTI, which does not go through the VT keyboard handler, so typing never un-blanked the console. That
+  matches "the screen went off and only one or two letters appeared" (reasoned from the kernel code, not measured
+  on 5.14). With 6.12 blanking is off (`consoleblank=0`, measured) and the keys come through uinput → VT keyboard
+  handler, which also un-blanks. The DVI resync watchdog did not trigger once, so a lost DVI PLL lock is not the cause
+  in these runs.
+- **Slow console.** Drawing is ≈ 1 ms per glyph, but each echoed character costs ≈ 42 ms (tty write + fbcon
+  cursor update per write), and the 40-line test takes ≈ 150 ms per line, of which drawing the ~50 glyphs is
+  ≈ 55 ms and the rest is scrolling the 320×240 framebuffer. On top comes the start-up cost of every command.
+  Done: no blinking cursor (`S20console`). Possible next steps: keep output short; MINI4x6 (80×40) puts more on
+  the screen but does not make drawing faster; the real fix is a faster CPU (the VexRiscv runs at the 20 MHz
+  `sys` clock — `sched_clock: 64 bits at 20MHz` — with 4 KiB caches).
+- **Letters missing.** On 5.14 `usbhostd` ran 8 loop passes per second under load and pushed characters with
+  TIOCSTI; on 6.12 it runs 73 passes per second and every key-down is counted (`kbd #N` lines, `key-downs` in the
+  `stat` lines, bytes read from `/dev/input/event0` in `diag`). Whether every press arrives is to be shown with the
+  typing test.
+
+**Not verified:** key presses and login on tty1 (nobody typed), and the DVI picture: the HDMI grabber (:8090)
+showed a uniformly black frame (every pixel 7) in all 70 snapshots of both runs, also while text was written to
+tty1, although the DMA was running and the watchdog saw no loss. Most likely the grabber is not connected to the
+board's DVI output at the moment (Goran watched the screen on a monitor); to be checked at the board.
+
+Other notes on the 6.12 rootfs: `mount devpts` fails (the kernel has no `CONFIG_UNIX98_PTYS`; add it to
+`linux_sbc.fragment` before an ssh/telnet server is needed); `Starting network: FAIL` is harmless (eth0 is already
+configured by `ip=`). Typing on the serial console still loses characters (0.15–0.2 s per character helps; one
+Enter was lost and had to be resent).
+
+**Typing test for later** (10 min, recorded): `usbhostd -v -s 30` logs `kbd #N` for every key-down; expected on
+the console after typing `root⏎` then `ls⏎` on the wireless keyboard: `kbd #1` … `kbd #7` and the login on the
+DVI screen.
+
+### 7.4 Remaining order
 
 Order (FPGA rules: do not power-cycle the board, only `openFPGALoader -r`; every bitstream is packed with
 `gmpack --reset` — the build script of these builds runs `gmpack --reset`, target_soc.py adds it; on instability
@@ -414,7 +497,8 @@ suspect first a missing `--reset`, then timing, never the Pi's supply):
    USB-C (LS path of the PHY on the board).
 2. ULX5M-GS in the CM4 IO board, keyboard on a hub port: `root port: FS device`, `hub with 4 ports`,
    `hub port N: LS device`, `boot keyboard` (PRE mode).
-3. Then the Buildroot kernel with uinput.
+3. Buildroot 6.12 with uinput: booted and measured (§7.3); the typing test (keys + login on tty1) and the DVI
+   picture check are left.
 
 ## 8. Files
 

@@ -1,0 +1,48 @@
+diag: up 214.86 load 3.04 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 291.59 load 2.66 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 381.69 load 2.25 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 468.98 load 1.97 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 550.17 load 2.25 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 635.08 load 2.06 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+[  749.378123] random: crng init done
+diag: up 719.49 load 1.99 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 805.53 load 2.03 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+grep -E "^stat|usbh:" /var/log/usbhostd.log | tail -4 > /dev/console; killall usbhostd; sleep 3; usbhostd -v -s 60 0xf0003800 > /dev/console 2>&1 &
+diag: up 888.43 load 2.03 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 963.73 load 2.08 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 1045.79 load 2.00 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 1132.30 load 1.97 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 1213.76 load 1.94 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 1296.58 load 2.07 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 1375.48 load 1.97 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 1451.24 load 2.14 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 1530.17 load 2.04 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 1612.64 load 2.05 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 1691.45 load 2.00 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 1774.63 load 2.02 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 1860.94 load 2.02 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 1943.05 load 2.01 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 2017.52 load 2.06 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+^C
+troot@buildroot:~# tail -5 /var/log/usbhostd.log > /dev/console
+diag: up 2100.41 load 2.01 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+stat 1740 s: 126186 loops, 175878 transactions, 175844 NAK, 0 time-outs, 0 CRC errors, 1 device(s), 0 key-downs
+stat 1800 s: 130549 loops, 182002 transactions, 181968 NAK, 0 time-outs, 0 CRC errors, 1 device(s), 0 key-downs
+stat 1860 s: 134894 loops, 188118 transactions, 188084 NAK, 0 time-outs, 0 CRC errors, 1 device(s), 0 key-downs
+stat 1920 s: 139765 loops, 194452 transactions, 194418 NAK, 0 time-outs, 0 CRC errors, 1 device(s), 0 key-downs
+stat 1980 s: 144051 loops, 200546 transactions, 200512 NAK, 0 time-outs, 0 CRC errors, 1 device(s), 0 key-downs
+root@buildroot:~# killall usbhostd; usbhostd -v -s 30 0xf0003800 > /dev/console 
+2>&1 &
+root@buildroot:~# [ 2214.022864] input: usb_pnru boot keyboard/mouse as /devices/virtual/input/input1
+usbhostd: usb_pnru CSR 0xf0003800 -> /dev/uinput
+usbh: line state D+ 1 D- 0 (FS device)
+usbh: root port: FS device
+usbh: addr 1 FS VID 046d PID c534 class 0 ep0 8
+usbh: dev 000: 12 01 00 02 00 00 00 08 6d 04 34 c5 01 29 01 02 00 01
+usbh: cfg 000: 09 02 3b 00 02 01 04 a0 31 09 04 00 00 01 03 01 01 00 09 21 11 01 00 01
+usbh: cfg 024: 22 3b 00 07 05 81 03 08 00 08 09 04 01 00 01 03 01 02 00 09 21 11 01 00
+usbh: cfg 048: 01 22 b1 00 07 05 82 03 14 00 02
+usbh: boot keyboard, EP1
+usbh: boot mouse, EP2
+diag: up 2177.28 load 2.31 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+stat 30 s: 2442 loops, 3340 transactions, 3306 NAK, 0 time-outs, 0 CRC errors, 1 device(s), 0 key-downs

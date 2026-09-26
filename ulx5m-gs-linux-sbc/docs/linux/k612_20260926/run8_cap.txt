@@ -1,0 +1,70 @@
+^C
+root@buildroot:~# ps | grep -E "[g]etty|[u]sbh|[d]iag|sleep"
+   94 root     /usr/bin/usbhostd -v 0xf0003800
+   95 root     {S90usbhostd} /bin/sh /etc/init.d/S90usbhostd start
+   99 root     {S92sbcdiag} /bin/sh /etc/init.d/S92sbcdiag start
+  102 root     /sbin/getty 38400 tty1
+  123 root     grep -E [g]etty|[u]sbh|[d]iag|sleep
+root@buildroot:~# diag: up 280.16 load 2.73 vrec 0x00000000 blank 0 vt tty1 keys 0 noev 
+ps -o pid,ppid,stat,args | tail -12; cat /sys/class/tty/tty0/a
+ctive; devmem 0xf0002800 32; cat /var/log/usbhostd.log | tail -5
+   28     2 IW   [kworker/u4:2-ev]
+   29     2 IW<  [kworker/R-mld]
+   30     2 IW<  [kworker/R-ipv6_]
+   54     1 S    /sbin/klogd -n
+   76     1 S    /usr/sbin/crond -f
+   94     1 S    /usr/bin/usbhostd -v 0xf0003800
+   95     1 S    {S90usbhostd} /bin/sh /etc/init.d/S90usbhostd start
+   99     1 S    {S92sbcdiag} /bin/sh /etc/init.d/S92sbcdiag start
+  101     1 S    -sh
+  102    95 S    /sbin/getty 38400 tty1
+  133   101 R    ps -o pid,ppid,stat,args
+  134   101 S    tail -12
+tty1
+diag: up 344.91 load 3.11 vrec 0x00000000 blank 0 vt tty1 keys 0 noev 
+0x00000000
+usbh: cfg 000: 09 02 3b 00 02 01 04 a0 31 09 04 00 00 01 03 01 01 00 09 21 11 01 00 01
+usbh: cfg 024: 22 3b 00 07 05 81 03 08 00 08 09 04 01 00 01 03 01 02 00 09 21 11 01 00
+usbh: cfg 048: 01 22 b1 00 07 05 82 03 14 00 02
+usbh: boot keyboard, EP1
+usbh: boot mouse, EP2
+root@buildroot:~# head -3 /var/log/usbhostd.log; ls -l /dev/uinput /dev/input; c
+at /proc/bus/input/devices | grep -E "N:|H:"; echo HELLO-TTY1-6x8 > /dev/tty1
+usbhostd: usb_pnru CSR 0xf0003800 -> /dev/tty1
+usbh: line state D+ 1 D- 0 (FS device)
+usbh: root port: FS device
+diag: up 406.20 load 3.31 vrec 0x00000000 blank 0 vt tty1 keys 0 noev 
+ls: /dev/input: No such file or directory
+crw-------    1 root     root       10, 223 Jan  1 00:00 /dev/uinput
+root@buildroot:~# diag: up 464.70 load 3.53 vrec 0x00000000 blank 0 vt tty1 keys 0 noev 
+devmem 0xf0004000 32; devmem 0xf0004008diag: up 526.33 load 2.57 vrec 0x00000000 blank 0 vt tty1 keys 0 noev 
+ 32; devmem 0xf0004014 
+32; devmem 0xf0004014 32; devmem 0x43f00000 32; dmesg | grep -iE "framebuffer|fb
+0|reserved|43f"
+0x43F00000
+0x00000001
+0x0000EB48
+0x00005CC8
+0x00000000
+diag: up 586.08 load 3.00 vrec 0x00000000 blank 0 vt tty1 keys 0 noev 
+[    0.000000] OF: reserved mem: OVERLAP DETECTED!
+[    0.000000] OF: reserved mem: OVERLAP DETECTED!
+[    0.000000] OF: reserved mem: 0x40f00000..0x40f3ffff (256 KiB) nomap non-reusable mmode_resv1@40f00000
+[    0.000000] OF: reserved mem: 0x40f00000..0x40f7ffff (512 KiB) map non-reusable opensbi@40f00000
+[    0.000000] OF: reserved mem: 0x40f40000..0x40f5ffff (128 KiB) nomap non-reusable mmode_resv0@40f40000
+[    0.000000] OF: reserved mem: 0x43f00000..0x43f25fff (152 KiB) nomap non-reusable framebuffer@43f00000
+[    0.000000]   Normal   [mem 0x0000000040000000-0x0000000043ffffff]
+[    0.000000]   node   0: [mem 0x0000000043f00000-0x0000000043f25fff]
+[    0.000000]   node   0: [mem 0x0000000043f26000-0x0000000043ffffff]
+[    0.000000] Initmem setup node 0 [mem 0x0000000040000000-0x0000000043ffffff]
+[    1.423532] Memory: 42436K/65536K available (6842K kernel code, 583K rwdata, 1076K rodata, 278K init, 253K bss, 22680K reserved, 0K cma-reserved)
+[   11.667893] simple-framebuffer 43f00000.framebuffer: framebuffer at 0x43f00000, 0x26000 bytes
+[   11.693311] simple-framebuffer 43f00000.framebuffer: format=r5g6b5, mode=320x240x16, linelength=640
+[   12.958595] simple-framebuffer 43f00000.framebuffer: fb0: simplefb registered!
+root@buildroot:~# diag: up 645.09 load 3.25 vrec 0x00000000 blank 0 vt tty1 keys 0 noev 
+diag: up 705.57 load 2.62 vrec 0x00000000 blank 0 vt tty1 keys 0 noev 
+diag: up 768.32 load 2.24 vrec 0x00000000 blank 0 vt tty1 keys 0 noev 
+dmesg | tail -40 > /dev/tty1
+diag: up 831.78 load 2.35 vrec 0x00000000 blank 0 vt tty1 keys 0 noev 
+root@buildroot:~# diag: up 893.48 load 3.18 vrec 0x00000000 blank 0 vt tty1 keys 0 noev 
+diag: up 956.17 load 2.72 vrec 0x00000000 blank 0 vt tty1 keys 0 noev 
