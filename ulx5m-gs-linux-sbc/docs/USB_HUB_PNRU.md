@@ -4,8 +4,9 @@ Goal: a USB keyboard (and mouse) behind the USB2514B hub of the Raspberry Pi CM4
 the CM4 socket, and the same on the USB-C connector J5 of the board.
 
 Status (26.09.2026): phase 1 (gateware) and phase 2a (userspace driver) are implemented and verified in
-simulation and P&R; phase 2b (Buildroot + Linux 6.12) is building; **phase 3 (board) has not been done** —
-nothing in this document has run on the board yet.
+simulation, host tests and P&R (recommended build: §4.3); phase 2b (Buildroot + Linux 6.12) recipe is written
+and was building at the time of writing; **phase 3 (board) has not been done** — nothing in this document has
+run on the board yet.
 
 ## 1. Hardware facts (from the schematics)
 
@@ -157,11 +158,32 @@ First version (before the one-hot FSMs):
 \* gtx0 "FAIL at 125 MHz" is expected in every grec build: the DVI path runs in gtx0 with a 1-in-5 clock enable,
 nextpnr checks the 5-cycle paths as 1-cycle paths.
 
-Final version (one-hot): see §4.3.
+Final version (one-hot FSMs), seeds 1–3, all placed at **30 975–30 977 CPE_LT (75.6 %)**, RAM_HALF 50/64
+(`ref_clk` is shown against 125 MHz but runs at 25 MHz, it also "fails" in grec_3; gtx0 see above):
+
+| Build | usb (48) | sys (20) | grx (125) | gtx0* | all real clocks |
+|---|---|---|---|---|---|
+| **pll48 s1** | **63.54** | **24.80** | **140.19** | 43.21 | **PASS** |
+| pll48 s2 | 55.78 | 16.89 FAIL | 112.69 FAIL | 44.52 | fail |
+| pll48 s3 | 62.04 | 23.28 | 94.43 FAIL | 43.93 | fail |
+| bufg48 s1 | 58.76 | 22.31 | 135.80 | 42.72 | PASS |
+| bufg48 s2 | 56.25 | 23.33 | 128.60 | 44.50 | PASS |
+| bufg48 s3 | — | — | — | — | router did not converge (overuse 1 after ~20 min), stopped |
+| gtx125 | — | — | — | — | not rebuilt: the engine alone reaches ~52 of 125 MHz (§4.1) |
+
+With the one-hot FSMs the USB domain has 16–32 % margin on every routed seed; what decides a seed is, as in
+every grec build, sys and grx.
 
 ### 4.3 Recommendation
 
-TBD after the final seed sweep.
+| Option | Timing | Risk | Verdict |
+|---|---|---|---|
+| (a) pll48 | usb 56–64 MHz on all seeds; seed 1 passes every real clock | no change to Ethernet; a fabric-routed clock (skew ~1 ns, included in the analysis) | **recommended** — `build/s_usb2_pll48_s1` (DTS `tools/linux/rv32_usb2_pll48_s1.dts`) |
+| (b) gtx125 | engine ~52 MHz vs 125 needed | would need a new PHY architecture | **not feasible** |
+| (c) bufg48 | 2 of 2 routed seeds pass | TXC moves from CLK90+BUFG to CLK270 over fabric: 1G TX timing now depends on a placement-dependent fabric route (lesson I6); must be proven with ping 1G on the board, per seed | fallback if (a) misbehaves on the board |
+
+The first board bitstream is therefore **pll48 seed 1** (sha256 `1d62ac96a02bce38…`, packed with
+`gmpack --reset`, checked in its build script). It has not been on the board.
 
 ## 5. PNRU with its rv32i (for comparison)
 
