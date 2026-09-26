@@ -3,8 +3,9 @@
 # and a login shell on the DVI console. Runs only if the device tree has the usbhost@<csr> node (tools/linux/mkdts.py).
 case "$1" in
   start|"")
+    o=$(grep -o "usbhostd=[^ ]*" /proc/cmdline); o=${o#usbhostd=}    # e.g. usbhostd=-v: log every HID report
     for n in /proc/device-tree/usbhost@*; do
-      [ -e "$n" ] && [ -x /usr/bin/usbhostd ] && /usr/bin/usbhostd 0x${n##*@} > /var/log/usbhostd.log 2>&1 &
+      [ -e "$n" ] && [ -x /usr/bin/usbhostd ] && /usr/bin/usbhostd $o 0x${n##*@} > /var/log/usbhostd.log 2>&1 &
     done
     [ -e /dev/tty1 ] && ! pidof getty > /dev/null && (while true; do /sbin/getty 38400 tty1; sleep 1; done) > /dev/null 2>&1 &
     ;;

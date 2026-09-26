@@ -23,7 +23,10 @@ OVL=$W/overlay_sbc
 rm -rf "$OVL" && mkdir -p "$OVL/usr/bin" "$OVL/etc/init.d"
 make -s -C "$HERE/../../doom_linux" usbhostd
 cp "$HERE/../../doom_linux/usbhostd" "$OVL/usr/bin/"
+make -s -C "$HERE/../../doom_linux" csrpeek
+cp "$HERE/../../doom_linux/csrpeek" "$OVL/usr/bin/"
 cp "$HERE/../../usbhostd/S90usbhostd" "$OVL/etc/init.d/"
+cp -a "$HERE/rootfs/." "$OVL/"             # S20console (no cursor blink), S89fbperf + S92sbcdiag (with sbcdiag=)
 
 DEF=$W/sbc_defconfig
 cp "$EXT/configs/litex_vexriscv_defconfig" "$DEF"

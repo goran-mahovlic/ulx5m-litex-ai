@@ -1,0 +1,6 @@
+#!/bin/sh
+# TASK-5051: DVI console (fbcon on simplefb, 20 MHz CPU): no blinking cursor (every blink redraws a character cell).
+# Screen blanking is off on the kernel command line (consoleblank=0, tools/linux/mkdts.py --k612).
+[ "$1" = stop ] && exit 0
+echo 0 > /sys/class/graphics/fbcon/cursor_blink 2>/dev/null
+exit 0

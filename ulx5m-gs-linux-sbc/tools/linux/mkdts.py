@@ -7,10 +7,18 @@ KSZ9031 is configured by the hardware mdio_core), so the `litex,liteeth` node is
 TASK-5040: with --with-video (constant VIDEO_FB_BASE) a simple-framebuffer node (320x240 r5g6b5, shown 2x on DVI)
 is added, its memory is reserved (no-map) and kernel messages go to tty0 (fbcon) as well as liteuart.
 Compile on the Pi (no dtc in the container): dtc -O dtb -o rv32.dtb rv32.dts
+TASK-5051: mkdts.py <build dir> [--font NAME] [--append "ARGS"] - fbcon font (default VGA8x8, the only small font of
+the prebuilt 5.14; the Buildroot 6.12 kernel also has 6x8, 6x10, MINI4x6) and extra kernel arguments, e.g.
+--font 6x8 --append "consoleblank=0 usbhostd=-v sbcdiag=0xf0002800".
 """
-import json, os, subprocess, sys
+import argparse, json, os, subprocess, sys
 
-build = sys.argv[1]
+ap = argparse.ArgumentParser()
+ap.add_argument("build")
+ap.add_argument("--font", default="VGA8x8")
+ap.add_argument("--append", default="")
+args = ap.parse_args()
+build = args.build
 csr = os.path.join(build, "csr.json")
 dts = subprocess.run([sys.executable, "-m", "litex.tools.litex_json2dts_linux", "--root-device", "ram0", csr],
                      check=True, capture_output=True, text=True).stdout
@@ -63,7 +71,8 @@ if "video_fb_base" in c:
     # DVI console has no keyboard - a shell on the screen is started from the UART (getty/sh on tty1).
     # rootfs_dvi.cpio (tools/doom_linux/mkrootfs_dvi.py: + doom, doom1.wad) is 8,4 MB > the 8 MB initrd window
     dts = dts.replace("linux,initrd-end   = <0x41800000>;", "linux,initrd-end   = <0x41c00000>;", 1)
-    dts = dts.replace('bootargs = "console=liteuart ', 'bootargs = "fbcon=font:VGA8x8 logo.nologo console=tty0 console=liteuart ', 1)
+    dts = dts.replace('bootargs = "console=liteuart ', 'bootargs = "fbcon=font:%s logo.nologo console=tty0 console=liteuart '
+                      % args.font, 1)
 if "usb_hid" in d["csr_bases"]:
     # TASK-5047: USB HID host CSRs; S90usbhidd starts usbhidd only if this node exists (the address differs per build,
     # and a fixed address would hit another peripheral - on glr0_1 0xf0003810 is video_fb2x_dma_loop).
@@ -89,4 +98,7 @@ if "usb_pnru" in d["csr_bases"]:
 """ % (ub, ub)
     anchor = "        soc {"
     dts = dts.replace(anchor, node + anchor, 1)
+if args.append:
+    i = dts.index('bootargs = "') + len('bootargs = "')
+    dts = dts[:i] + args.append + " " + dts[i:]
 sys.stdout.write(dts)

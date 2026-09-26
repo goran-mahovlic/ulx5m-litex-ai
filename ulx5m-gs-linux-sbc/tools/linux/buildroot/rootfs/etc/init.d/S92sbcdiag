@@ -1,0 +1,20 @@
+#!/bin/sh
+# TASK-5051 board test (only with `sbcdiag=<video_recoveries CSR>` on the kernel command line): every 10 s one line on the
+# serial console - uptime, load, video recoveries (DVI resync watchdog, --video-recover), console blanking, the active VT,
+# key-downs seen by usbhostd (-v log) and bytes read from the evdev node of usbhostd (16 bytes per input_event on rv32).
+a=$(grep -o "sbcdiag=[^ ]*" /proc/cmdline) || exit 0
+[ "$1" = stop ] && { killall -q cat; exit 0; }
+a=${a#sbcdiag=}
+(
+  sleep 5
+  ev=$(grep -l "usb_pnru" /sys/class/input/event*/device/name 2>/dev/null | head -1 | sed 's|.*/\(event[0-9]*\)/.*|\1|')
+  [ -n "$ev" ] && cat /dev/input/$ev > /tmp/evdev.bin &
+  while true; do
+    read u _ < /proc/uptime; read l1 l2 l3 _ < /proc/loadavg
+    k=$(grep "^kbd #" /var/log/usbhostd.log 2>/dev/null | tail -1 | sed 's/^kbd #\([0-9]*\):.*/\1/')
+    echo "diag: up ${u} load $l1 vrec $(devmem $a 32) blank $(cat /sys/module/kernel/parameters/consoleblank)" \
+         "vt $(cat /sys/class/tty/tty0/active) keys ${k:-0} ${ev:-noev} $(wc -c < /tmp/evdev.bin 2>/dev/null)" > /dev/console
+    sleep 10
+  done
+) > /dev/null 2>&1 &
+exit 0

@@ -58,6 +58,15 @@ static int hid_kbd_events(const uint8_t *prev, const uint8_t *cur, struct hid_ev
 	return n;
 }
 
+/* Number of key-down events (modifiers included) in ev[0..n-1]: the board test counts every press (usbhostd -v). */
+static int hid_key_downs(const struct hid_ev *ev, int n)
+{
+	int k = 0;
+	for (int i = 0; i < n; i++)
+		k += ev[i].type == EV_KEY && ev[i].value == 1 && ev[i].code < BTN_LEFT;
+	return k;
+}
+
 /* Boot mouse report (buttons, dx, dy[, wheel]) -> events. `prev_btn` holds the last button state. */
 static int hid_mouse_events(uint8_t *prev_btn, const uint8_t *r, int len, struct hid_ev *ev)
 {

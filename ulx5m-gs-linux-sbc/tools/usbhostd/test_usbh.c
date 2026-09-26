@@ -402,6 +402,9 @@ int main(int argc, char **argv)
 		n = hid_kbd_events(r2, r3, ev, 16);
 		CHECK(n == 4 && ev[0].code == 42 && ev[0].value == 0 && ev[1].value == 0 && ev[2].value == 0,
 		      "uinput: all released -> 3 key-up + SYN (%d events)", n);
+		n = hid_kbd_events(r0, r2, ev, 16);   /* shift + h + i in one report */
+		CHECK(hid_key_downs(ev, n) == 3 && hid_key_downs(ev, hid_kbd_events(r2, r3, ev, 16)) == 0,
+		      "key counter: 3 key-downs in one report, 0 on release");
 		uint8_t btn = 0, m[4] = {0x01, 0xfe, 3, 0};
 		n = hid_mouse_events(&btn, m, 4, ev);
 		CHECK(n == 4 && ev[0].code == BTN_LEFT && ev[1].code == REL_X && ev[1].value == -2 && ev[2].value == 3,

@@ -1,0 +1,17 @@
+#!/bin/sh
+# TASK-5051 board test (only with `sbcdiag=` on the kernel command line): time the DVI console (fbcon) before the
+# getty of S90usbhostd draws on tty1. Times from /proc/uptime (10 ms); results go to the serial console.
+grep -q "sbcdiag=" /proc/cmdline || exit 0
+[ "$1" = stop ] && exit 0
+up() { read u _ < /proc/uptime; echo "${u%.*}${u#*.}"; }          # centiseconds
+T=/dev/tty1
+s=$(head -c 1000 /dev/zero | tr '\0' 'x')
+t0=$(up); printf '\033[H\033[J%s' "$s" > $T; t1=$(up)
+i=0; t2=$(up); while [ $i -lt 100 ]; do printf a > $T; i=$((i+1)); done; t3=$(up)
+i=0; while [ $i -lt 100 ]; do printf a > /dev/null; i=$((i+1)); done; t4=$(up)
+i=0; t5=$(up); while [ $i -lt 40 ]; do echo "line $i scroll test ................................"; i=$((i+1)); done > $T; t6=$(up)
+printf '\033[H\033[J' > $T
+echo "fbperf: $(cat /proc/cmdline | grep -o 'fbcon=[^ ]*') 1000 chars in one write: $(( (t1-t0)*10 )) ms;" \
+     "100 single-char writes: $(( (t3-t2)*10 )) ms (same loop to /dev/null $(( (t4-t3)*10 )) ms);" \
+     "40 lines (scrolling): $(( (t6-t5)*10 )) ms" > /dev/console
+exit 0

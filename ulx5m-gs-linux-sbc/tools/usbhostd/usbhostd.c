@@ -51,6 +51,7 @@ struct ctx {
 	char rep[4];
 	int nrep;
 	uint32_t t_rep;
+	uint32_t n_keys;                /* key-downs so far (logged with -v) */
 };
 
 static void push(int tty, const char *s, int n)
@@ -103,13 +104,16 @@ static void c_kbd(void *cv, const uint8_t r[8])
 {
 	struct ctx *c = cv;
 	char out[24];
+	struct hid_ev ev[20];
+	int nev = hid_kbd_events(c->prev, r, ev, 20);
+	c->n_keys += hid_key_downs(ev, nev);
 	if (c->verbose && memcmp(c->prev, r, 8)) {
-		printf("kbd: %02x %02x %02x %02x %02x %02x %02x %02x\n", r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7]);
+		printf("kbd #%u: %02x %02x %02x %02x %02x %02x %02x %02x t %u\n", (unsigned)c->n_keys,
+		       r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], (unsigned)sys_ms());
 		fflush(stdout);
 	}
 	if (c->ui >= 0) {                       /* the kernel does the typematic repeat */
-		struct hid_ev ev[20];
-		ui_emit(c->ui, ev, hid_kbd_events(c->prev, r, ev, 20));
+		ui_emit(c->ui, ev, nev);
 		memcpy(c->prev, r, 8);
 		return;
 	}
