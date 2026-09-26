@@ -165,4 +165,10 @@ The scripts in `tools/` still contain our local paths and IP addresses. Change t
 - `SBC_DVI_USB_TASK-5047.md`: the clock/PLL problem and the USB keyboard,
 - `LESSONS_GATEMATE.md`: general GateMate lessons.
 
-Some documents in that folder are in Croatian.
+---
+
+## Contact
+
+**Intergalaktik d.o.o.**  
+[intergalaktik.eu](https://intergalaktik.eu)  
+[warp@intergalaktik.eu](mailto:warp@intergalaktik.eu)
