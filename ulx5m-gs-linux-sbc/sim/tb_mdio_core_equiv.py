@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""TASK-5048 (uputa #69/#70): gateware/mdio_core.py (Migen) against the former gateware/verilog/mdio_core.v.
+"""TASK-5048 (instruction #69/#70): gateware/mdio_core.py (Migen) against the former gateware/verilog/mdio_core.v.
 
 Both run side by side in Icarus Verilog, each with its own KSZ9031 MDIO slave model (PHY ID 0x0022/0x1622 at one
 PHYAD, register file reset by RESET_N, writes stored, reads answered after TA). Every sys clock the testbench

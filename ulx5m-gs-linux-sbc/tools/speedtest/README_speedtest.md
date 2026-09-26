@@ -33,7 +33,7 @@ Docker NAT. A host on the LAN without NAT (e.g. node-A 192.168.10.20) measures b
 | node-A 192.168.10.20 | 1 Gb/s bridge | measured by REGOČ | | |
 | dell-home (Goran, `ulx_blast`, 8 threads sendmmsg) | 1 Gb/s | host sent 110.2 Mb/s, board received 43995/50000 (12 % lost), **board measured 95.67 Mb/s** | | |
 
-Open question (REGOČ, uputa #39): the board caps at ~96 Mb/s of 1472 B datagrams = ~8.1 kpps, the same figure as
+Open question (REGOČ, instruction #39): the board caps at ~96 Mb/s of 1472 B datagrams = ~8.1 kpps, the same figure as
 from the 100 Mb/s Pi, so the limit is the CPU/MAC (VexRiscv lite at 20 MHz polling 2 RX slots of 2 KiB), not
 the link. No PAUSE frames come from the board: LiteEth has no 802.3x flow control and the KSZ9031
 advertisement written by mdio_core (REG4 = 0x0001) has the pause bits 10/11 clear. Why the host sends only

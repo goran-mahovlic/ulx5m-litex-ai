@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""TASK-5033 (uputa #33/#34): Ethernet speed test against the ULX5M-GS speedtest.bin (netboot SoC, CPU port).
+"""TASK-5033 (instruction #33/#34): Ethernet speed test against the ULX5M-GS speedtest.bin (netboot SoC, CPU port).
 
     eth_speedtest.py [ip] [--count N] [--sizes 64,512,1472]
 

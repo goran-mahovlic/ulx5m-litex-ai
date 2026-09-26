@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""mkrootfs.py <orig.cpio> <out.cpio> — ULX5M-GS rootfs.cpio (newc) s dodacima:
-  - /etc/network/interfaces: eth0 statički 192.168.10.213 odmah na bootu
-  - /bin/banner, /bin/banner_ascii: banner programi (rv32ima Linux, statički)
-  /etc/motd ostaje originalni LiteX banner (Goran, 25.09.2026.).
-Postojeće datoteke istog imena zamjenjuju se, nove se dodaju prije TRAILER-a."""
+"""mkrootfs.py <orig.cpio> <out.cpio> — ULX5M-GS rootfs.cpio (newc) with additions:
+  - /etc/network/interfaces: eth0 static 192.168.10.213 right at boot
+  - /bin/banner, /bin/banner_ascii: banner programs (rv32ima Linux, static)
+  /etc/motd keeps the original LiteX banner (Goran, 2026-09-25).
+Existing files with the same name are replaced, new ones are added before the TRAILER."""
 import os
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ADD = {  # ime u arhivi -> (mode, datoteka u ovoj mapi)
+ADD = {  # name in archive -> (mode, file in this folder)
     "etc/network/interfaces": (0o100644, "interfaces"),
     "bin/banner":             (0o100755, "banner"),
     "bin/banner_ascii":       (0o100755, "banner_ascii"),
@@ -26,7 +26,7 @@ def parse(d):
             return ents, h
         ents.append((h, name, d[p:p + fs]))
         i = (p + fs + 3) & ~3
-    raise SystemExit("nije newc cpio ili nema TRAILER-a")
+    raise SystemExit("not a newc cpio or no TRAILER")
 
 
 def fields(h):
@@ -52,15 +52,15 @@ def main():
         if name in add:
             mode, data = add.pop(name)
             f[1] = mode
-            print("zamijenjeno:", name, len(data), "B")
+            print("replaced:", name, len(data), "B")
         res += entry(f, name, data)
-    tmpl = fields(ents[0][0])  # uid/gid/mtime/dev kao u izvorniku (root)
+    tmpl = fields(ents[0][0])  # uid/gid/mtime/dev as in the original (root)
     for name, (mode, data) in add.items():
         f = list(tmpl)
         f[0], f[1], f[4] = ino, mode, 1
         ino += 1
         res += entry(f, name, data)
-        print("dodano:     ", name, len(data), "B")
+        print("added:      ", name, len(data), "B")
     res += entry(fields(trailer), "TRAILER!!!", b"")
     res += b"\0" * ((512 - len(res) % 512) % 512)
     open(out, "wb").write(res)

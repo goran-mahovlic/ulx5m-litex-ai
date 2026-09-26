@@ -22,7 +22,7 @@ EXPECT = {
                 {"CONFIG_BIOS_NO_BOOT", "NET_BOOT_DISABLE", "SDCARD_BOOT_DISABLE"}),
 }
 EXTRA = []   # (name, extra args, present, absent)
-# The ident (BIOS banner, `ident` command) names the CPU address and MAC (uputa #32)
+# The ident (BIOS banner, `ident` command) names the CPU address and MAC (instruction #32)
 IDENT = {"netboot": ["CPU/TFTP 192.168.10.213", "10:e2:d5:00:00:01"],
          "none":    ["CPU/TFTP 192.168.10.213"]}
 VALUES = {"netboot": {"NET_BOOT_PRIORITY": "-1", "LOCALIP4": "213", "REMOTEIP4": "14"},

@@ -123,7 +123,7 @@ class FrameBuffer2x(LiteXModule):
                       self.watchdog.frame_ok.eq(mk() & self.scaler.frame_ok)]
         self.wd = self.watchdog.wd
 
-        # Diagnostics (TASK-5040 uputa #59): counters in the video domain, read through MultiReg (a torn read is
+        # Diagnostics (TASK-5040 instruction #59): counters in the video domain, read through MultiReg (a torn read is
         # possible but harmless for a slowly moving counter). frames = VTG frame ends, underflows = pixels the
         # scaler needed but the DMA FIFO did not have, resyncs = frames that ended without the DMA `last`.
         self._frames    = CSRStatus(32, description="VTG frames shown (video domain)")

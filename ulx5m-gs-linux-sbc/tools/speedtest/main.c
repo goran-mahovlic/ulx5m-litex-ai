@@ -1,4 +1,4 @@
-// TASK-5033 (uputa #33): bare-metal Ethernet speed test for the ULX5M-GS netboot SoC (CPU port 192.168.10.213).
+// TASK-5033 (instruction #33): bare-metal Ethernet speed test for the ULX5M-GS netboot SoC (CPU port 192.168.10.213).
 // Loaded by the BIOS netboot from TFTP (boot.json -> speedtest.bin at main_ram). Driven over UDP by the Pi
 // (tools/speedtest/eth_speedtest.py); every result is also printed on the BIOS serial (GPIO4/5).
 //   port 5000  control (ASCII): "RX" start sink | "RXEND" -> "RXSTAT <pkts> <bytes> <ticks>"
