@@ -167,6 +167,30 @@ The scripts in `tools/` still contain our local paths and IP addresses. Change t
 
 ---
 
+## Built on
+
+This work is built on these open-source projects. Without them it would not exist:
+
+| Project | What we use it for |
+|---|---|
+| [LiteX](https://github.com/enjoy-digital/litex) | SoC builder, BIOS, CPU integration, build flow |
+| [LiteEth](https://github.com/enjoy-digital/liteeth) | Ethernet MAC (and the IP stack in the CPU-less designs) |
+| [LiteDRAM](https://github.com/enjoy-digital/litedram) | SDRAM controller |
+| [LiteSDCard](https://github.com/enjoy-digital/litesdcard) | SD card support (not working on this board yet) |
+| [Migen](https://github.com/m-labs/migen) | Python hardware description language that LiteX uses |
+| [VexRiscv](https://github.com/SpinalHDL/VexRiscv) / [pythondata-cpu-vexriscv_smp](https://github.com/litex-hub/pythondata-cpu-vexriscv_smp) | RISC-V CPU |
+| [linux-on-litex-vexriscv](https://github.com/litex-hub/linux-on-litex-vexriscv) | Prebuilt Linux 5.14, Buildroot root file system and OpenSBI |
+| [Yosys](https://github.com/YosysHQ/yosys), [nextpnr](https://github.com/YosysHQ/nextpnr) (himbaechel/GateMate), [Project Peppercorn](https://github.com/YosysHQ/prjpeppercorn) (`gmpack`) | Open-source synthesis, place and route, and bitstream packing for GateMate |
+| [oss-cad-suite](https://github.com/YosysHQ/oss-cad-suite-build) | Ready-made bundle of the tools above |
+| [openFPGALoader](https://github.com/trabucayre/openFPGALoader) | Loading bitstreams over JTAG |
+| [smunaut/doom_riscv](https://github.com/smunaut/doom_riscv) | DOOM engine for RISC-V (we added a Linux framebuffer layer) |
+| [emard/ulx3s-misc](https://github.com/emard/ulx3s-misc) | USB 1.1 HID host (Ultra-Embedded SIE + OpenCores USB PHY) |
+
+Our own code is BSD-2-Clause. Files taken from other projects keep their original license: the DOOM files
+in `tools/doom_linux/` are GPL v2+, and the USB host in `gateware/verilog/usbhost/` is GPL.
+
+---
+
 ## Contact
 
 **Intergalaktik d.o.o.**  
