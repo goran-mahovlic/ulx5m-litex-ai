@@ -274,13 +274,49 @@ The first run therefore used the PNRU build, which answers both questions in one
 - Boot: `tools/linux/lxrun.sh <bit> rv32_usb2.dtb rootfs_usb.cpio 720 "cat /var/log/usbhostd.log" …` on the Pi
   (rootfs: the REGOČ rootfs + `usbhostd`, padded to 12 MiB for the initrd window).
 
-Result: the pll48 s1 bitstream (sha256 `1d62ac96…`) loaded, **Linux 5.14 booted to `/init` (syslogd, klogd
-started)** — first board evidence that the SoC with the PNRU engine runs. At about that moment (init scripts:
-network, `S90usbhostd` enumerating the receiver) **the Pi 192.168.10.14 stopped answering** (LAN and Tailscale,
-ssh and the 8090 stream; other hosts on the LAN fine). The line-state/descriptor log was not read. Suspects, not
-yet measured: the baseboard is fed with 5 V through the 40-pin header — if that is the Pi's 5 V, the receiver
-drawing its configured current plus the FPGA may brown out the Pi; or an unrelated Pi hang. Nothing was
-power-cycled; waiting for Goran.
+Result of the first build (`pll48 s1`, sha256 `1d62ac96…`), three boots (Linux 5.14, TFTP netboot):
+
+| Observation | Measured |
+|---|---|
+| SoC | Linux boots, DVI console, 1G ping: the grec_3 SoC with the PNRU engine works |
+| Device speed | `usbh: line state D+ 1 D- 0 (FS device)`: the wireless receiver is **full speed** (Emard's LS host cannot talk to it) |
+| Host → device | SETUP, SET_ADDRESS accepted (the device answers on its new address): TX path works |
+| Device → host | `usbdiag` (raw register trace): IN with a **valid CRC** returns `01 00 02 00 00 00 08 00`; the device descriptor starts `12 01 00 02 00 00 00 08` — every byte at an even buffer address is lost, odd addresses read 0 |
+| Intermittent | some IN packets arrive with `crc_err` (e.g. PID 4b, 8 bytes, CRC flag) |
+| Pi outage 16:27–16:41 | a network outage, not a crash (Pi uptime 5 h); the Pi logs under-voltage all day (158× in 5 h, before the test too) |
+
+Two faults, both fixed in the gateware (§7.1.1):
+
+1. **RX buffer:** in the first build the RX RAM was written in the `usb` domain, whose clock is fabric-routed (pll48,
+   no global net) and enters the RAM through a CPE; nextpnr merged that RAM into a shared block
+   (`$ram$merged$id21`, write enable on `WEA[1]`), and the write address bit 0 was lost: bytes 0 and 1 go to
+   location 0 (1 overwrites 0), odd locations stay 0 — exactly `b1 0 b3 0 …`. The TX RAM (written in `sys`) was
+   fine. The RTL and the simulation are correct; the fault is in the mapping.
+2. **Receiver margin at 48 MHz:** the ULX5M-GS has no differential receiver on the USB lines; like on the ULX3S
+   without `usb_fpga_dp`, D+ alone is the data input. New cocotb test `t10` drives the device with a skewed D-
+   (SE0/SE1 transients at every edge) and with duty-cycle distortion on D+ (late rising edge):
+
+   | engine clock (samples/bit) | none | D- skew 10/20/30 ns | D+ DCD 8 / 16 ns | skew 20 + DCD 8 |
+   |---|---|---|---|---|
+   | 48 MHz (4, PNRU) | ok | ok / ok / FAIL | **FAIL / FAIL** (PID 4b → 9b, extra bits) | FAIL |
+   | 60 MHz (5) | ok | ok / ok / ok | ok / ok | ok |
+   | 96, 125 MHz | ok | ok | ok | ok |
+
+   A few ns of D+ distortion is normal for a single-ended input, so at 48 MHz the receiver has no margin; this
+   matches the intermittent CRC errors. From 60 MHz every case passes.
+
+The serial console was the practical obstacle: under load the Linux console drops typed
+characters; commands were typed at 0.1 s/char and long-running ones interrupted with Ctrl-C.
+
+#### 7.1.1 Fix: RX buffer in `sys`, engine at 60 MHz
+
+- `gateware/usb_pnru.py`: both RX RAM ports in `sys`; each received byte is handed from `usb` to `sys` with a
+  toggle (2-FF synchronizer) and a byte register that holds still until the next push (one byte per 8 bit times
+  = 0.67 µs at FS = 13 sys clocks). The simulation results of §3 are unchanged.
+- `gateware/target_soc.py --usb-pnru-freq 60e6`: the same third PLL on fabric routing (no global net), 60 MHz.
+  The PHY's NCO makes any clock ≥ 48 MHz work (§2.1).
+- A line-capture block (1024 samples) was tried for the diagnosis but does not place in the full SoC (placer
+  limit, 75 % CPE_LT, lesson J7); it is not in the source.
 
 ### 7.2 Remaining order
 

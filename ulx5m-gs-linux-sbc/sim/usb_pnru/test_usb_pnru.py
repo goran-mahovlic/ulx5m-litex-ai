@@ -184,6 +184,8 @@ class TB:
         self.dev_busy = False
         self.log = dut._log
         self.processed = set()     # t0 of the packets already handled
+        self.skew_ps = 0           # device driver impairments (t10): D- transitions late by skew_ps,
+        self.dcd_ps = 0            # D+ rising edges late by dcd_ps (single-ended threshold / duty-cycle distortion)
         self.csr = json.load(open(os.environ["CSR_MAP"])) if KIND == "mig" else None
 
     async def start(self):
@@ -357,10 +359,24 @@ class TB:
         t0 = get_sim_time("ps")
         d.dev_dp.value, d.dev_dn.value = J
         d.dev_oe.value = 1
+        ev, cp, cn = [], J[0], J[1]
         for k, (p, n) in enumerate(seq):
-            d.dev_dp.value = p
-            d.dev_dn.value = n
-            await Timer(round(t0 + (k + 1)*T) - get_sim_time("ps"), unit="ps")
+            tk = t0 + k*T
+            if p != cp:
+                ev.append((tk + (self.dcd_ps if p else 0), 0, p))
+            if n != cn:
+                ev.append((tk + self.skew_ps, 1, n))
+            cp, cn = p, n
+        for t, which, v in sorted(ev):
+            if round(t) > get_sim_time("ps"):
+                await Timer(round(t) - get_sim_time("ps"), unit="ps")
+            if which == 0:
+                d.dev_dp.value = v
+            else:
+                d.dev_dn.value = v
+        t_end = round(t0 + len(seq)*T + max(self.skew_ps, self.dcd_ps))
+        if t_end > get_sim_time("ps"):
+            await Timer(t_end - get_sim_time("ps"), unit="ps")
         d.dev_oe.value = 0
         self.dev_busy = False
 
@@ -595,3 +611,40 @@ async def t09_bus_reset_and_detect(dut):
     await Timer(60, unit="us")
     st = await tb.rd("stat")
     assert not (st & STAT_DETECT) and not (st & 3), hex(st)
+
+
+@cocotb.test()
+async def t10_fs_rx_impairments(dut):
+    """FS IN with a skewed D- (SE0/SE1 transients at every edge) and a late D+ rising edge (duty-cycle distortion
+    of the single-ended D+ input): records which impairments still give an intact packet. Board finding (TASK-5051):
+    at 48 MHz (4 samples per bit, PNRU's clock) 8 ns of D+ distortion already inserts bits (PID 4b -> 9b); from
+    60 MHz (5 samples) every case passes, so the SoC runs the engine at 60 MHz (--usb-pnru-freq 60e6)."""
+    if KIND != "mig":
+        return
+    tb = TB(dut)
+    await tb.start()
+    dut.dev_pull.value = 1
+    payload = [0x12, 0x01, 0x00, 0x02, 0x00, 0x00, 0x00, 0x08]
+    tb.handler = lambda p: {"bytes": data_packet(PID_DATA1, payload)} if p["bytes"][:1] == [PID_IN] else None
+    modes = ["pnru"]
+    cases = {"none": (0, 0), "skew10": (10000, 0), "skew20": (20000, 0), "skew30": (30000, 0),
+             "dcd8": (0, 8000), "dcd16": (0, 16000), "skew20_dcd8": (20000, 8000)}
+    table = {}
+    for mn in modes:
+        for cn, (sk, dc) in cases.items():
+            tb.skew_ps, tb.dcd_ps = sk, dc
+            await tb.root_config("fs")
+            await Timer(2, unit="us")
+            s, rx = await tb.transaction(PID_IN, 5, 1, data1=True)
+            await Timer(20, unit="us")
+            ok = ((s >> 16) & 0xff) == PID_DATA1 and not (s & (RX_TIMEOUT | RX_CRCERR)) and rx == payload
+            table["%s/%s" % (mn, cn)] = ok
+            if not ok:
+                dut._log.info("%s/%s: rx_stat %08x rx %s" % (mn, cn, s, " ".join("%02x" % b for b in rx)))
+    tb.skew_ps = tb.dcd_ps = 0
+    record("rx_impairments", table)
+    for k, v in table.items():
+        dut._log.info("%-24s %s" % (k, "ok" if v else "FAIL"))
+    assert table["pnru/none"] and table["pnru/skew20"], table
+    if USB_FREQ >= 59e6:
+        assert all(table.values()), table

@@ -21,5 +21,6 @@ mkrootfs.ADD.update({
     # TASK-5051: USB host daemon for the usb_pnru controller (J5 / CM4 IO board hub, tools/usbhostd)
     "usr/bin/usbhostd":          (0o100755, os.path.join(here, "usbhostd")),
     "etc/init.d/S90usbhostd":    (0o100755, os.path.join(here, "..", "usbhostd", "S90usbhostd")),
+    "usr/bin/usbdiag":           (0o100755, os.path.join(here, "usbdiag")),
 })
 mkrootfs.main()

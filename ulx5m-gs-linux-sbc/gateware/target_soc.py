@@ -86,7 +86,7 @@ class IS42VM16320(SDRModule):
 
 class SoCCRG(LiteXModule):
     def __init__(self, platform, sys_clk_freq, perf_mode="economy", with_gbe=False, pll_lock_req=1,
-                 usb48=None, gtx270=False):
+                 usb48=None, gtx270=False, usb_freq=48e6):
         # TASK-5047: every PLL is a GateMatePLLStdy (USR_PLL_LOCKED_STDY wired out). pll_lock_req=0: the PLL keeps
         # its clock outputs running while the raw lock flag is low (DS1001 Table 2.19); LiteX default is 1.
         from pll_stdy import GateMatePLLStdy
@@ -137,7 +137,7 @@ class SoCCRG(LiteXModule):
             self.pll_usb = pll_usb = GateMatePLL(perf_mode=perf_mode)
             self.comb += pll_usb.reset.eq(~rst_n)
             pll_usb.register_clkin(clk25, 25e6)
-            pll_usb.create_clkout(self.cd_usb, 48e6, with_reset=False)
+            pll_usb.create_clkout(self.cd_usb, usb_freq, with_reset=False)
             if usb48 == "local":
                 self.cd_usb.clk.attr.add(("clkbuf_inhibit", 1))
             self.lock_usb = ClockDomainsRenamer("ref")(StickyLock(pll_usb.locked, int(25e6*1e-3)))
@@ -152,7 +152,7 @@ class ULX5MSoC(SoCCore):
                  fb_base=0x43f00000, video_ce_rep=False, video_neg_sync=False,
                  pll_lock_req=1, video_640x240=False, with_usb_hid=False, video_recover=False,
                  phy_write_after=0, phy_reg4=0x0001, phy_snap_csr=False, with_usb_pnru=False,
-                 usb_pnru_clk="pll48", **kwargs):
+                 usb_pnru_clk="pll48", usb_pnru_freq=48e6, **kwargs):
         platform = intergalaktik_ulx5m_gs.Platform("peppercorn")
         # nextpnr timing model = VDD_CORE 1.1 V (SPEED); PLLs stay ECONOMY (lessons B3, I9).
         platform.toolchain._pnr_opts += " --vopt fpga_mode=%d " % {"lowpower": 1, "economy": 2, "speed": 3}[pnr_mode]
@@ -163,7 +163,7 @@ class ULX5MSoC(SoCCore):
         usb48 = {"pll48": "local", "bufg48": "bufg"}.get(usb_pnru_clk) if with_usb_pnru else None
         gtx270 = with_usb_pnru and usb_pnru_clk == "bufg48"
         self.crg = crg = SoCCRG(platform, sys_clk_freq, perf_mode, with_gbe, pll_lock_req=pll_lock_req,
-                                usb48=usb48, gtx270=gtx270)
+                                usb48=usb48, gtx270=gtx270, usb_freq=usb_pnru_freq)
         kwargs.setdefault("uart_name", "serial")
         # The ident names the address and MAC the CPU answers on (BIOS `ident` command, csr.json).
         fmt_mac = lambda m: ":".join("%02x" % ((m >> (8*i)) & 0xff) for i in reversed(range(6)))
@@ -275,7 +275,7 @@ class ULX5MSoC(SoCCore):
                 self.specials += AsyncResetSynchronizer(self.cd_usb, crg.eth_rst)
             # No connect detect and no EventManager: the userspace driver polls and debounces stat.dp/dn itself
             # (-~150 LT; the full SoC is at the placer limit, lesson J7).
-            self.usb_pnru = USBHostPNRU(platform.request("usb_host"), 125e6 if usb_pnru_clk == "gtx125" else 48e6,
+            self.usb_pnru = USBHostPNRU(platform.request("usb_host"), 125e6 if usb_pnru_clk == "gtx125" else usb_pnru_freq,
                                         sys_clk_freq, pull=platform.request("usb_pull"),
                                         with_detect=False, with_events=False)
 
@@ -441,6 +441,8 @@ def main():
     p.add_argument("--video-recover", action="store_true", help="resettable video domain + resync watchdog (TASK-5047)")
     p.add_argument("--with-usb-hid", action="store_true", help="USB low-speed HID host (Emard) on J5, CSR usb_hid (TASK-5047)")
     p.add_argument("--with-usb-pnru", action="store_true", help="USB 1.1 LS/FS host (PNRU port), CSR usb_pnru (TASK-5051)")
+    p.add_argument("--usb-pnru-freq", type=float, default=48e6,
+                   help="USB engine clock for pll48/bufg48 (60e6: 5x oversampling, robust to D+ duty-cycle distortion)")
     p.add_argument("--usb-pnru-clk", default="pll48", choices=USB_PNRU_CLKS, help="USB engine clock (see ULX5MSoC)")
     # MDIO controller board test (docs/REVIEW_LITEX_DUPLICATES.md): later write, other REG4, full snap as a CSR.
     p.add_argument("--phy-write-after", default=0, type=int, help="MDIO pass in which REG9/4/0 are written")
@@ -458,6 +460,7 @@ def main():
                    video_640x240=args.video_640x240, with_usb_hid=args.with_usb_hid, video_recover=args.video_recover,
                    phy_write_after=args.phy_write_after, phy_reg4=args.phy_reg4, phy_snap_csr=args.phy_snap_csr,
                    with_usb_pnru=args.with_usb_pnru, usb_pnru_clk=args.usb_pnru_clk,
+                   usb_pnru_freq=args.usb_pnru_freq,
                    **soc_core_argdict(args))
     if args.synth_extra:
         soc.platform.toolchain._synth_opts += " " + args.synth_extra + " "

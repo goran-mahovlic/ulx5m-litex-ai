@@ -26,6 +26,9 @@ usbhidd: ../usbhidd/usbhidd.c sys_linux.c ../usbhidd/hidkey.h
 usbhostd: ../usbhostd/usbhostd.c ../usbhostd/usbh.c ../usbhostd/usbh.h sys_linux.c ../usbhidd/hidkey.h
 	$(CC) $(CFLAGS) $(LDFLAGS) -I../usbhidd -I../usbhostd -o $@ ../usbhostd/usbhostd.c ../usbhostd/usbh.c sys_linux.c -lc -lgcc
 
+usbdiag: ../usbhostd/usbdiag.c sys_linux.c ../usbhostd/usbh.h
+	$(CC) $(CFLAGS) $(LDFLAGS) -I../usbhostd -o $@ ../usbhostd/usbdiag.c sys_linux.c -lc -lgcc
+
 clean:
-	rm -f doom csrpeek usbhidd usbhostd
+	rm -f doom csrpeek usbhidd usbhostd usbdiag
 .PHONY: clean

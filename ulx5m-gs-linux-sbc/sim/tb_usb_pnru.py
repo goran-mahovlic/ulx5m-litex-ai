@@ -26,7 +26,9 @@ PNRU_COMMIT = "47408bb"
 SYS_FREQ    = 20e6
 # name: (kind, usb clock, small = the SoC configuration: no connect detect, no EventManager)
 CONFIGS     = {"ref48": ("ref", 48e6, False), "mig48": ("mig", 48e6, False), "mig125": ("mig", 125e6, False),
-               "mig48s": ("mig", 48e6, True), "mig125s": ("mig", 125e6, True)}
+               "mig48s": ("mig", 48e6, True), "mig125s": ("mig", 125e6, True),
+               "mig60s": ("mig", 60e6, True), "mig72s": ("mig", 72e6, True), "mig96s": ("mig", 96e6, True),
+               "mig54s": ("mig", 54e6, True), "mig56s": ("mig", 56e6, True)}
 
 
 def fetch_pnru():
@@ -95,6 +97,8 @@ def run(cfg):
         sources, top = [os.path.join(out, "usb_pnru_dut.v"), os.path.join(TBDIR, "tb_mig_top.v")], "tb_mig_top"
         env = {"CSR_MAP": os.path.join(out, "csr_map.json")}
         build_args = []
+    if os.environ.get("COCOTB_TEST_FILTER"):
+        env["COCOTB_TEST_FILTER"] = os.environ["COCOTB_TEST_FILTER"]
     env.update({"DUT_KIND": kind, "USB_FREQ": str(freq), "RESULTS_JSON": res, "DUT_SMALL": "1" if small else "0"})
     r = get_runner("icarus")
     r.build(sources=sources, hdl_toplevel=top, build_dir=out, always=True, timescale=("1ns", "1ps"),
