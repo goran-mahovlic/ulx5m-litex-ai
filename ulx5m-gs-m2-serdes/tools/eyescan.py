@@ -4,12 +4,16 @@
     fpga-jtag m2 run python3 eyescan.py scan --ph=-32:31:2 --th=-15:15:2 --window 512 --out eye_m2.json
     fpga-jtag gs run python3 eyescan.py set RX_EN_EQA=1 RX_AFE_PEAK=24 TX_SEL_PRE=5   # any serdestool field
     fpga-jtag gs run python3 eyescan.py get RX_EN_EQA RX_EQA_LOCKED RX_EQA_TAPW RX_TH_MON RX_OFFSET
+    fpga-jtag gs run python3 eyescan.py recal [--rx]      # after field writes: TX/RX calibration + DFE (or RX) reset
+    fpga-jtag gs run python3 eyescan.py health -n 10 --out h.json   # E0: PLL/BISC/calib/EQA/CDR + FREQ_ACC x10
     python3 eyescan.py margin eye_m2.json [--target 1e-3]
     python3 eyescan.py plot eye_m2.json eye_m2.png        # needs numpy + matplotlib (eyetools.py, pu-cc 83d7858)
 
 How a point is measured (DS1001 2026-09, tables 2.44-2.47, regfile 0x05, 0x14-0x1D): monitor 2 samples the
 received signal at phase RX_MON_PH_OFFSET (0x15[5:0], signed, 64 codes = 1 UI as in eyetools) against threshold
-RX_TH_MON2 (0x05[10:6], signed; override enable RX_EN_EQA_EXT_VALUE[1] = 0x05[11]). Writing RX_EYE_MEAS_EN=1 with
+RX_TH_MON2 (0x05[10:6], signed). Its override enable is 0x06[11] (vendor map, serdestool 56aa48b: RX_TH_MON2_OVR +
+RX_AFE_OFFSET_OVR; 0x05[11] is unused - TUNING_5G.md §5.1). The monitor only runs with RX_EN_EQA=1 and
+RX_EQA_LOCK_CFG bit1 (select monitor output for capturing); scan sets both and restores them. Writing RX_EYE_MEAS_EN=1 with
 the window count in RX_EYE_MEAS_CFG (0x14[15:4]) starts a measurement; the bit clears when it is done. The
 counters 0x16-0x1D hold correct/wrong decisions of the monitor for the bit classes X11, X00, 001, 110 (the data
 sampler's decision is the reference). BER of a point = wrong / (correct + wrong) over all classes.
@@ -48,8 +52,24 @@ def s6_value(c):
 
 
 def th2_write(th):
-    """(addr, data, mask): RX_TH_MON2 = th with its override bit set."""
-    return 0x05, (s5_code(th) << 6) | (1 << 11), 0x0FC0
+    """(addr, data, mask): RX_TH_MON2 = th (0x05[10:6]); the override bit is separate (th2_ovr_write)."""
+    return 0x05, s5_code(th) << 6, 0x07C0
+
+
+def th2_ovr_write(on):
+    """(addr, data, mask): RX_TH_MON2_OVR (+ RX_AFE_OFFSET_OVR) = 0x06[11]. It also makes the RX_AFE_OFFSET register
+    field (0x06[10:6]) active, so the scan leaves that field as it is and restores 0x06 afterwards."""
+    return 0x06, (1 << 11) if on else 0, 0x0800
+
+
+def scan_prep(cur):
+    """Field writes needed before a scan: DFE adaption on and EQA_LOCK_CFG bit1 (monitor output for capturing)."""
+    w = {}
+    if cur['RX_EN_EQA'] != 1:
+        w['RX_EN_EQA'] = 1
+    if not cur['RX_EQA_LOCK_CFG'] & 2:
+        w['RX_EQA_LOCK_CFG'] = cur['RX_EQA_LOCK_CFG'] | 2
+    return w
 
 
 def ph_write(ph):
@@ -136,9 +156,15 @@ def cmd_scan(a):
     if sd.field('SERDES_TESTMODE') != 1:
         print('board=%s: SERDES_TESTMODE=0, regfile writes are ignored' % sd.board); return 1
     s = sd.s
-    keep = {x: int(s.rd_regfile(x)) for x in (0x05, 0x14, 0x15)}
-    status = s.rd_fields(['RX_EN_EQA', 'RX_EQA_LOCKED', 'RX_EQA_TAPW', 'RX_TH_MON', 'RX_OFFSET', 'RX_CDR_LOCKED',
-                          'RX_AFE_PEAK', 'RX_AFE_GAIN', 'RX_CDR_CKP', 'TX_SEL_PRE', 'TX_SEL_POST', 'TX_AMP'])
+    keep = {x: int(s.rd_regfile(x)) for x in (0x04, 0x05, 0x06, 0x14, 0x15)}
+    status = s.rd_fields(['RX_EN_EQA', 'RX_EQA_LOCK_CFG', 'RX_EQA_LOCKED', 'RX_EQA_TAPW', 'RX_TH_MON', 'RX_OFFSET',
+                          'RX_AFE_OFFSET', 'RX_CDR_LOCKED', 'RX_AFE_PEAK', 'RX_AFE_GAIN', 'RX_CDR_CKP', 'TX_SEL_PRE',
+                          'TX_SEL_POST', 'TX_AMP'])
+    prep = scan_prep(status)
+    if prep:
+        s.wr_fields(prep)
+        time.sleep(0.5)
+    s.wr_regfile(*th2_ovr_write(1))
     phs, ths = parse_range(a.ph), parse_range(a.th)
     pts, t0 = {}, time.time()
     try:
@@ -213,6 +239,89 @@ def cmd_get(a):
     return 0
 
 
+# ------------------------------------------------------------------ E0 health, sweep procedure (TASK-5066)
+HEALTH_FIELDS = ['PLL_LOCKED', 'PLL_CAP_FT_OF', 'PLL_CAP_FT_UF', 'PLL_CAP_FT', 'PLL_CAP_STATE',          # 0x55
+                 'PLL_BISC_TIMER_DONE', 'PLL_BISC_CP_VALID', 'PLL_BISC_CP', 'PLL_BISC_OPT_DET', 'PLL_BISC_CO',  # 0x5A/5B
+                 'RX_CALIB_DONE', 'RX_CALIB_CAL', 'TX_CALIB_DONE', 'TX_CALIB_CAL',                             # 0x02/0x3C
+                 'RX_EN_EQA', 'RX_EQA_LOCK_CFG', 'RX_EQA_LOCKED', 'RX_EQA_TAPW', 'RX_TH_MON', 'RX_OFFSET',      # 0x04/0x07
+                 'RX_CDR_LOCK_CFG', 'RX_CDR_TRANS_TH', 'RX_CDR_LOCKED',                                          # 0x0B
+                 'RX_PRESENT', 'RX_DETECT_DONE', 'RX_BUF_ERR',                                                   # 0x2A[12..14]
+                 'RX_AFE_PEAK', 'RX_AFE_GAIN', 'RX_AFE_VCMSEL', 'RX_RTERM_VCMSEL', 'RX_CDR_CKP',
+                 'TX_AMP', 'TX_SEL_PRE', 'TX_SEL_POST', 'PLL_REF_RTERM']
+
+
+def s15_value(c):
+    c &= 0x7FFF
+    return c - 0x8000 if c & 0x4000 else c
+
+
+def health_verdict(f, freq_acc):
+    """E0 verdict from one field snapshot + RX_CDR_FREQ_ACC_VAL samples (15 bit, read as two's complement)."""
+    p = []
+    for k in ('PLL_CAP_FT_OF', 'PLL_CAP_FT_UF'):
+        if f[k]:
+            p.append(k)
+    for k in ('PLL_LOCKED', 'PLL_BISC_TIMER_DONE', 'PLL_BISC_CP_VALID', 'RX_CALIB_DONE', 'TX_CALIB_DONE', 'RX_CDR_LOCKED'):
+        if not f[k]:
+            p.append('%s=0' % k)
+    if f['RX_EN_EQA'] and not f['RX_EQA_LOCKED']:
+        p.append('RX_EQA_LOCKED=0')
+    v = [s15_value(x) for x in freq_acc]
+    return {'problems': p, 'freq_acc': v, 'freq_acc_span': max(v) - min(v)}
+
+
+def recal_steps(rx=False):
+    """Field writes after a JTAG change (TUNING_5G.md §3): TX/RX termination calibration (W/C), then reset the DFE
+    (or the whole RX) through the 0x2B override, then release the override. Not upstream reset_serdes_rx (0x3F)."""
+    r = ('RX_RESET_OVR', 'RX_RESET') if rx else ('RX_EQA_RESET_OVR', 'RX_EQA_RESET')
+    return [{'TX_CALIB_EN': 1}, {'RX_CALIB_EN': 1}, {r[0]: 1, r[1]: 1}, {r[0]: 0}]
+
+
+def do_recal(s, rx=False, timeout=3.0):
+    for w in recal_steps(rx):
+        s.wr_fields(w)
+        time.sleep(0.05)
+    t = time.time()
+    while time.time() - t < timeout:
+        f = s.rd_fields(['RX_EN_EQA', 'RX_EQA_LOCKED', 'RX_CDR_LOCKED', 'TX_CALIB_DONE', 'RX_CALIB_DONE'])
+        if f['RX_CDR_LOCKED'] and (f['RX_EQA_LOCKED'] or not f['RX_EN_EQA']):
+            break
+        time.sleep(0.1)
+    f['wait_s'] = round(time.time() - t, 2)
+    return f
+
+
+def cmd_recal(a):
+    from serdes_jtag import Serdes
+    sd = Serdes()
+    f = do_recal(sd.s, a.rx)
+    print('board=%s recal %s' % (sd.board, ' '.join('%s=%s' % kv for kv in f.items())))
+    sd.close()
+    return 0 if f['RX_CDR_LOCKED'] else 1
+
+
+def cmd_health(a):
+    from serdes_jtag import Serdes
+    sd = Serdes()
+    f = sd.s.rd_fields(HEALTH_FIELDS)
+    acc, ph = [], []
+    for i in range(a.n):
+        g = sd.s.rd_fields(['RX_CDR_FREQ_ACC_VAL', 'RX_CDR_PHASE_ACC_VAL', 'RX_CDR_LOCKED'])
+        acc.append(g['RX_CDR_FREQ_ACC_VAL']); ph.append(g['RX_CDR_PHASE_ACC_VAL'])
+        f['RX_CDR_LOCKED'] = f['RX_CDR_LOCKED'] and g['RX_CDR_LOCKED']
+        if i < a.n - 1:
+            time.sleep(a.interval)
+    v = health_verdict(f, acc)
+    out = dict(board=sd.board, label=a.label, time=time.strftime('%F %T'), fields=f, phase_acc=ph, **v)
+    if a.out:
+        json.dump(out, open(a.out, 'w'))
+    print('HEALTH board=%s %s problems=%s freq_acc=%s span=%d' % (sd.board, a.label, ','.join(v['problems']) or 'none',
+                                                              v['freq_acc'], v['freq_acc_span']))
+    print('  ' + ' '.join('%s=%s' % kv for kv in f.items()))
+    sd.close()
+    return 0
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sp = p.add_subparsers(dest='cmd')
@@ -223,8 +332,12 @@ def main(argv=None):
     pl = sp.add_parser('plot'); pl.add_argument('file'); pl.add_argument('png')
     st = sp.add_parser('set'); st.add_argument('fields', nargs='+')
     g = sp.add_parser('get'); g.add_argument('fields', nargs='+')
+    rc = sp.add_parser('recal'); rc.add_argument('--rx', action='store_true', help='reset the whole RX, not only the DFE')
+    h = sp.add_parser('health'); h.add_argument('-n', type=int, default=10); h.add_argument('--interval', type=float, default=1.0)
+    h.add_argument('--label', default=''); h.add_argument('--out')
     a = p.parse_args(argv)
-    fn = {'scan': cmd_scan, 'margin': cmd_margin, 'plot': cmd_plot, 'set': cmd_set, 'get': cmd_get}.get(a.cmd)
+    fn = {'scan': cmd_scan, 'margin': cmd_margin, 'plot': cmd_plot, 'set': cmd_set, 'get': cmd_get, 'recal': cmd_recal,
+          'health': cmd_health}.get(a.cmd)
     if fn is None:
         p.print_help(); return 2
     return fn(a)

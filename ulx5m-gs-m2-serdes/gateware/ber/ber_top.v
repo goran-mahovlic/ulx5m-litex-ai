@@ -15,7 +15,10 @@ module ber_top #(
     parameter TX_NEG = 0,                  // 1: TX_DATA_I from a negedge register (SerDes ports are not timed by nextpnr)
     parameter RX_NEG = 0,                  // 1: RX_DATA_O captured on negedge first
     parameter EYE_EN = 0,                  // RX_EYE_MEAS_EN in the bitstream (eye counters did not count with 0, TASK-5063)
-    parameter PROFILE = 0                  // analog/CDR set: 0 = serdes_lb.v (0.3-1.25 Gb/s proven), 1 = pu-cc 5G (ab7ce94)
+    parameter PROFILE = 0,                 // analog/CDR set: 0 = serdes_lb.v (0.3-1.25 Gb/s proven), 1 = pu-cc 5G (ab7ce94)
+    parameter TX_DET_RX = 0,               // TX_DETECT_RX_I: 0 = upstream since pu-cc dda07f7 (TASK-5066 E1); bits before 5066 had 1
+    parameter TX_CALIB = 1,                // TX_CALIB_EN in every profile (TASK-5066 E1); bits before 5066: PROFILE 0 had 0
+    parameter PLL_RTERM = 1                // PLL_REF_RTERM (refclk LVDS termination; E6: 0 on gs, TUNING_5G.md §2.4)
 ) (
     input  wire clk_i,          // IO_SB_A8 (GS: 25 MHz)
     output wire uart_tx,
@@ -51,7 +54,7 @@ module ber_top #(
     localparam [4:0] A_TX_BR_PRE    = P1 ? 5'hC  : 5'h0;
     localparam [4:0] A_TX_BR_POST   = P1 ? 5'hC  : 5'h0;
     localparam [6:0] A_TX_DC_ENABLE = P1 ? 7'h2B : 7'h3F;   // (12+63+12)/2 = 43 as in ab7ce94
-    localparam [0:0] A_TX_CALIB_EN  = P1 ? 1'h1  : 1'h0;
+    localparam [0:0] A_TX_CALIB_EN  = TX_CALIB[0];
 
     // ------------------------------------------------ CC_SERDES (parameters as serdes_lb_dut.v)
     parameter [27:0] kChar = {8'hBC, 10'h283, 10'h17C};
@@ -91,7 +94,7 @@ module ber_top #(
         .TX_CLK_I(CLK_DIRECT ? pll_clk_o : tclk), .TX_DATA_I(txd_s), .TX_POWER_DOWN_N_I(1'b1), .TX_POLARITY_I(1'b0),
         .TX_PRBS_SEL_I(3'b000), .TX_PRBS_FORCE_ERR_I(1'b0), .TX_8B10B_EN_I(1'b1), .TX_8B10B_BYPASS_I(8'h0),
         .TX_CHAR_IS_K_I(txk_s), .TX_CHAR_DISPMODE_I(8'h0), .TX_CHAR_DISPVAL_I(8'h0),
-        .TX_ELEC_IDLE_I(1'b0), .TX_DETECT_RX_I(1'b1), .TX_BUF_ERR_O(txbe),
+        .TX_ELEC_IDLE_I(1'b0), .TX_DETECT_RX_I(TX_DET_RX[0]), .TX_BUF_ERR_O(txbe),
         .RX_CLK_I(CLK_DIRECT ? rx_clk_o : rclk), .RX_POWER_DOWN_N_I(1'b1), .RX_POLARITY_I(RX_POL),
         .RX_PRBS_SEL_I(3'b000), .RX_PRBS_CNT_RESET_I(1'b0), .RX_PRBS_ERR_O(prbse),
         .RX_8B10B_EN_I(1'b1), .RX_8B10B_BYPASS_I(8'h0), .RX_EN_EI_DETECTOR_I(1'b0),
@@ -210,15 +213,19 @@ module ber_top #(
 endmodule
 
 module top_gs #(parameter N1 = 1, N2 = 2, N3 = 3, OUTDIV = 4, parameter [5:0] FCNTRL = 6'h3A,
-                parameter RX_POL = 1'b1, parameter [2:0] LOOPBACK_SEL = 3'b000, parameter CLK_DIRECT = 0, parameter TX_NEG = 0, parameter RX_NEG = 0, parameter PROFILE = 0, parameter EYE_EN = 0)
+                parameter RX_POL = 1'b1, parameter [2:0] LOOPBACK_SEL = 3'b000, parameter CLK_DIRECT = 0, parameter TX_NEG = 0, parameter RX_NEG = 0, parameter PROFILE = 0, parameter EYE_EN = 0,
+                parameter TX_DET_RX = 0, parameter TX_CALIB = 1, parameter PLL_RTERM = 1)
                (input wire clk_i, output wire uart_tx, input wire uart_rx);
     ber_top #(.ROLE(0), .N1(N1), .N2(N2), .N3(N3), .OUTDIV(OUTDIV), .FCNTRL(FCNTRL), .RX_POL(RX_POL),
-              .LOOPBACK_SEL(LOOPBACK_SEL), .CLK_DIRECT(CLK_DIRECT), .TX_NEG(TX_NEG), .RX_NEG(RX_NEG), .PROFILE(PROFILE), .EYE_EN(EYE_EN)) u (.clk_i(clk_i), .uart_tx(uart_tx), .uart_rx(uart_rx));
+              .LOOPBACK_SEL(LOOPBACK_SEL), .CLK_DIRECT(CLK_DIRECT), .TX_NEG(TX_NEG), .RX_NEG(RX_NEG), .PROFILE(PROFILE), .EYE_EN(EYE_EN),
+              .TX_DET_RX(TX_DET_RX), .TX_CALIB(TX_CALIB), .PLL_RTERM(PLL_RTERM)) u (.clk_i(clk_i), .uart_tx(uart_tx), .uart_rx(uart_rx));
 endmodule
 
 module top_m2 #(parameter N1 = 1, N2 = 2, N3 = 3, OUTDIV = 4, parameter [5:0] FCNTRL = 6'h3A,
-                parameter RX_POL = 1'b1, parameter [2:0] LOOPBACK_SEL = 3'b000, parameter CLK_DIRECT = 0, parameter TX_NEG = 0, parameter RX_NEG = 0, parameter PROFILE = 0, parameter EYE_EN = 0)
+                parameter RX_POL = 1'b1, parameter [2:0] LOOPBACK_SEL = 3'b000, parameter CLK_DIRECT = 0, parameter TX_NEG = 0, parameter RX_NEG = 0, parameter PROFILE = 0, parameter EYE_EN = 0,
+                parameter TX_DET_RX = 0, parameter TX_CALIB = 1, parameter PLL_RTERM = 1)
                (input wire clk_i);
     ber_top #(.ROLE(1), .N1(N1), .N2(N2), .N3(N3), .OUTDIV(OUTDIV), .FCNTRL(FCNTRL), .RX_POL(RX_POL),
-              .LOOPBACK_SEL(LOOPBACK_SEL), .CLK_DIRECT(CLK_DIRECT), .TX_NEG(TX_NEG), .RX_NEG(RX_NEG), .PROFILE(PROFILE), .EYE_EN(EYE_EN)) u (.clk_i(clk_i), .uart_tx(), .uart_rx(1'b1));
+              .LOOPBACK_SEL(LOOPBACK_SEL), .CLK_DIRECT(CLK_DIRECT), .TX_NEG(TX_NEG), .RX_NEG(RX_NEG), .PROFILE(PROFILE), .EYE_EN(EYE_EN),
+              .TX_DET_RX(TX_DET_RX), .TX_CALIB(TX_CALIB), .PLL_RTERM(PLL_RTERM)) u (.clk_i(clk_i), .uart_tx(), .uart_rx(1'b1));
 endmodule
