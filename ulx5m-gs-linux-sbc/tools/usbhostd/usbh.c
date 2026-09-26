@@ -22,6 +22,18 @@ static void say(struct usbh *h, const char *fmt, ...)
 	h->log(h->ctx, buf);
 }
 
+/* hex dump of a descriptor into the log, 24 bytes per line (VID:PID and interfaces of unknown devices) */
+static void dump(struct usbh *h, const char *what, const uint8_t *b, int n)
+{
+	char line[100];
+	for (int o = 0; o < n; o += 24) {
+		int k = snprintf(line, sizeof line, "usbh: %s %03d:", what, o);
+		for (int i = o; i < n && i < o + 24; i++)
+			k += snprintf(line + k, sizeof line - k, " %02x", b[i]);
+		say(h, "%s", line);
+	}
+}
+
 static uint32_t ctrl_for(int speed)
 {
 	int x = speed == SPEED_LS ? 2 : speed == SPEED_LS_HUB ? 3 : 1;
@@ -209,6 +221,7 @@ static int enumerate(struct usbh *h, struct usbh_dev *d)
 	say(h, "usbh: addr %d %s VID %04x PID %04x class %d ep0 %d", addr,
 	    d->speed == SPEED_FS ? "FS" : d->speed == SPEED_LS ? "LS" : "LS(hub)",
 	    buf[8] | buf[9] << 8, buf[10] | buf[11] << 8, buf[4], d->ep0_size);
+	dump(h, "dev", buf, 18);
 	if ((r = usbh_control(h, d, 0x80, 6, 0x0200, 0, 9, buf)) < 9)
 		return -1;
 	total = buf[2] | buf[3] << 8;
@@ -218,6 +231,7 @@ static int enumerate(struct usbh *h, struct usbh_dev *d)
 	if ((r = usbh_control(h, d, 0x80, 6, 0x0200, 0, total, buf)) < 9)
 		return -1;
 	total = r;
+	dump(h, "cfg", buf, total);
 	for (i = 0; i + 2 <= total && buf[i] >= 2; i += buf[i]) {
 		uint8_t *p = buf + i;
 		if (p[1] == 4 && p[0] >= 9) {                           /* interface */
@@ -444,6 +458,10 @@ void usbh_init(struct usbh *h)
 	h->root_last = 0xff;
 	h->next_addr = 1;
 	USBH_WR(h, R_CTRL, root_idle_ctrl());
+	SLEEP(5);
+	uint32_t s = USBH_RD(h, R_STAT);
+	say(h, "usbh: line state D+ %d D- %d (%s)", s & 1, (s >> 1) & 1,
+	    (s & 3) == STAT_DP ? "FS device" : (s & 3) == STAT_DN ? "LS device" : (s & 3) ? "SE1?" : "SE0: nothing attached");
 }
 
 void usbh_poll(struct usbh *h)

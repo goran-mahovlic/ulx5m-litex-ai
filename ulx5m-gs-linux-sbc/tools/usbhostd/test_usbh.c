@@ -36,6 +36,8 @@ struct mdev {
 	/* keyboard: scripted reports */
 	const uint8_t (*script)[8]; int nscript, pos; uint32_t start_ms;
 	int wrong_mode;                 /* transactions seen with the wrong xcvrsel */
+	const uint8_t *devd, *cfg;      /* keyboard: descriptors (0 = LS boot keyboard) */
+	int cfg_len, mouse_sent;
 };
 
 static const uint8_t hub_dev_desc[18] = {18, 1, 0x00, 0x02, 9, 0, 1, 64, 0x24, 0x04, 0x14, 0x25, 0xb3, 0x0b, 0, 0, 0, 1};
@@ -45,6 +47,12 @@ static const uint8_t hub_desc[9] = {9, 0x29, 4, 0x09, 0, 50, 1, 0, 0xff};
 static const uint8_t kbd_dev_desc[18] = {18, 1, 0x10, 0x01, 0, 0, 0, 8, 0x6d, 0x04, 0x1c, 0xc3, 0, 0x01, 1, 2, 0, 1};
 static const uint8_t kbd_cfg[34] = {9, 2, 34, 0, 1, 1, 0, 0xa0, 50,  9, 4, 0, 0, 1, 3, 1, 1, 0,
                                     9, 0x21, 0x10, 0x01, 0, 1, 0x22, 63, 0,  7, 5, 0x81, 3, 8, 0, 10};
+/* 2.4 GHz keyboard+mouse receiver (dongle): FS, composite - interface 0 boot keyboard EP1, interface 1 boot
+ * mouse EP2 (TASK-5051 instruction #83: Goran's wireless set on the USB-C of the Waveshare CM5-IO-BASE-A) */
+static const uint8_t dgl_dev_desc[18] = {18, 1, 0x10, 0x01, 0, 0, 0, 8, 0x6d, 0x04, 0x2b, 0xc5, 0, 0x12, 1, 2, 0, 1};
+static const uint8_t dgl_cfg[59] = {9, 2, 59, 0, 2, 1, 0, 0xa0, 49,
+                                    9, 4, 0, 0, 1, 3, 1, 1, 0,  9, 0x21, 0x11, 0x01, 0, 1, 0x22, 59, 0,  7, 5, 0x81, 3, 8, 0, 8,
+                                    9, 4, 1, 0, 1, 3, 1, 2, 0,  9, 0x21, 0x11, 0x01, 0, 1, 0x22, 148, 0,  7, 5, 0x82, 3, 8, 0, 2};
 /* "hi" + Enter, each key pressed and released */
 static const uint8_t kbd_script[][8] = {
 	{0, 0, 0x0b}, {0}, {0, 0, 0x0c}, {0}, {0, 0, 0x28}, {0},
@@ -102,9 +110,10 @@ static int do_setup(struct mdev *d)
 	d->in_len = d->in_pos = 0;
 	if (t == 0x80 && r == 6) {
 		if (val == 0x0100)
-			load_in(d, d->type == T_HUB ? hub_dev_desc : kbd_dev_desc, 18);
+			load_in(d, d->type == T_HUB ? hub_dev_desc : d->devd ? d->devd : kbd_dev_desc, 18);
 		else if (val == 0x0200)
-			d->type == T_HUB ? load_in(d, hub_cfg, sizeof hub_cfg) : load_in(d, kbd_cfg, sizeof kbd_cfg);
+			d->type == T_HUB ? load_in(d, hub_cfg, sizeof hub_cfg) : d->cfg ? load_in(d, d->cfg, d->cfg_len)
+			                 : load_in(d, kbd_cfg, sizeof kbd_cfg);
 		else
 			return -1;
 		return 0;
@@ -191,6 +200,16 @@ static int transact(int xcvr, int pid, int addr, int ep, int data1, const uint8_
 		}
 		return PID_NAK;
 	}
+	if (pid == PID_IN && ep == 2 && d->config && d->cfg) {
+		/* mouse: one report (left button, dx -2, dy 3) after the keyboard script */
+		if (d->mouse_sent || d->pos < d->nscript)
+			return PID_NAK;
+		static const uint8_t m[4] = {0x01, 0xfe, 3, 0};
+		memcpy(rx, m, 4);
+		*rxlen = 4;
+		d->mouse_sent = 1;
+		return PID_DATA0;
+	}
 	if (pid == PID_IN && d == &hub)
 		return PID_NAK;
 	return PID_STALL;
@@ -248,7 +267,7 @@ static void m_wr(struct usbh *h, int i, uint32_t v)
 /* OS layer ------------------------------------------------------------------------------------------------ */
 
 static char typed[64];
-static int ntyped, verbose;
+static int ntyped, verbose, n_mouse, mouse_dx, mouse_dy;
 static uint8_t prev_rep[8];
 
 static uint32_t t_now(void *c) { (void)c; return now/1000; }
@@ -262,6 +281,12 @@ static void t_kbd(void *c, const uint8_t r[8])
 	for (int i = 0; i < n && ntyped < 63; i++) typed[ntyped++] = o[i];
 	typed[ntyped] = 0;
 	memcpy(prev_rep, r, 8);
+}
+
+static void t_mouse(void *c, const uint8_t *r, int len)
+{
+	(void)c; (void)len;
+	n_mouse++; mouse_dx = (int8_t)r[1]; mouse_dy = (int8_t)r[2];
 }
 
 static void run(struct usbh *h, uint32_t ms)
@@ -331,7 +356,23 @@ int main(int argc, char **argv)
 	run(&h, 100);
 	CHECK(h.root_dev == 0, "root port disconnect detected");
 
-	/* 3: HID -> Linux input events (uinput path of usbhostd) */
+	/* 3: FS composite receiver (keyboard + mouse) directly on the root port (USB-C of the Waveshare board) */
+	setup_kbd(&root_kbd, 1);
+	root_kbd.speed = SPEED_FS; root_kbd.devd = dgl_dev_desc; root_kbd.cfg = dgl_cfg; root_kbd.cfg_len = sizeof dgl_cfg;
+	root = &root_kbd;
+	xcvr_kbd = 0;
+	memset(&h, 0, sizeof h);
+	h.r = regs; h.now_ms = t_now; h.sleep_ms = t_sleep; h.log = t_log; h.on_kbd = t_kbd; h.on_mouse = t_mouse;
+	ntyped = 0; typed[0] = 0; memset(prev_rep, 0, 8);
+	usbh_init(&h);
+	run(&h, 3000);
+	CHECK(root_kbd.addr == 1 && xcvr_kbd == 1 && root_kbd.wrong_mode == 0,
+	      "FS keyboard+mouse receiver on the root port: addr %d, xcvrsel %d (FS)", root_kbd.addr, xcvr_kbd);
+	CHECK(h.dev[0].kbd_ep == 1 && h.dev[0].mse_ep == 2, "receiver: keyboard EP%d, mouse EP%d", h.dev[0].kbd_ep, h.dev[0].mse_ep);
+	CHECK(strcmp(typed, "hi\r") == 0, "receiver typed \"hi\\r\" (got \"%s\")", typed);
+	CHECK(n_mouse == 1 && mouse_dx == -2 && mouse_dy == 3, "receiver mouse report: %d, dx %d dy %d", n_mouse, mouse_dx, mouse_dy);
+
+	/* 4: HID -> Linux input events (uinput path of usbhostd) */
 	{
 		struct hid_ev ev[16];
 		uint8_t r0[8] = {0}, r1[8] = {0x02, 0, 0x0b}, r2[8] = {0x02, 0, 0x0b, 0x0c}, r3[8] = {0};
