@@ -1,0 +1,5 @@
+NET "clk_i"       Loc = "IO_SB_A8";
+NET "pll_rstn_i"  Loc = "IO_EA_B4" | pullup;
+NET "trx_rstn_i"  Loc = "IO_EA_A4" | pullup;
+NET "LED0" Loc="IO_SB_A0"; NET "LED1" Loc="IO_SB_B0"; NET "LED2" Loc="IO_SB_A1"; NET "LED3" Loc="IO_SB_B1";
+NET "LED4" Loc="IO_SB_B2"; NET "LED5" Loc="IO_SB_A2"; NET "LED6" Loc="IO_SB_B3"; NET "LED7" Loc="IO_SB_A3";

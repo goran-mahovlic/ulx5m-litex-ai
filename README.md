@@ -54,6 +54,18 @@ Older bitstreams are not in this repository.
 
 ---
 
+## ulx5m-gs-m2-serdes — SerDes link between two GateMate boards
+
+ULX5M-GS and ULX5M-M2 connected by their SerDes lane, with one JTAG probe per board.
+- An 8b10b link works in both directions, bit-exact, at 0.3 Gb/s (360/360 reads).
+- A fabric BER checker measured 1.1·10⁹ words per direction with 0 errors (BER < 6.7·10⁻¹¹).
+- A script proves step by step that the data goes over the external cable (idle tests, error injection, pulling the cable).
+- Higher rates (up to 2.5 Gb/s) are built but not yet measured.
+
+Details: `ulx5m-gs-m2-serdes/README.md`.
+
+---
+
 ## How to try it on another computer
 
 **You need:**
@@ -181,6 +193,7 @@ exact version we used. All are plain upstream `master`, without local changes, u
 | [oss-cad-suite](https://github.com/YosysHQ/oss-cad-suite-build/releases/tag/2026-09-23): [Yosys](https://github.com/YosysHQ/yosys), [nextpnr](https://github.com/YosysHQ/nextpnr), [Project Peppercorn](https://github.com/YosysHQ/prjpeppercorn) (`gmpack`), [openFPGALoader](https://github.com/trabucayre/openFPGALoader) | Open-source synthesis, place and route, bitstream packing and loading for GateMate |
 | [smunaut/doom_riscv](https://github.com/smunaut/doom_riscv/tree/02b0d80) | DOOM engine for RISC-V. Not changed; our Linux framebuffer layer is in `tools/doom_linux/`. |
 | [emard/ulx3s-misc](https://github.com/emard/ulx3s-misc/tree/d0c6f15/examples/usb) | USB 1.1 HID host (Ultra-Embedded SIE + OpenCores USB PHY). Copied into `gateware/verilog/usbhost/`; the VHDL PHY was converted to Verilog with GHDL. |
+| [CologneChip gm_serdes_lb](https://github.com/pu-cc/gm_serdes_lb/tree/fbe1966) (via [openCologne @ 27eb53a](https://github.com/chili-chips-ba/openCologne/tree/27eb53ae74cbec76a8066ff108776bce127523bf/7.SerDes/1.serdestool_by_gm)) | `serdes_lb.v` and `serdestool.py` for `ulx5m-gs-m2-serdes` (CC_SERDES instance, regfile access over JTAG). ISC-style permission notice, © Cologne Chip AG, kept in the file headers. Small changes are listed in `ulx5m-gs-m2-serdes/README.md`. |
 
 **We did not change LiteEth.** Gigabit Ethernet works because we use our own PHY (`gateware/gbe_phy.py`)
 with the stock LiteEth MAC. The reason is explained in `ulx5m-gs-linux-sbc/README.md`. The same goes for the
