@@ -3,6 +3,9 @@
 **Order:** Goran, Telegram 26.09.2026 21:44: *"There are a lot of things we should check to reach for example 5 Gbit/s.
 Driver strength, equalizer settings etc. so please do more research what is needed to get there."*
 **Author:** Manda (REGOČ research). **For:** Jelena (TASK-5063, board work). **No board was touched for this document.**
+**Update 26.09.2026 22:30 (TASK-5067):** Goran, Telegram 22:19: *"Na obje ploče jumper je na 1.1V."* J3 = 2‑3 (VDD_CORE 1.1 V)
+on **both** GS and M2, checked on the boards. The SerDes supply is therefore **in spec** and is no longer a suspect. §0 item 1,
+§1.7, §3 (E0/E1, new order) and §4 (H1) are updated. The 5–12 % BER at 5 Gb/s was measured **with** VDD_SER in spec.
 **Starting point:** `VERIFY_20260926_RATES.md` up to commit `e3a6375`:
 - 2.5 Gb/s with `PROFILE=1` in the bitstream: BER 6.7·10⁻¹¹ (m2→gs) and 1.2·10⁻⁹ (gs→m2) over 300 s.
 - 5 Gb/s: the CDR locks, but BER is 5–12 %.
@@ -19,12 +22,13 @@ to `serdes_lb.v`, and `ab7ce94` is "prepare 5G tests".
 
 ## 0. Short version: the five things most likely to matter for 5 Gb/s
 
-1. **The SerDes supply is probably out of spec on both boards.** This needs hardware (Goran). VERIFIED in the schematic and PCB, DERIVED for the voltage, the board state is UNVERIFIED.
-   - `VDD_SER` and `VDD_SER_PLL` come from `VDD_CORE` through **1 Ω resistors**: R106 and R105, 100 nF each, ferrites L6/L7 DNP on GS and not on the M2 PCB at all.
-   - The core voltage is set by solder jumper **J3 "Vcore_sel": open = 0.9 V (factory default), 1‑2 = 1.0 V, 2‑3 = 1.1 V**. This is a text note on the `power.kicad_sch` sheet. The ulx5m-gs-hw README says: *"DEFAULT VCC CORE is 0.9V - if you use SerDes this needs to be higher"*.
-   - DS1001 p.155 requires **VDD_SER = 1.00–1.10 V**. The SerDes draws 40–51 mA at 5 Gb/s (Table 4.4), so the 1 Ω drops 40–50 mV.
-   - Result: at 0.9 V core, VDD_SER ≈ 0.85 V. At 1.0 V core it is ≈ 0.95 V. **Only J3 = 2‑3 (1.1 V) puts the SerDes inside the datasheet.**
-   - **First measure TP10 (VDD_SER) and TP8 (VDD_SER_PLL) on both boards** (§4, H1).
+1. ~~**The SerDes supply is probably out of spec on both boards.**~~ **RESOLVED (26.09.2026 22:19): J3 = 2‑3 = 1.1 V on both boards (Goran, checked on the boards). The DC supply level is in spec; it does not explain the 5 G BER.**
+   - `VDD_SER` and `VDD_SER_PLL` come from `VDD_CORE` through **1 Ω resistors**: R106 and R105, 100 nF each, ferrites L6/L7 DNP on GS and not on the M2 PCB at all. VERIFIED.
+   - J3 "Vcore_sel": open = 0.9 V (factory default), 1‑2 = 1.0 V, **2‑3 = 1.1 V ← both boards**. The ulx5m-gs-hw README note (*"DEFAULT VCC CORE is 0.9V - if you use SerDes this needs to be higher"*) was already done.
+   - DS1001 p.155: **VDD_SER = 1.00–1.10 V**. At 40–51 mA (5 Gb/s, Table 4.4) the 1 Ω drops 40–51 mV, so **VDD_SER ≈ VDD_SER_PLL ≈ 1.05–1.06 V** (DERIVED). **Reserve ≈ 50 mV to the 1.00 V minimum** and ≈ 40–50 mV to the 1.10 V maximum.
+   - What is left of the supply topic is **noise, not DC level**: 1 Ω / 100 nF filters only above ≈ 1.6 MHz, and the SerDes PLL is an all-digital DCO (§1.7). With VDD_CORE's own ±50 mV tolerance (MPM3833C mode spec) the worst case is 1.05 V − 51 mV ≈ **1.00 V**, i.e. the reserve can shrink to ~0 at the low regulator corner (DERIVED). A one-off multimeter reading of TP10/TP8 (§4, H1) closes this; it is no longer a blocker.
+   - Consequence: the other items move up. **The most likely causes of 5–12 % BER are now RX peaking (item 4), TX_DETECT_RX (item 2), refclk distribution/jitter (§2.4) and reflections (item 5).**
+   - Also consistent with 1.1 V: nextpnr-himbaechel for GateMate defaults to `fpga_mode` 3 = **SPEED** (1.1 V) and `time_mode` 3 = WORST (`gatemate.cc:44–45`, speed grade `worst_spd`). The fabric Fmax numbers (gs checker 44 MHz) were therefore computed for the voltage the boards really run at — they stay valid. Fabric PLL DCO range in SPEED mode is also the widest (`pll.cc`, eco = 1000–2000 MHz).
 2. **The TX receiver-detect input is held high in our gateware; upstream holds it low.** UNVERIFIED effect, one rebuild to test.
    - Our code: `ber_top.v:94` and `baseline/serdes_lb_*.v:435` have `.TX_DETECT_RX_I(1'b1)`. That is the old CologneChip `serdes_lb.v`.
    - Patrick changed it to `1'b0` in `dda07f7` (2025-10-28, "fix CDR parameter"). It has stayed 0 since, including `ab7ce94`/`22bbe50`.
@@ -74,7 +78,7 @@ Taken literally, the absolute formula gives volts that are impossible (87 branch
 
 | Parameter | Reg | Range | DS def | P0 | pu-cc 5G | Measured | Recommendation / sweep | Tag |
 |---|---|---|---|---|---|---|---|---|
-| `TX_AMP` (unit current = swing) | 0x30[14:10] | 0–31 | 15 | 15 | **31** | 2.5 G: 24 best; 4, 8, 15, 31 worse (PROFILE 0 + JTAG) | 5 G, after the supply fix: 20, 24, 28, 31. The optimum below 31 may be supply headroom (VDD_SER low) → re-check after H1 | VERIFIED reg / meas. |
+| `TX_AMP` (unit current = swing) | 0x30[14:10] | 0–31 | 15 | 15 | **31** | 2.5 G: 24 best; 4, 8, 15, 31 worse (PROFILE 0 + JTAG) | 5 G, after the supply fix: 20, 24, 28, 31. VDD_SER is in spec (J3 1.1 V), so an optimum below 31 is not a low-supply effect → look at reflections/over-drive | VERIFIED reg / meas. |
 | `TX_BRANCH_EN_MAIN` | 0x31[10:5] | 0–63 | 63 | 63 | 63 | — | keep 63 | VERIFIED |
 | `TX_BRANCH_EN_PRE` | 0x31[4:0] | 0–31 | 0 | 0 | **12** | — | 0 or 12 (pre-cursor only if post alone is not enough) | VERIFIED |
 | `TX_BRANCH_EN_POST` | 0x31[15:11] | 0–31 | 0 | 0 | **12** | — | 31 for a deeper post-cursor sweep | VERIFIED |
@@ -100,7 +104,7 @@ Taken literally, the absolute formula gives volts that are impossible (87 branch
 | `RX_AFE_PEAK` (CTLE peaking) | 0x09[4:0] | 0–31, **0 = max, 31 = min** | 16 (serdestool: 15) | 15 | **24** (= less) | 2.5 G: 20–31 flat. 5 G: 15 better than 24 | **5 G: 16, 12, 8, 4, 0** (more peaking) | VERIFIED DS / meas. |
 | `RX_AFE_GAIN` | 0x09[8:5] | 0–15 (0 = min) | 8 | 8 | **0** | **key**: 0 → 6·10⁻⁷, 4/8 → 2·10⁻² (2.5 G) | 5 G: 0, 1, 2, 3 | VERIFIED |
 | `RX_AFE_VCMSEL` (internal CM) | 0x09[11:9] | 0–7 | 4 | 4 | 3 | part of the AFE step | 2, 3, 4 | VERIFIED |
-| `RX_RTERM_VCMSEL` (line CM through RTERM) | 0x02[13:11] | 0–7 = (18…25)/29·VDD_SER | 4 | 4 | 3 | part of the AFE step | 2, 3, 4. **Absolute CM follows VDD_SER** (Table 2.42): at 0.85 V supply code 3 is ≈ 0.61 V, not the 0.72 V at 1.0 V | VERIFIED / DERIVED |
+| `RX_RTERM_VCMSEL` (line CM through RTERM) | 0x02[13:11] | 0–7 = (18…25)/29·VDD_SER | 4 | 4 | 3 | part of the AFE step | 2, 3, 4. **Absolute CM follows VDD_SER** (Table 2.42): at the actual ≈ 1.05 V supply code 3 is ≈ 0.76 V (0.72 V at 1.0 V) | VERIFIED / DERIVED |
 | `RX_CALIB_EN` (termination calibration) | 0x02[0] W/C | — | 0 | 1 | 1 | — | 1. Read `RX_CALIB_DONE` 0x02[1] and `RX_CALIB_CAL` 0x02[10:7]; `RX_CALIB_OVR/VAL` only for experiments | VERIFIED |
 | `RX_RTERM_PD` | 0x02[14] | 0/1 | 0 | 0 | 0 | — | 0 (AC-coupled link) | VERIFIED |
 | Internal R_TERM | — | 100 Ω diff (p.155); calibration reference is the 200 Ω on `SER_RTERM` | — | — | — | — | GS and M2 fit **R109 = 200R 1 %** on SER_RTERM (V12). External R107 across RX is **DNP** (correct) | VERIFIED |
@@ -151,7 +155,7 @@ The DS calls it a "3-tap DFE". Only **one** writable tap weight (`RX_TAPW`) and 
 | `PLL_CI` / `PLL_CP` | 0x52 | 3 / 80 (0x50) | regfile map says CP 80. Table 2.18 says 12, a DS inconsistency. BISC overwrites CP anyway | VERIFIED |
 | `PLL_FILTER_SHIFT`, `FAST_LOCK`, `LOCK_WINDOW` | 0x53[8:7], 0x50[6], 0x50[5] | 2, 1, 1 | keep | VERIFIED |
 | `PLL_BISC_MODE` (loop-gain self-calibration) | 0x57[2:0] | **5** = mode B + enable (ours = pu-cc ✓) | DS: mode B preferred. `TIMER_MAX` 0xC, `CP_MIN/MAX/START` 6/30/6, `CAL_SIGN` 1 (Patrick's values, ours are the same) | VERIFIED |
-| **PLL status to log** | 0x55: `PLL_LOCKED`[0], **`PLL_CAP_FT_OF`[1], `PLL_CAP_FT_UF`[2]**, `PLL_CAP_FT`[12:3], `CAP_STATE`[14:13]; 0x5A: `BISC_TIMER_DONE`[0], `BISC_CP`[7:1]; 0x5B `BISC_CO` | — | FT overflow/underflow = the DCO fine-tune is at its end, i.e. the DCO cannot reach 2.5 GHz. Most likely with low VDD_SER_PLL | VERIFIED reg / UNVERIFIED interpretation |
+| **PLL status to log** | 0x55: `PLL_LOCKED`[0], **`PLL_CAP_FT_OF`[1], `PLL_CAP_FT_UF`[2]**, `PLL_CAP_FT`[12:3], `CAP_STATE`[14:13]; 0x5A: `BISC_TIMER_DONE`[0], `BISC_CP`[7:1]; 0x5B `BISC_CO` | — | FT overflow/underflow = the DCO fine-tune is at its end, i.e. the DCO cannot reach 2.5 GHz. VDD_SER_PLL DC is in spec (J3 1.1 V), so a flag would point to supply noise or the refclk | VERIFIED reg / UNVERIFIED interpretation |
 | `PLL_REF_SEL` / `PLL_REF_RTERM` | 0x50[10] / [11] | 1 / 1 | LVDS input with internal termination. For the shared-clock topology see §2.4 | VERIFIED |
 | Refclk requirement | — | 100–125 MHz, **jitter ≤ 1 ps** (J_SER, p.155) | GS X2 = Skyworks/SiLabs **511FCA100M000BAG** (Si511 LVDS, 100 MHz) → the source is fine; the distribution is the question (§2.4) | VERIFIED |
 
@@ -161,9 +165,9 @@ The DS calls it a "3-tap DFE". Only **one** writable tap weight (`RX_TAPW`) and 
 |---|---|---|---|---|
 | `VDD_SER` U12, V17 | 1.00–1.10 V (p.155; 1.15 V in the recommended table p.154). 36–51 mA (Table 4.4). "should be connected to noise filters" (p.128) | from VDD_CORE through **R106 = 1 Ω** 0603, **C128 = 100 nF** only; ferrite L7 (MPZ1608) **DNP**; R9 DNP; TP10 | same: R106 1 Ω, C128 100 nF, no ferrite footprint; TP10 | VERIFIED |
 | `VDD_SER_PLL` T16 | 1.00–1.10 V | from VDD_CORE through **R105 = 1 Ω**, **C127 = 100 nF**; L6 **DNP**; TP8 | same; TP8 | VERIFIED |
-| `VDD_CORE` | 0.9 / 1.0 / 1.1 V ±50 mV by mode | MPM3833C, R15 20k / R12 40.2k, **J3 Vcore_sel: open 0.9 V, 1‑2 1.0 V (‖120k), 2‑3 1.1 V (‖60k)** | same (R12 40k, R14 120k, R16 60k, J3 marked DNP/open on PCB) | VERIFIED; board state UNVERIFIED |
+| `VDD_CORE` | 0.9 / 1.0 / 1.1 V ±50 mV by mode | MPM3833C, R15 20k / R12 40.2k, **J3 Vcore_sel: open 0.9 V, 1‑2 1.0 V (‖120k), 2‑3 1.1 V (‖60k)** | same (R12 40k, R14 120k, R16 60k, J3 marked DNP/open on PCB) | VERIFIED; **board state: J3 = 2‑3 = 1.1 V on both boards (Goran, 26.09. 22:19)** |
 | `VDD_CLK` T14 (SER_CLK input buffer) | 1.1–2.7 V | +1V8 | VDD_CLK net (also X2) | VERIFIED |
-| Estimated VDD_SER at 5 G | ≥ 1.00 V | 0.9 V core → **≈ 0.85 V**; 1.0 → **≈ 0.95 V**; 1.1 → **≈ 1.05 V** | same | DERIVED (1 Ω × 45 mA; MPM3833C Vref 0.6 V from the schematic note) |
+| Estimated VDD_SER at 5 G | ≥ 1.00 V | 0.9 V core → ≈ 0.85 V; 1.0 → ≈ 0.95 V; **1.1 (actual) → ≈ 1.05–1.06 V, reserve ≈ 50 mV to 1.00 V** (≈ 0 mV at the −50 mV regulator corner) | same (J3 also 2‑3) | DERIVED (1 Ω × 40–51 mA; MPM3833C Vref 0.6 V from the schematic note) |
 
 RC corner of 1 Ω / 100 nF ≈ 1.6 MHz (DERIVED). This barely filters the core switching noise that the fabric (checker at 31–62 MHz) puts on
 VDD_CORE, and the SerDes PLL is an **all-digital** PLL (DCO). Supply noise becomes DCO jitter directly (UNVERIFIED magnitude).
@@ -213,7 +217,7 @@ The measurements agree:
 - `RX_AFE_GAIN 0` is best → the signal arriving at the RX is large, not small.
 - TX FFE hurts at 2.5 Gb/s → at 1.25 GHz there is little ISI to cancel.
 
-At 5 Gb/s the loss roughly doubles in dB, so some FFE/peaking is expected to help there (§3 E4/E5).
+At 5 Gb/s the loss roughly doubles in dB, so some FFE/peaking is expected to help there (§3 E2/E3).
 
 ### 2.3 Where the P/N swap is
 
@@ -233,7 +237,7 @@ The refclk pair goes through the same adapter. An inverted LVDS clock is only a 
 - Both FPGA inputs have `PLL_REF_RTERM=1` (internal termination). One LVDS driver then sees **two terminations in parallel**, i.e. about half the swing on each input (DERIVED, assuming ~100 Ω internal RTERM, which the DS does not state).
 - M2 also sees **two series caps** (C136 + C129) and the whole channel's crosstalk. The DS allows only **1 ps** refclk jitter (p.155).
 - Because both ADPLLs multiply the same clock ×25, refclk jitter at M2 that is uncorrelated with GS's shows up directly in the M2 receiver's CDR budget (UI = 200 ps at 5 G).
-- Experiment E7: set `PLL_REF_RTERM=0` on GS only, so the short GS branch is an unterminated stub and the long line stays terminated at M2. Then compare M2's PLL/CDR status and BER.
+- Experiment E6: set `PLL_REF_RTERM=0` on GS only, so the short GS branch is an unterminated stub and the long line stays terminated at M2. Then compare M2's PLL/CDR status and BER.
 
 ---
 
@@ -251,16 +255,22 @@ Confirm every winner **in a bitstream** before quoting it.
 
 | # | Experiment | Who / cost | Pass criterion | Why here |
 |---|---|---|---|---|
-| **E0** | **Health snapshot, read-only**, both boards, at 2.5 G (PROFILE 1) and 5 G. Log: 0x55 (PLL_LOCKED, **CAP_FT_OF/UF**, CAP_FT), 0x5A/0x5B (BISC done, CP, CO), 0x02 (RX_CALIB_DONE/CAL), 0x3C (TX_CALIB_DONE/CAL), 0x04/0x07 (EQA_LOCKED, TAPW, TH_MON, OFFSET), 0x0B–0x0D (CDR_LOCKED, FREQ/PHASE_ACC_VAL; 10 reads 1 s apart), 0x2A[12..14]. `eyescan.py get` works for all of these | Jelena, 10 min, no rebuild | PLL locked, **no FT_OF/UF**, BISC done, calibration done, FREQ_ACC steady. Any flag at 5 G but not at 2.5 G points to supply/DCO (E1) | Cheap. Tells whether 5 G fails in the PLL/CDR or in the data eye |
-| **E1** | **Measure VDD_SER (TP10) and VDD_SER_PLL (TP8) on both boards**, with the 5 G bitstream running; read J3 | **Goran**, 5 min, multimeter | 1.00–1.10 V. If lower, bridge J3 2‑3 (1.1 V core) = H1, then repeat E0 + a 5 G baseline | Most likely single cause (§0 item 1) |
-| **E2** | Rebuild with `TX_DETECT_RX_I=0` (ber_top.v:94) and `TX_CALIB_EN=1` in PROFILE 0 as well. A/B at 2.5 G PROFILE 1 (the gs→m2 1.2·10⁻⁹ direction), then 5 G | Jelena, 1 rebuild pair | 2.5 G: gs→m2 median BER ≥ 3× better, or no change (then keep 0 anyway = upstream). 5 G: CDR locked, BER vs baseline | Matches upstream; one rebuild |
-| **E3** | **5 G RX AFE sweep** (DFE on, `EQA_LOCK_CFG 0xC`): GAIN {0,1,2,3} × PEAK {16,12,8,4,0}; VCM 3. Log the DFE tap per point | Jelena, JTAG + sweep procedure | Find BER < 10⁻⁶ → continue; the best point should also show `RX_EQA_TAPW` away from the rail | Peaking toward 0 is unexplored and 15 > 24 already helped |
-| **E4** | **5 G TX FFE sweep, each direction on its own** (A's TX settings only affect B's RX): BR_PRE 0, BR_POST 31, `DC_ENABLE = N_BRA/2` = 47; SEL_POST {0,6,12,17,20} (0…−4.8 dB); then SEL_PRE {0,2,5} with BR_PRE 12; TX_AMP {20,24,28,31} | Jelena | ≥ 10× lower BER than the pu-cc 5/5 point | Loss doubles at 2.5 GHz; a Gen2 PHY normally uses −3.5 dB |
-| **E5** | **CDR loop**: CKP {0xF8, 0x7E, 0x3E, 0x1E} × TRANS_TH {8,16,32}, CKI 0 → then CKI 1, 2 if FREQ_ACC wanders | Jelena | stable lock over 60 s, lower BER | CKP encoding unknown → empirical |
-| **E6** | RX common mode: RTERM_VCMSEL and AFE_VCMSEL {2,3,4,5} (after E1, because the absolute CM scales with VDD_SER) | Jelena | lower BER | DS: "small input signal → higher CM" |
-| **E7** | Refclk: GS `PLL_REF_RTERM=0` (0x50[11]), rebuild or write + PLL restart (0x50[0] off/on); M2 unchanged | Jelena, 1 rebuild | M2 PLL/CDR status unchanged or better; 5 G BER m2-RX ≥ 3× better | §2.4 |
-| **E8** | Eye scan fix (§5.1): override at 0x06[11], `RX_EN_EQA=1`, `EQA_LOCK_CFG` bit1 = 1; if the counters still stay 0 → ask Patrick (the upstream `tc_eyemeas` is a stub) | Jelena, 30 min | non-zero `CORRECT_*` counters | Gives eye margin instead of BER-only |
-| **E9** | Bake the best E3–E7 point into a `PROFILE=2` (5 G) bitstream, check the rebuild is byte-identical, 300 s per direction; then the soak (§5.3) | Jelena | 5 G BER < 10⁻¹⁰ in 300 s → soak for < 10⁻¹² | Only the bitstream counts (`e3a6375`) |
+**Order changed 26.09.2026 (TASK-5067).** The supply is confirmed in spec, so the old E1 (Goran with a multimeter, possible J3 bridge) is
+**no longer a gate**. E0 stays the first step but now only checks health; everything else moves forward by one.
+
+| # | Experiment | Who / cost | Pass criterion | Why here |
+|---|---|---|---|---|
+| **E0** | **Health snapshot, read-only**, both boards, at 2.5 G (PROFILE 1) and 5 G. Log: 0x55 (PLL_LOCKED, **CAP_FT_OF/UF**, CAP_FT), 0x5A/0x5B (BISC done, CP, CO), 0x02 (RX_CALIB_DONE/CAL), 0x3C (TX_CALIB_DONE/CAL), 0x04/0x07 (EQA_LOCKED, TAPW, TH_MON, OFFSET), 0x0B–0x0D (CDR_LOCKED, FREQ/PHASE_ACC_VAL; 10 reads 1 s apart), 0x2A[12..14]. `eyescan.py get` works for all of these. **Supply: CONFIRMED by Goran (J3 2‑3 = 1.1 V on both boards, 26.09. 22:19)** — nothing to do on the hardware. There is no absolute on-chip voltage monitor in the SerDes register map we use (TX_CM_SAR 0x3E is ratiometric to VDD, eq. 2.13), so JTAG cannot replace a multimeter; the PLL/calibration flags are the indirect check | Jelena, 10 min, no rebuild | PLL locked, **no FT_OF/UF**, BISC done, calibration done, FREQ_ACC steady. A flag at 5 G but not at 2.5 G now points to DCO noise / refclk (§2.4, E6), not to the DC supply | Cheap. Tells whether 5 G fails in the PLL/CDR or in the data eye |
+| ~~E1~~ | ~~Measure VDD_SER/VDD_SER_PLL, bridge J3~~ → **RESOLVED**: J3 = 2‑3 on both boards, VDD_SER ≈ 1.05–1.06 V (DERIVED, ≈ 50 mV reserve). Optional one-off TP10/TP8 reading = H1, not a gate | Goran, optional | — | Was §0 item 1 |
+| **E1** | Rebuild with `TX_DETECT_RX_I=0` (ber_top.v:94) and `TX_CALIB_EN=1` in PROFILE 0 as well. A/B at 2.5 G PROFILE 1 (the gs→m2 1.2·10⁻⁹ direction), then 5 G | Jelena, 1 rebuild pair | 2.5 G: gs→m2 median BER ≥ 3× better, or no change (then keep 0 anyway = upstream). 5 G: CDR locked, BER vs baseline | Matches upstream; one rebuild (was E2) |
+| **E2** | **5 G RX AFE sweep** (DFE on, `EQA_LOCK_CFG 0xC`): GAIN {0,1,2,3} × PEAK {16,12,8,4,0}; VCM 3. Log the DFE tap per point | Jelena, JTAG + sweep procedure | Find BER < 10⁻⁶ → continue; the best point should also show `RX_EQA_TAPW` away from the rail | Peaking toward 0 is unexplored and 15 > 24 already helped (was E3) |
+| **E3** | **5 G TX FFE sweep, each direction on its own** (A's TX settings only affect B's RX): BR_PRE 0, BR_POST 31, `DC_ENABLE = N_BRA/2` = 47; SEL_POST {0,6,12,17,20} (0…−4.8 dB); then SEL_PRE {0,2,5} with BR_PRE 12; TX_AMP {20,24,28,31} | Jelena | ≥ 10× lower BER than the pu-cc 5/5 point | Loss doubles at 2.5 GHz; a Gen2 PHY normally uses −3.5 dB (was E4) |
+| **E4** | **CDR loop**: CKP {0xF8, 0x7E, 0x3E, 0x1E} × TRANS_TH {8,16,32}, CKI 0 → then CKI 1, 2 if FREQ_ACC wanders | Jelena | stable lock over 60 s, lower BER | CKP encoding unknown → empirical (was E5) |
+| **E5** | RX common mode: RTERM_VCMSEL and AFE_VCMSEL {2,3,4,5}. VDD_SER ≈ 1.05 V, so code 3 ≈ 0.76 V absolute (Table 2.42) | Jelena | lower BER | DS: "small input signal → higher CM" (was E6; no longer waits for the supply) |
+| **E6** | Refclk: GS `PLL_REF_RTERM=0` (0x50[11]), rebuild or write + PLL restart (0x50[0] off/on); M2 unchanged | Jelena, 1 rebuild | M2 PLL/CDR status unchanged or better; 5 G BER m2-RX ≥ 3× better | §2.4; with the supply cleared, refclk is the main PLL/CDR suspect (was E7) |
+| **E7** | Eye scan fix (§5.1): override at 0x06[11], `RX_EN_EQA=1`, `EQA_LOCK_CFG` bit1 = 1; if the counters still stay 0 → ask Patrick (the upstream `tc_eyemeas` is a stub) | Jelena, 30 min | non-zero `CORRECT_*` counters | Gives eye margin instead of BER-only (was E8) |
+| **E8** | Bake the best E1–E6 point into a `PROFILE=2` (5 G) bitstream, check the rebuild is byte-identical, 300 s per direction; then the soak (§5.3) | Jelena | 5 G BER < 10⁻¹⁰ in 300 s → soak for < 10⁻¹² | Only the bitstream counts (`e3a6375`) (was E9) |
+| E9 | Only if E2–E6 leave 5 G noisy: supply **noise** check — H2 (ferrite / extra µF on C127/C128) on GS, A/B at 5 G | Goran + Jelena | ≥ 3× lower BER after H2 | The DC level is fine; noise through 1 Ω/100 nF is the remaining supply risk |
 
 Parallel track, not analog: gs fabric checker Fmax (44 MHz < 62.5 MHz word clock at 5 G, Jelena §3, next step 3). Without it, the m2→gs number at 5 G is not meaningful. JTAG `ber_jtag_check.py` samples are only a coarse substitute.
 
@@ -270,8 +280,8 @@ Parallel track, not analog: gs fabric checker Fmax (44 MHz < 62.5 MHz word clock
 
 | # | Action | Board | Effect | Priority |
 |---|---|---|---|---|
-| **H1** | Measure TP10/TP8. If VDD_SER < 1.00 V, **bridge J3 2‑3 (VDD_CORE 1.1 V "speed mode")** — README: most of the tests ran at 1.1 V | GS and M2 | VDD_SER ≈ 1.05 V = in spec. Core power goes up (DS Fig 4.2) — check the regulator temperature | **1** |
-| H2 | Replace R105/R106 (1 Ω) with the MPZ1608 ferrites (L6/L7 footprints on GS; M2 has no footprint → keep the 1 Ω but add 2.2–4.7 µF next to C127/C128) | GS (M2 partly) | less drop (≈ 0.05 Ω DCR, typical) and real filtering above ~10 MHz | 2 (after H1 if 5 G is still noisy) |
+| ~~H1~~ | ~~Bridge J3 2‑3~~ **RESOLVED 26.09.2026: J3 = 2‑3 (1.1 V) on both boards (Goran).** Optional: one multimeter reading of TP10/TP8 with the 5 G bitstream running, to confirm ≈ 1.05 V (reserve ≈ 50 mV to 1.00 V) | GS and M2 | VDD_SER ≈ 1.05–1.06 V = in spec | done / optional |
+| H2 | Replace R105/R106 (1 Ω) with the MPZ1608 ferrites (L6/L7 footprints on GS; M2 has no footprint → keep the 1 Ω but add 2.2–4.7 µF next to C127/C128) | GS (M2 partly) | less drop (≈ 0.05 Ω DCR, typical) and real filtering above ~10 MHz | **1** now, but only if E2–E6 leave 5 G noisy (= E9) |
 | H3 | **Identify the FFC and adapter chain**: part numbers or photo, FFC length (RPi spec ≤ 50 mm, 90 Ω). Is there a PCIe x1 slot in between? Use the shortest FFC | chain | completes §2.2/§2.3; finds the P/N swap | 2 |
 | H4 | Optional scope check of the M2 refclk at C129/C130 (amplitude, edges) | M2 | confirms §2.4 | 3 |
 | H5 | Next board spin: ferrite + 1–10 µF on VDD_SER/VDD_SER_PLL; SerDes supply from its own LDO at 1.05 V independent of Vcore; refclk fan-out buffer (one driver per load); SerDes path with no FFC | both | removes the three structural risks | later |
