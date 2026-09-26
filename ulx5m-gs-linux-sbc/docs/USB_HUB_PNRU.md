@@ -371,15 +371,24 @@ Open: 733 main-loop passes in 90 s (8 per second instead of ~400 with the 2 ms s
 SoC is slow as a whole (boot to login 10–15 min, load average ≈ 3 already without usbhostd, see TASK-5047), so a
 key is picked up within ~125 ms. Key reports on the board: see §7.1.3.
 
+#### 7.1.3 Key presses: not verified yet
+
+After the 90 s run `usbhostd -v` keeps running (console log of every keyboard/mouse report, keys into tty1 by
+TIOCSTI). No report arrived in the 15 min after the request to type (20:00–20:12; Goran was not at the board),
+so the key path is **not yet shown on the board** (it is covered by the host test, `test_usbh` 18/18, including
+the FS composite receiver). The Pi keeps recording the console (`~/t5051/run7_cap2.txt`, until ~21:05) while the
+board stays in this state. To repeat: `lxrun.sh ETH_GateMateA1_2609_1646_Linux_GbE_DVI_USBPNRU_pll60s1.bit
+rv32_usb4.dtb rootfs_usb6.cpio 1500` + `cap.sh`, then type on the wireless keyboard: expected
+`kbd: 00 00 0b 00 …` lines and characters on the DVI console.
+
 ### 7.2 Remaining order
 
 Order (FPGA rules: do not power-cycle the board, only `openFPGALoader -r`; every bitstream is packed with
 `gmpack --reset` — the build script of these builds runs `gmpack --reset`, target_soc.py adds it; on instability
 suspect first a missing `--reset`, then timing, never the Pi's supply):
 
-1. LS keyboard directly on J5 (external 5 V: J5.VBUS is not powered by the board): bitstream with
-   `--with-usb-pnru`, DTB from `mkdts.py`, `usbhostd` in the rootfs; expect in `/var/log/usbhostd.log`:
-   `root port: LS device`, `boot keyboard`, then typing on tty1.
+1. Key presses of the wireless receiver on the Waveshare USB-C (§7.1.3); then a wired LS keyboard on the same
+   USB-C (LS path of the PHY on the board).
 2. ULX5M-GS in the CM4 IO board, keyboard on a hub port: `root port: FS device`, `hub with 4 ports`,
    `hub port N: LS device`, `boot keyboard` (PRE mode).
 3. Then the Buildroot kernel with uinput.
