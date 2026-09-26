@@ -1,0 +1,51 @@
+=== verify_external_link  2026-09-26 22:19:52
+Done
+Done
+[1] Početno stanje: obje ploče primaju podatke DRUGE ploče, LOOPBACK_SEL=0, bez grešaka
+  board=gs PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 10/10 distinct=10  expect=peer -> PASS
+  board=m2 PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 10/10 distinct=10  expect=peer -> PASS
+  GS=UP M2=UP  gs_rx: synced=1 new_words=11250088 new_errb=0 self=0 | m2_rx: synced=1 new_words=11250080 new_errb=0 fresh=1
+  -> PASS
+[2] Utišaj TX na m2 (električni idle) -> gs MORA izgubiti podatke, m2 i dalje prima od gs
+board=m2 busdev=1:17 idle on -> reg0x2A=0x280C reg0x2B=0x0000 reg0x40=0x1018 reg0x41=0x4003
+  GS=UP M2=UP  gs_rx: synced=1 new_words=15000117 new_errb=0 self=0 | m2_rx: synced=1 new_words=15000096 new_errb=0 fresh=1
+  GS=DOWN M2=UNKNOWN  gs_rx: synced=0 new_words=0 new_errb=0 self=0 | m2_rx: synced=1 new_words=0 new_errb=0 fresh=0
+  board=m2 PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 10/10 distinct=10  expect=peer -> PASS
+  -> PASS
+board=m2 busdev=1:17 idle off -> reg0x2A=0x280C reg0x2B=0x0000 reg0x40=0x1018 reg0x41=0x4000
+  GS=UP M2=UP  gs_rx: synced=1 new_words=7500059 new_errb=0 self=0 | m2_rx: synced=1 new_words=7500064 new_errb=0 fresh=1
+  -> PASS
+[3] Utišaj TX na gs -> m2 MORA izgubiti podatke, gs i dalje prima od m2
+board=gs busdev=1:18 idle on -> reg0x2A=0x280C reg0x2B=0x0000 reg0x40=0x1018 reg0x41=0x4003
+  GS=UP M2=DOWN  gs_rx: synced=1 new_words=7500059 new_errb=0 self=0 | m2_rx: synced=0 new_words=7299181 new_errb=2535 fresh=1
+  board=m2 PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: IDLE_FF 10/10 distinct=1  expect=down -> PASS
+  -> PASS
+board=gs busdev=1:18 idle off -> reg0x2A=0x280C reg0x2B=0x0000 reg0x40=0x1018 reg0x41=0x4000
+  GS=UP M2=UP  gs_rx: synced=1 new_words=7500058 new_errb=0 self=0 | m2_rx: synced=1 new_words=7500064 new_errb=0 fresh=1
+  -> PASS
+[4] Promjena uzorka: ubaci točno 3 greške na svaki TX -> druga strana mora izbrojiti točno 3
+INJECT gs TX -> m2 checker: sent=3 counted=3 -> PASS
+  -> PASS
+INJECT m2 TX -> gs checker: sent=3 counted=3 -> PASS
+  -> PASS
+    zamijeni podatke na m2 TX fiksnim uzorkom (TX_DATA_OVR) -> gs ne smije vidjeti m2 podatke
+board=m2 busdev=1:17 pattern 00FF00FF -> reg0x2A=0x280C reg0x2B=0x0000 reg0x40=0x1018 reg0x41=0x4B00
+  GS=UP M2=UP  gs_rx: synced=1 new_words=7500058 new_errb=0 self=0 | m2_rx: synced=1 new_words=7500064 new_errb=0 fresh=1
+  GS=DOWN M2=UNKNOWN  gs_rx: synced=0 new_words=0 new_errb=0 self=0 | m2_rx: synced=1 new_words=0 new_errb=0 fresh=0
+  board=gs PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: OTHER 10/10 distinct=1  expect=peer -> FAIL
+  -> PASS
+board=m2 busdev=1:17 pattern off -> reg0x2A=0x280C reg0x2B=0x0000 reg0x40=0x1018 reg0x41=0x4000
+  GS=UP M2=UP  gs_rx: synced=1 new_words=7500059 new_errb=0 self=0 | m2_rx: synced=1 new_words=7500064 new_errb=0 fresh=1
+  -> PASS
+
+=== SAŽETAK  22:22:13
+  PASS  1 početno stanje (gs i m2 primaju PEER, LOOPBACK_SEL=0)
+  PASS  2 m2 TX utišan -> gs pao, m2 i dalje prima
+  PASS  2b m2 TX vraćen -> oporavak obje strane
+  PASS  3 gs TX utišan -> m2 pao, gs i dalje prima
+  PASS  3b gs TX vraćen -> oporavak obje strane
+  PASS  4a gs TX 3 greške -> m2 checker broji 3
+  PASS  4b m2 TX 3 greške -> gs checker broji 3
+  PASS  4c m2 šalje drugi uzorak -> gs odbija
+  PASS  4d uzorak vraćen -> oporavak
+=== UKUPNO: 9 PASS, 0 FAIL -> PASS

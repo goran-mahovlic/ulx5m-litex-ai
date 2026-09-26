@@ -1,7 +1,10 @@
 # verify_external_link.sh — kako sam provjeriti da SerDes GS↔M2 radi preko kabela
 
-Skripta je na Piju: `tools/verify_external_link.sh` (izvor u repou:
-`tools/`). Radi s dizajnom **ber_top** (`docs/ulx5m-serdes/gw/`) učitanim na obje ploče.
+Skripta je na Piju u `/home/pi/ulx5m-serdes/tools/verify_external_link.sh` (izvor u repou: `tools/`).
+Radi s dizajnom **ber_top** (`gateware/ber/`) učitanim na obje ploče. Za `--load` bitstreamovi moraju
+biti u `bitstreams/` pokraj `tools/` (na Piju `/home/pi/ulx5m-serdes/bitstreams/`, kopija repoa
+`bitstreams/`, provjera `sha256sum -c SHA256SUMS`) ili u mapi zadanoj s `SERDES_BIT_DIR`. Ako datoteka
+nema, skripta stane s porukom i izlaznim statusom 2.
 
 ## Što skripta dokazuje
 
@@ -25,7 +28,22 @@ Skripta se u koraku 5 zaustavi i ispiše **„SAD IZVUCI SerDes KABEL“**. Izvu
 U koraku 6 traži **„VRATI SerDes KABEL“**: vrati kabel i pritisni ENTER.
 Bez koraka s kabelom (npr. na daljinu): `--no-cable`.
 
-Prije pokretanja provjeri da gs nije zauzet: `cat <lab-dir>/gs.owner`. Ako tamo stoji tuđi zadatak
+### Što je „SerDes kabel" na našem postavu (pročitaj prije koraka 5)
+
+Zasebnog kabela samo za podatke nema. Podatkovni parovi idu putem GS → CM4 IO ploča → PCIe utor →
+PCIe→M.2 prijelaznica → M2, a **istim putem m2 dobiva i 100 MHz refclk** (oscilator na M2 je skinut).
+M2 je M.2 kartica, pa **najvjerojatnije i napajanje** dobiva iz utora (nije provjereno na shemi;
+iznimka je ako mu je spojen vlastiti USB). Posljedice:
+
+- Korak 5 prolazi, ali pad veze tada ima dva uzroka odjednom: nestanak podatkovnog para i nestanak
+  refclka na m2 (PLL izgubi lock). Samo podatkovni par izoliraju koraci **2 i 3** (TX u električni
+  idle preko JTAG-a, refclk i napajanje netaknuti). Oni su glavni dokaz vanjskog puta.
+- Ako m2 ostane bez napajanja, gubi SRAM konfiguraciju (flash se ne piše). Korak 6 tada padne i
+  skripta ispiše **SAVJET**: ponovi s `--load`. Takav FAIL u koraku 6 **nije kvar veze**.
+- Izvlačenje prijelaznice pod naponom je hot-unplug kartice i ujedno power-cycle m2, što pravila laba
+  inače izbjegavaju. Radi to samo svjesno.
+
+Prije pokretanja provjeri da gs nije zauzet: `cat /home/pi/gs.owner`. Ako tamo stoji tuđi zadatak
 mlađi od 2 sata, pričekaj.
 
 ## Koraci i što mora biti
