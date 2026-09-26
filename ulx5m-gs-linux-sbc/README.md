@@ -19,7 +19,7 @@ keyboard and SD card. The bitstreams in `bitstreams/` are built from it.
 
 The project started with two designs without a CPU (100 Mb/s and 1000 Mb/s ping in hardware) and many
 diagnostic modules. They were removed on 26 September 2026 and are kept in the git tag `pre-cleanup-20260926`.
-The review is in `docs/REVIZIJA_LITEX_DUPLIKATI.md`.
+The review is in `docs/REVIEW_LITEX_DUPLICATES.md`.
 
 ## Why these files are local
 

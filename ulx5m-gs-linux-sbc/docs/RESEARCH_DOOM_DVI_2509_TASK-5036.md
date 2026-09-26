@@ -44,7 +44,7 @@ Nisam flashala ploču: to nije bilo traženo, a prema Goranovu README-u DVI na v
 
 ## 2. Globalne mreže: glavni sukob s 1G Ethernetom
 
-GateMate A1 ima 4 `CC_BUFG`. Današnji 1G SoC troši svih 4: `sys`, `gtx0` 125 MHz, TXC i `grx` (IZVOR `docs/SOC_FAZA2_20260925_TASK-5033.md` §4). Video traži još 2 (IZMJERENO, §1).
+GateMate A1 ima 4 `CC_BUFG`. Današnji 1G SoC troši svih 4: `sys`, `gtx0` 125 MHz, TXC i `grx` (IZVOR `docs/SOC_PHASE2_20260925_TASK-5033.md` §4). Video traži još 2 (IZMJERENO, §1).
 
 | Kombinacija | Globalne mreže | Ocjena |
 |---|---|---|
@@ -57,7 +57,7 @@ GateMate A1 ima 4 `CC_BUFG`. Današnji 1G SoC troši svih 4: `sys`, `gtx0` 125 M
 
 LiteX `VideoFrameBuffer` (`litex/soc/cores/video.py:1022`) čita okvir DMA-om preko LiteDRAM porta. Podržani formati su samo `rgb888/rgb565/rgb332/mono8/mono1` (`video.py:1008`): **nema palete, nema udvostručenja linija**.
 
-Vrh SDRAM-a: 16 bita × 20 MHz = **40,0 MB/s**. Izmjereno CPU-om (BIOS memspeed, S5): pisanje 8,8 MiB/s, čitanje 4,5 MiB/s (IZVOR `SOC_FAZA2` §4). Budžet pri 60 Hz (IZMJERENO računom, `python3`):
+Vrh SDRAM-a: 16 bita × 20 MHz = **40,0 MB/s**. Izmjereno CPU-om (BIOS memspeed, S5): pisanje 8,8 MiB/s, čitanje 4,5 MiB/s (IZVOR `SOC_PHASE2` §4). Budžet pri 60 Hz (IZMJERENO računom, `python3`):
 
 | Način | Okvir | Čitanje @60 Hz | % vrha | Ocjena |
 |---|---|---|---|---|
@@ -111,7 +111,7 @@ DOOM je pisan u fiksnom zarezu 16.16. `FixedMul` je `(int64)a*b >> 16` (na rv32i
 
 | CPU (LiteX varijanta) | Množenje | Cache | CC_MULT | Stane s | Izvor |
 |---|---|---|---|---|---|
-| lite | `MulDivIterativePlugin`, brojač do 32 (`VexRiscv_Lite.v:3729`) → ~33 takta po `mul`, 2× za `FixedMul` | I$ 2 KiB, D$ nema | 0 | netboot SoC (71 % LT) | IZVOR `VexRiscv_Lite.v`, `SOC_FAZA2` §6 |
+| lite | `MulDivIterativePlugin`, brojač do 32 (`VexRiscv_Lite.v:3729`) → ~33 takta po `mul`, 2× za `FixedMul` | I$ 2 KiB, D$ nema | 0 | netboot SoC (71 % LT) | IZVOR `VexRiscv_Lite.v`, `SOC_PHASE2` §6 |
 | **standard** | `MulPlugin` (4 CC_MULT, 1 takt protoka) + `DivPlugin` | I$ 4 KiB, D$ 4 KiB (`banks_0[0:1023]`) | 4 | S5s9 (68 % LT) ✅, netboot (76 %) ❌ | IZVOR `VexRiscv.v:5381, 6127`, lekcija J7 |
 
 **Sukob s CC_MULT je stvaran, ali se ne tiče DOOM SoC-a.** CC_MULT sam po sebi ne pada: S5s9 ima 4 CC_MULT i prolazi. Placer pada tek kad je LT iznad ~75 % (J7: 3 : 0 uz hipotezu). DOOM build izbacuje 1G, Etherbone i hardverski stog, pa se vraća ispod te granice. **Preporuka: VexRiscv standard.** S lite varijantom `FixedMul` je ~30× sporiji, pa bi DOOM bio neigriv (HIPOTEZA < 1 FPS).
@@ -157,7 +157,7 @@ Broj se mora izmjeriti (§7, korak 1).
 | R3 | hdmi5x fmax 128,8 MHz uz cilj 125 MHz (3 % rezerve) | srednja | seed sweep kao za gtx; serijalizator `v2` (CDC + Converter) kao alternativa |
 | R4 | Nestandardni piksel takt 25,0 umjesto 25,175 MHz | niska | većina monitora prihvaća; smunaut i LiteX_DVI rade isto |
 | R5 | DMA videa krade SDRAM CPU-u | niska | 3,8 MB/s ≈ 10 % vrha |
-| R6 | 1G ping pada pod SDRAM opterećenjem (nalaz 3 u `SOC_FAZA2`) | ne tiče se DOOM builda | DOOM build nema 1G |
+| R6 | 1G ping pada pod SDRAM opterećenjem (nalaz 3 u `SOC_PHASE2`) | ne tiče se DOOM builda | DOOM build nema 1G |
 | R7 | Licenca: shareware `doom1.wad` smije se dijeliti, Ultimate/Doom II ne | – | za demo koristiti samo `doom1.wad` ili Freedoom |
 
 ## 9. Odgovori na Klaudijeve točke

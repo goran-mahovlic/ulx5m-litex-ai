@@ -3,7 +3,7 @@
 Učitavanje (samo SRAM): `openFPGALoader -c dirtyJtag <bit> -r`. Svi imaju CMD_CFGRST (`gmpack --reset`).
 
 Starije bitstreamove i CPU-less dizajne (100 Mb/s `target_eth.py`, 1 Gb/s `target_gbe.py`) ovaj repozitorij više
-ne sadrži; opisi i izvori su u git tagu `pre-cleanup-20260926` (vidi `docs/REVIZIJA_LITEX_DUPLIKATI.md`).
+ne sadrži; opisi i izvori su u git tagu `pre-cleanup-20260926` (vidi `docs/REVIEW_LITEX_DUPLICATES.md`).
 U mapi su samo dva bitstreama označena ispod: `grec_3` i `ghrec_1`.
 
 ## TASK-5040 (DVI / Linux fbcon / DOOM), grana sbc-dvi-usb

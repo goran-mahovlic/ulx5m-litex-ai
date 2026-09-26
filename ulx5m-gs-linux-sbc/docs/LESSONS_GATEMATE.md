@@ -138,7 +138,7 @@ i `gateware/target_gbe.py`. LiteEth ostaje u sys (20 MHz).
 
 ## J. Puni SoC (TASK-5033, 25. 9. 2026)
 
-Rezultat: `ETH_GateMateA1_2509_0918_SoC_S5s9.bit` (`--boot none`, VexRiscv standard) i `ETH_GateMateA1_2509_1027_SoC_NetBoot.bit` (`--boot netboot`, VexRiscv lite), oba 3/3 uz prljavi bitstream. Izvještaj: `docs/SOC_FAZA2_20260925_TASK-5033.md`.
+Rezultat: `ETH_GateMateA1_2509_0918_SoC_S5s9.bit` (`--boot none`, VexRiscv standard) i `ETH_GateMateA1_2509_1027_SoC_NetBoot.bit` (`--boot netboot`, VexRiscv lite), oba 3/3 uz prljavi bitstream. Izvještaj: `docs/SOC_PHASE2_20260925_TASK-5033.md`.
 
 | # | Lekcija | Status | Dokaz |
 |---|---|---|---|

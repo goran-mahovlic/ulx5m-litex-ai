@@ -391,7 +391,7 @@ def main():
     p.add_argument("--video-640x240", action="store_true", help="640x240 framebuffer, lines doubled only (80x30 text, 18.4 MB/s)")
     p.add_argument("--video-recover", action="store_true", help="resettable video domain + resync watchdog (TASK-5047)")
     p.add_argument("--with-usb-hid", action="store_true", help="USB low-speed HID host (Emard) on J5, CSR usb_hid (TASK-5047)")
-    # MDIO controller board test (docs/REVIZIJA_LITEX_DUPLIKATI.md): later write, other REG4, full snap as a CSR.
+    # MDIO controller board test (docs/REVIEW_LITEX_DUPLICATES.md): later write, other REG4, full snap as a CSR.
     p.add_argument("--phy-write-after", default=0, type=int, help="MDIO pass in which REG9/4/0 are written")
     p.add_argument("--phy-reg4", default=0x0001, type=lambda x: int(x, 0), help="KSZ9031 REG4 written by MDIOCore")
     p.add_argument("--phy-snap-csr", action="store_true", help="CSR phy_snap = MDIOCore snap (256 bit)")

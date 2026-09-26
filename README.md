@@ -151,7 +151,7 @@ scripts, or gmpack by hand), add `--reset` yourself. All bitstreams in `bitstrea
 The build uses plain upstream LiteX at the version linked under [Built on](#built-on). An older version of
 this folder had a small optional LiteX patch (one line that did not change the logic, and one extra line in the
 BIOS start-up screen). It was removed on 26 September 2026; see
-`ulx5m-gs-linux-sbc/docs/REVIZIJA_LITEX_DUPLIKATI.md`.
+`ulx5m-gs-linux-sbc/docs/REVIEW_LITEX_DUPLICATES.md`.
 
 The scripts in `tools/` still contain our local paths and IP addresses. Change them before you use them.
 

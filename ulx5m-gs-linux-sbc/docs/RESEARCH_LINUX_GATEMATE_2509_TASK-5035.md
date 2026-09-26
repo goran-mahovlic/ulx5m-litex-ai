@@ -4,7 +4,7 @@ Autorica: Dora (REGOČ), 25. 9. 2026. Nalog: Goran 10:45, upute #28, #30, #31. O
 
 Dorada i provjera: Jelena (TASK-5038), 25. 9. 2026. Lokalne tvrdnje ponovno sam provjerila, a dvije otvorene točke iz §7 zatvorila mjerenjem (vidi §11).
 
-> **Stanje prije ovog izvještaja.** Dok je nalog nastajao, Jelena je (TASK-5033, grana `linux-vexriscv-smp`, tag `linux-boot-ok-2509`) već podigla Linux 5.14 na ULX5M-GS: VexRiscv-SMP s 1 jezgrom, I$/D$ 4 KiB, MMU, 1G CPU MAC, bez SD-a, **CPE_LT 55 %**, RAM_HALF 45/64 (`docs/SOC_FAZA2_20260925_TASK-5033.md` §9). Zato ovaj dokument ne traži konfiguraciju koja stane, nego:
+> **Stanje prije ovog izvještaja.** Dok je nalog nastajao, Jelena je (TASK-5033, grana `linux-vexriscv-smp`, tag `linux-boot-ok-2509`) već podigla Linux 5.14 na ULX5M-GS: VexRiscv-SMP s 1 jezgrom, I$/D$ 4 KiB, MMU, 1G CPU MAC, bez SD-a, **CPE_LT 55 %**, RAM_HALF 45/64 (`docs/SOC_PHASE2_20260925_TASK-5033.md` §9). Zato ovaj dokument ne traži konfiguraciju koja stane, nego:
 > (a) dokazuje da je to ista konfiguracija kojom je Linux podignut na Kölschu;
 > (b) popisuje što se još može ukloniti da uz Linux stane i SD;
 > (c) ocjenjuje zamjenske putove (nommu, SaxonSoc, VexiiRiscv).
@@ -108,7 +108,7 @@ Daljnje smanjenje jezgre. Sve su to opcije `litex/soc/cores/cpu/vexriscv_smp/cor
 | Userspace | bFLT (`CONFIG_BINFMT_FLAT=y`), `vfork` umjesto `fork`, `-Wl,-elf2flt=-r` | [popovicu.com: 789 KB Linux without MMU](https://popovicu.com/posts/789-kb-linux-without-mmu-riscv/) (6.5.5, rv64, QEMU) |
 | RAM | tinyconfig kernel 789 KB nekomprimiran. Buildroot sustav stane u nekoliko MB, a mi imamo 64 MB, pa to nije ograničenje. | isto |
 | Radni primjer na LiteX/VexRiscv? | **Nisam ga našla.** Svi LiteX Linux primjeri koriste MMU (VexRiscv-SMP/linux). Poznati rv32 nommu primjeri su emulatori (mini-rv32ima, uc-rv32ima na ESP32-C3) i KianV (vlastiti SoC; ima i Sv32 inačicu). | [xhackerustc/uc-rv32ima](https://github.com/xhackerustc/uc-rv32ima), [splinedrive/kianRiscV](https://github.com/splinedrive/kianRiscV) |
-| Može li na našem **Lite** SoC-u? | **Ne izravno.** `lite` je `rv32im` (GCC_FLAGS: `-march=rv32i2p0_m`), dakle ima M (iterativno, 0 CC_MULT), **ali nema A**. Ispravak §9 u SOC_FAZA2, gdje piše „lite nema A/M”: M ima. Kandidat bez MMU-a je varijanta **`imac`**: `GenCoreDefault --csrPluginConfig all --atomics true --compressedGen true`, s istim 4K cacheom kao `standard`, ali s MMU-om. Emulirati A u trap handleru nije moguće jer kernel radi u M-modu (HIPOTEZA). | `litex/soc/cores/cpu/vexriscv/core.py` r. 34–80; `pythondata-cpu-vexriscv/verilog/Makefile` r. 15–25 |
+| Može li na našem **Lite** SoC-u? | **Ne izravno.** `lite` je `rv32im` (GCC_FLAGS: `-march=rv32i2p0_m`), dakle ima M (iterativno, 0 CC_MULT), **ali nema A**. Ispravak §9 u SOC_PHASE2, gdje piše „lite nema A/M”: M ima. Kandidat bez MMU-a je varijanta **`imac`**: `GenCoreDefault --csrPluginConfig all --atomics true --compressedGen true`, s istim 4K cacheom kao `standard`, ali s MMU-om. Emulirati A u trap handleru nije moguće jer kernel radi u M-modu (HIPOTEZA). | `litex/soc/cores/cpu/vexriscv/core.py` r. 34–80; `pythondata-cpu-vexriscv/verilog/Makefile` r. 15–25 |
 | Isplati li se? | **Ne.** `standard` (izveden iz iste jezgre kao `imac`) s netbootom ne stane (76 %, J7), a SMP s MMU-om stane na 55 %. Razlika dolazi od toga što SMP spaja LiteDRAM nativno (Ldw16) i sporije pristupa periferiji. nommu bi uz to tražio vlastiti kernel i uClibc + elf2flt userspace, a to je puno softverskog posla bez hardverskog dobitka. | Jelenina tablica §9 + J7 |
 
 ## 6. SaxonSoc — uputa #28 (6)
@@ -151,7 +151,7 @@ Cilj je spustiti `SMP + MAC + SD` sa 77 % ispod ~71 %, što je granica placera i
 
 ## 9. DOOM (uputa #30)
 
-Po uputi #31 ovo poglavlje ne dupliciram. Vidi Jelenin dokument **`docs/ISTRAZIVANJE_DOOM_DVI_2509_TASK-5036.md`** na grani `doom-dvi-2509` (commit `3684e8e`) i moju reviziju (§10, ispravci D1–D8, commit `5337c88`, TASK-5037).
+Po uputi #31 ovo poglavlje ne dupliciram. Vidi Jelenin dokument **`docs/RESEARCH_DOOM_DVI_2509_TASK-5036.md`** na grani `doom-dvi-2509` (commit `3684e8e`) i moju reviziju (§10, ispravci D1–D8, commit `5337c88`, TASK-5037).
 
 Veza s Linuxom:
 - DVI treba 2 globalne mreže, a 1G SoC troši 4/4 CC_BUFG. Zato **Linux + 1G + DVI ne ide istodobno**.
@@ -167,7 +167,7 @@ Veza s Linuxom:
 - https://machdyne.com/product/kolsch-computer/ ; https://github.com/machdyne/kolsch
 - https://github.com/SpinalHDL/SaxonSoc ; https://github.com/dok3r/ulx3s-saxonsoc/wiki/SaxonSoc-on-ULX3s
 - https://lkml.iu.edu/hypermail/linux/kernel/2403.3/07337.html ; https://github.com/cnlohr/mini-rv32ima ; https://popovicu.com/posts/789-kb-linux-without-mmu-riscv/
-- lokalno: `~/app/litex-1g-deps/{litex,litedram,pythondata-cpu-vexriscv,pythondata-cpu-vexriscv_smp}`; `docs/SOC_FAZA2_20260925_TASK-5033.md`; `docs/LESSONS_GATEMATE.md` (J7)
+- lokalno: `~/app/litex-1g-deps/{litex,litedram,pythondata-cpu-vexriscv,pythondata-cpu-vexriscv_smp}`; `docs/SOC_PHASE2_20260925_TASK-5033.md`; `docs/LESSONS_GATEMATE.md` (J7)
 
 ## 11. Dorada i provjera (Jelena, TASK-5038)
 
@@ -178,7 +178,7 @@ Veza s Linuxom:
 | Lokalni LiteX sadrži #2274 (§1.1) | `git -C ~/app/litex-1g-deps/litex log --oneline \| grep invert` | `dbca01b0e colognechip: DDR should not be inverted` | ✅ |
 | litedram ima `W989D6DBGX6` (§1.1) | `grep -n W989D6DBGX6 litedram/modules.py` | `574:class W989D6DBGX6(SDRModule):` | ✅ |
 | Opcije smanjenja SMP jezgre (§4) | `sed -n 60,100p litex/soc/cores/cpu/vexriscv_smp/core.py` | postoje `--without-out-of-order-decoder`, `--icache/dcache-size`, `--itlb/dtlb-size`, `--hardware-breakpoints` (zadano 1) | ✅ |
-| `lite` = rv32im, `imac` = rv32imac (§5) | `grep -n 'lite\|imac' litex/soc/cores/cpu/vexriscv/core.py` | r. 65: `-march=rv32i2p0_m`, r. 70: `-march=rv32i2p0_mac` | ✅ Dorin ispravak stoji: `lite` ima M, nema A. U SOC_FAZA2 (grana `linux-vexriscv-smp`, r. 195) i dalje piše „lite nema A/M”, pa taj redak treba ispraviti pri sljedećem commitu na toj grani. |
+| `lite` = rv32im, `imac` = rv32imac (§5) | `grep -n 'lite\|imac' litex/soc/cores/cpu/vexriscv/core.py` | r. 65: `-march=rv32i2p0_m`, r. 70: `-march=rv32i2p0_mac` | ✅ Dorin ispravak stoji: `lite` ima M, nema A. U SOC_PHASE2 (grana `linux-vexriscv-smp`, r. 195) i dalje piše „lite nema A/M”, pa taj redak treba ispraviti pri sljedećem commitu na toj grani. |
 
 ### 11.2 Ima li prebuilt kernel 5.14 upravljački program za SPI-SD? — DA
 
