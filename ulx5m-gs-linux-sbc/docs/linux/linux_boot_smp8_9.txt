@@ -1,0 +1,83 @@
+Done
+LOGIN PROMPT after 176 s
+5 packets transmitted, 0 received, 100% packet loss, time 140ms
+[    0.000000] Linux version 5.14.0 (florent@panda) (riscv32-buildroot-linux-gnu-gcc.br_real (Buildroot 2021.08-381-g279167ee8d) 10.3.0, GNU ld (GNU Binutils) 2.36.1) #1 SMP Tue Sep 21 12:57:31 CE.Q.....5)m............u.5...........................}.....}..5)m............u........................%.=..........Bz..........5)m............u.5...............................5).[    0.000000] earlycon: liteuart0 at MMIO 0xf0001000 (o..........5..[    0.000000] printk: bootconsole [liteuart0] enable.5..[    0.000000] Zone........5).[    0.000000]   Normal   [mem 0x0000000040000000-0x0000000043fffff.u5).[    0.000000] Movable zone start for each n.G.5).[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000040000000-0x0000000....d....u...[    0.000000] Initmem setup node 0 [mem 0x0000000040000000-0x00000000...g....u5).[    0.000000] SBI specification v0.2 detected
+[    0.000000] SBI implementation ID=0x1 Version=0x8
+[    0.000000] SBI TIME extension d.G.....5).[    0.000000] SBI IPI extension d...=...5).[    0.000000] SBI RFENCE extension detec...5).[    0.000000] SBI v0.2 HSM extension de...A..5..[    0.000000] riscv: ISA extensi........5).[    0.000000] riscv: ELF capab........
+..5 .[    0.000000] percpu: Embedded 8 pages/cpu s11340 r0 d21.............[    0.000000] Built 1 zonelists, mobility grouping on.  Total p...........5).[    0.000000] Kernel command line: console=liteuart earlycon=liteuart,0xf0001000 rootwait root=/dev/ram0 ip=192.168.10.213:192.168.10.14:192.168.10.14:255.255.255.0::eth0:off.B.jR.[    0.000000] Unknown command line parameters: ip=192.168.10.213:192.168.10.14:192.168.10.14:255.255.255.0::eth0:off:::
+[    0.000000] Dentry cache hash table entries: 8192 (order: 3, 32768 bytes,........5).[    0.000000] Inode-cache hash table entries: 4096 (order: 2, 16384 bytes,........5).[    0.000000] Sorting __ex_table...5).[    0.000000] mem auto-init: stack:off, heap alloc:off, heap free:off
+[    0.000000] Memory: 48644K/65536K available (5685K kernel code, 572K rwdata, 883K rodata, 209K init, 221K bss, 16892K reserved, 0K cma-reserved)
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=1, Nod....5).[    0.000000] rcu: Hierarchical RCU impl..u...A....5).[    0.000000] rcu: .RCU restricting CPUs from NR_CPUS=8 to nr_cpu_ids=1.
+[    0.000000] rcu: RCU calculated value of scheduler-enlistment delay is 25 ...d....5).[    0.000000] rcu: Adjusting geometry for rcu_fanout_leaf=16, n.}...}.....5).[    0.000000] NR_IRQS: 64, nr_irqs: 64, preallocated .K.....j..[    0.000000] riscv-intc: 32 local interrupts mapped
+[    0.000000] plic: interrupt-controller@f0c00000: mapped 32 interrupts with 1 handlers for 2 context... ".[    0.000000] random: get_random_bytes called from start_kernel+0x4ac/0x63c wi...
+...}...q..5).[    0.000000] riscv_timer_init_dt: Registering clocksource cpuid [0] hartid [0]
+[    0.000000] clocksource: riscv_clocksource: mask: 0xffffffffffffffff max_cycles: 0x49cd42e20, max_idle_ns: 440795202120 n.5..[    0.000118] sched_clock: 64 bits at 20MHz, resolution 50ns, wraps every 4398046511100ns
+[    0.022263] Console: colour dummy device 80x25
+[    0.033526] Calibrating delay loop (skipped), value calculated using timer frequency.. 40.00 BogoMIPS (lpj=80000)
+[    0.053601] pid_max: default: 32768 minimum: 301
+[    0.084314] Mount-cache hash table entries: 1024 (order: 0, 4096 bytes, linear)
+[    0.099071] Mountpoint-cache hash table entries: 1024 (order: 0, 4096 bytes, linear)
+[    0.289755] ASID allocator using 9 bits (512 entries)
+[    0.317834] rcu: Hierarchical SRCU implementation.
+[    0.374334] smp: Bringing up secondary CPUs ...
+[    0.384169] smp: Brought up 1 node, 1 CPU
+[    0.435270] devtmpfs: initialized
+[    0.678701] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+[    0.699880] futex hash table entries: 256 (order: 2, 16384 bytes, linear)
+[    0.775100] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    2.207711] pps_core: LinuxPPS API ver. 1 register..5).[    2.217713] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[    2.235678] PTP clock support registered
+[    2.272377] FPGA manager framewo..5).[    2.393337] clocksource: Switched to clocksource riscv_clocksource
+[    4.082853] NET: Registered PF_INET protocol family
+[    4.107934] IP idents hash table entries: 2048 (order: 2, 16384 bytes, linear)
+[    4.190930] tcp_listen_portaddr_hash hash table entries: 512 (order: 0, 6144 bytes, linear)
+[    4.212649] TCP established hash table entries: 1024 (order: 0, 4096 bytes, linear)
+[    4.235480] TCP bind hash table entries: 1024 (order: 1, 8192 bytes, linear)
+[    4.252479] TCP: Hash tables configured (established 1024 bind 1024)
+[    4.276327] UDP hash table entries: 256 (order: 1, 8192 bytes, linear)
+[    4.295879] UDP-Lite hash table entries: 256 (order: 1, 8192 bytes, linear)
+[    4.563654] Unpacking initramfs...
+[    4.915060] workingset: timestamp_bits=30 max_order=14 bucket_order=0
+[    7.256017] io scheduler mq-deadline registered
+[    7.267646] io scheduler kyber registered
+[   10.363173] LiteX SoC Controller driver initialized
+[   23.314985] Initramfs unpacking failed: invalid magic at start of compressed archive
+[   24.042648] Freeing initrd memory: 8192K
+[   28.322646] f0001000.serial: ttyLXU0 at MMIO 0x0 (irq = 0, base_baud = 0) is a liteuart
+[   28.344041] printk: console [liteuart0] enabled
+[   28.344041] printk: console [liteuart0] enabled
+[   28.362873] printk: bootconsole [liteuart0] disabled
+[   28.362873] printk: bootconsole [liteuart0] disabled
+[   28.704669] liteeth f0000800.mac eth0: irq 1 slots: tx 2 rx 2 size 2048
+[   28.752527] i2c_dev: i2c /dev entries driver
+[   29.170613] NET: Registered PF_INET6 protocol family
+[   29.354812] Segment Routing with IPv6
+[   29.367723] In-situ OAM (IOAM) with IPv6
+[   29.387949] sit: IPv6, IPv4 and MPLS over IPv4 tunneling driv..5).[   29.531664] NET: Registered PF_PACKET protocol family
+[   29.646631] Freeing unused kernel image (initmem) memory: 204K
+[   29.662646] Kernel memory protection not selected by kernel config.
+[   29.679030] Run /init as init process
+Starting syslogd: OK
+Starting klogd: OK
+Running sysctl: OK
+Saving random seed: [   58.690786] random: dd: uninitialized urandom read (512 bytes read)
+OK
+Starting network: OK
+Welcome to Buildroot
+buildroot login: root
+                   __   _
+                  / /  (}.}}..}}.}}}}.}}.
+                 / /__/ ..}.q......q.q...
+                /____/_/_//_/\_,_//_\_\
+                      / _ \/ _ \
+   __   _ __      _  _\___/_//...........}}}..}.
+  / /  (_) /____ | |/_/__| | / /____ __ / _ \(_)__ _____  __
+ / /__/ / __/ -_)>  </___/ |/ / -_) \ // , _/ (_-</ __/ |/ /
+/____/_/\__/\__/_/|_|____|___/\__/_\_\/_/|_/_/___/\__/|___/
+                  / __/ .......}.q.
+                 _\ \/ /|_/ / ___/
+                /___/_/  /_/_/
+  32-bit RISC-V Linux running on LiteX / VexRiscv-SMP.
+login[69]: root login on 'console'
+root@buildroot:~# uname -a; cat /profo | head -8; free; ip a

@@ -1,0 +1,40 @@
+Info: Device utilisation:
+Info: 	            USR_RSTN:       1/      1   100%
+Info: 	            CPE_COMP:       0/  20480     0%
+Info: 	         CPE_CPLINES:      41/  20480     0%
+Info: 	               IOSEL:      53/    162    32%
+Info: 	                GPIO:      53/    162    32%
+Info: 	               CLKIN:       1/      1   100%
+Info: 	              GLBOUT:       1/      1   100%
+Info: 	                 PLL:       2/      4    50%
+Info: 	            CFG_CTRL:       0/      1     0%
+Info: 	              SERDES:       0/      1     0%
+Info: 	              CPE_LT:    2777/  40960     6%
+Info: 	              CPE_FF:     679/  40960     1%
+Info: 	           CPE_RAMIO:     778/  40960     1%
+Info: 	            RAM_HALF:      17/     64    26%
+
+Info: Placed 0 cells based on constraints.
+      227   CC_ADDF
+       17   CC_BRAM_20K
+        4   CC_BUFG
+      711   CC_DFF
+        2   CC_IBUF
+       16   CC_IOBUF
+      663   CC_L2T4
+      220   CC_L2T5
+       53   CC_LUT1
+      236   CC_LUT2
+        4   CC_LVDS_OBUF
+       82   CC_MX2
+       53   CC_MX4
+       31   CC_OBUF
+        4   CC_ODDR
+        2   CC_PLL
+        1   CC_USR_RSTN
+Info: Max frequency for clock    'sys_clk': 36.85 MHz (PASS at 20.00 MHz)
+Info: Max frequency for clock   'hdmi_clk': 122.29 MHz (FAIL at 125.00 MHz)
+Info: Max frequency for clock 'hdmi5x_clk': 165.51 MHz (PASS at 125.00 MHz)
+Info: Max frequency for clock    'sys_clk': 35.15 MHz (PASS at 20.00 MHz)
+Warning: Max frequency for clock   'hdmi_clk': 59.62 MHz (FAIL at 125.00 MHz)
+Info: Max frequency for clock 'hdmi5x_clk': 128.80 MHz (PASS at 125.00 MHz)

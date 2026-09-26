@@ -1,0 +1,28 @@
+dirty: ETH_GateMateA1_2509_0222_RefSoC_CFGRST.bit -> Done
+soc:   ETH_GateMateA1_2509_0918_SoC_S5s9.bit -> Done
+mem_test finished 86.2 s after load
+first ping reply after load: 6.1 s
+ping0: 71/100 replies
+ping -s 0: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 18: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 56: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 100: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 1000: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 1472: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 1472 x20: 20 packets transmitted, 20 received, 0% packet loss
+0xf0000004: 0x12345678
+UART 46256 B:
+CPU:..VexRiscv @ 20MHz
+BUS:..wishbone 32-bit data/32-bit addr
+CSR:..32-bit data big ordering
+SDRAM:..64.0MiB 16-bit @ 20MT/s (CL-2 CWL-2)
+MAIN RAM:.64.0MiB
+Initializing SDRAM..
+Memtest OK
+litex> 
+litex> mem_test 0x40000000 0x4000000
+Memtest at 0x40000000..%...j......)5.  Write: 0x40000000-0x40000000 0B   
+  Write: 0x40000000-0x44000000 64.0MiB   
+Memtest OK
+litex> sdcard_init
+.[92;1mlitex.[0m> sdcard_init

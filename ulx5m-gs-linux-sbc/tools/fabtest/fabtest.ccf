@@ -1,0 +1,5 @@
+Net "clk25" Loc = "IO_SB_A8" | SCHMITT_TRIGGER=true;
+Net "led4" Loc = "IO_SB_B2";
+Net "led5" Loc = "IO_SB_A2";
+Net "led6" Loc = "IO_SB_B3";
+Net "led7" Loc = "IO_SB_A3";

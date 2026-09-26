@@ -1,0 +1,1 @@
+Net "clk25" Loc = "IO_SB_A8" | SCHMITT_TRIGGER=true;

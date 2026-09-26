@@ -1,0 +1,140 @@
+##### NETBOOT 1 12:03:12
+dirty: ETH_GateMateA1_2509_0222_RefSoC_CFGRST.bit -> Done
+demo prompt: 8.2 s after load
+CPU port .213: 1 ARP requests, 1 ARP replies to it, 2 TFTP RRQ, 10 frames .213 -> Pi
+first ping reply after load: 6.32 s
+ping -s 0: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 18: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 56: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 100: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 1000: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 1472: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 1472 x20: 20 packets transmitted, 20 received, 0% packet loss
+Ident:..ULX5M-GS SoC | HW ping/Etherbone 192.168.10.212 (10:e2:d5:00:00:00) | CPU/TFTP 192.168.10.213 (10:e2:d5:00:00:01) 2026-09-25 09:42:19
+CPU:..VexRiscv_Lite @ 20MHz
+Booting from boot.bin...
+Copying boot.bin to 0x40000000... (6280 bytes)
+LiteX minimal demo app built Sep 25 2026 07:52:31
+reboot             - Reboot CPU
+LiteX minimal demo app built Sep 25 2026 07:52:31
+reboot             - Reboot CPU
+##### NETBOOT 2 12:03:58
+dirty: ETH_GateMateA1_2509_0222_RefSoC_CFGRST.bit -> Done
+demo prompt: 8.2 s after load
+CPU port .213: 1 ARP requests, 1 ARP replies to it, 2 TFTP RRQ, 10 frames .213 -> Pi
+first ping reply after load: 6.31 s
+ping -s 0: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 18: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 56: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 100: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 1000: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 1472: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 1472 x20: 20 packets transmitted, 20 received, 0% packet loss
+Ident:..ULX5M-GS SoC | HW ping/Etherbone 192.168.10.212 (10:e2:d5:00:00:00) | CPU/TFTP 192.168.10.213 (10:e2:d5:00:00:01) 2026-09-25 09:42:19
+CPU:..VexRiscv_Lite @ 20MHz
+Booting from boot.bin...
+Copying boot.bin to 0x40000000... (6280 bytes)
+LiteX minimal demo app built Sep 25 2026 07:52:31
+reboot             - Reboot CPU
+LiteX minimal demo app built Sep 25 2026 07:52:31
+reboot             - Reboot CPU
+##### NETBOOT 3 12:04:43
+dirty: ETH_GateMateA1_2509_0222_RefSoC_CFGRST.bit -> Done
+demo prompt: 8.2 s after load
+CPU port .213: 1 ARP requests, 1 ARP replies to it, 2 TFTP RRQ, 10 frames .213 -> Pi
+first ping reply after load: 6.33 s
+ping -s 0: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 18: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 56: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 100: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 1000: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 1472: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 1472 x20: 20 packets transmitted, 20 received, 0% packet loss
+Ident:..ULX5M-GS SoC | HW ping/Etherbone 192.168.10.212 (10:e2:d5:00:00:00) | CPU/TFTP 192.168.10.213 (10:e2:d5:00:00:01) 2026-09-25 09:42:19
+CPU:..VexRiscv_Lite @ 20MHz
+Booting from boot.bin...
+Copying boot.bin to 0x40000000... (6280 bytes)
+LiteX minimal demo app built Sep 25 2026 07:52:31
+reboot             - Reboot CPU
+LiteX minimal demo app built Sep 25 2026 07:52:31
+reboot             - Reboot CPU
+##### MEMTEST 1 12:05:29
+dirty: ETH_GateMateA1_2509_0222_RefSoC_CFGRST.bit -> Done
+mem_test finished 214.6 s after load
+first ping reply after load: 7.57 s
+ping -s 0: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 18: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 56: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 100: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 1000: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 1472: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 1472 x20: 20 packets transmitted, 20 received, 0% packet loss
+0xf0000004: 0x12345678
+Ident:..ULX5M-GS SoC | HW ping/Etherbone 192.168.10.212 (10:e2:d5:00:00:00) | CPU/TFTP 192.168.10.213 (10:e2:d5:00:00:01) 2026-09-25 09:42:19
+Memtest at 0x40000000 (2.0MiB)...
+Memtest OK
+Memtest at 0x40000000 (64.0MiB)...
+  Write: 0x40000000-0x44000000 64.0MiB   
+   Read: 0x40000000-0x44000000 64.0MiB   
+Memtest OK
+Memtest at 0x40000000 (2.0MiB)...
+Memtest OK
+Memtest at 0x40000000 (64.0MiB)...
+   Read: 0x40000000-0x44000000 64.0MiB   
+Memtest OK
+##### MEMTEST 2 12:09:36
+dirty: ETH_GateMateA1_2509_0222_RefSoC_CFGRST.bit -> Done
+mem_test finished 213.6 s after load
+first ping reply after load: 6.12 s
+ping -s 0: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 18: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 56: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 100: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 1000: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 1472: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 1472 x20: 20 packets transmitted, 20 received, 0% packet loss
+0xf0000004: 0x12345678
+Ident:..ULX5M-GS SoC | HW ping/Etherbone 192.168.10.212 (10:e2:d5:00:00:00) | CPU/TFTP 192.168.10.213 (10:e2:d5:00:00:01) 2026-09-25 09:42:19
+Memtest at 0x40000000 (2.0MiB)...
+Memtest OK
+Memtest at 0x40000000 (64.0MiB)...
+  Write: 0x40000000-0x44000000 64.0MiB   
+   Read: 0x40000000-0x44000000 64.0MiB   
+Memtest OK
+Memtest at 0x40000000 (2.0MiB)...
+Memtest OK
+Memtest at 0x40000000 (64.0MiB)...
+   Read: 0x40000000-0x44000000 64.0MiB   
+Memtest OK
+##### MEMTEST 3 12:13:43
+dirty: ETH_GateMateA1_2509_0222_RefSoC_CFGRST.bit -> Done
+mem_test finished 213.6 s after load
+first ping reply after load: 6.1 s
+ping -s 0: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 18: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 56: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 100: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 1000: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 1472: 5 packets transmitted, 5 received, 0% packet loss
+ping -s 1472 x20: 20 packets transmitted, 20 received, 0% packet loss
+0xf0000004: 0x12345678
+Ident:..ULX5M-GS SoC | HW ping/Etherbone 192.168.10.212 (10:e2:d5:00:00:00) | CPU/TFTP 192.168.10.213 (10:e2:d5:00:00:01) 2026-09-25 09:42:19
+Memtest at 0x40000000 (2.0MiB)...
+Memtest OK
+Memtest at 0x40000000 (64.0MiB)...
+  Write: 0x40000000-0x44000000 64.0MiB   
+   Read: 0x40000000-0x44000000 64.0MiB   
+Memtest OK
+Memtest at 0x40000000 (2.0MiB)...
+Memtest OK
+Memtest at 0x40000000 (64.0MiB)...
+   Read: 0x40000000-0x44000000 64.0MiB   
+Memtest OK
+boot.bin
+Image
+opensbi.bin
+probe.txt
+rootfs.cpio
+rv32.dtb
+speedtest.bin
+ALLDONE

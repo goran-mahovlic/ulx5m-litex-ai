@@ -1,0 +1,4 @@
+--============== .[1mConsole.[0m ===============--
+.[92;1mlitex.[0m> 
+.[92;1mlitex.[0m> sdcard_detect
+SDCard inserted.

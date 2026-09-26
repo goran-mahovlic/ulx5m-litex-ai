@@ -1,0 +1,7 @@
+BIT=${BIT:-$D/ETH_GateMateA1_2509_1155_SoC_NetBoot3.bit}
+Done
+ULX5M-GS speed test -> 192.168.10.213 (speedtest.bin, VexRiscv @ 20 MHz); count 2000
+  size | RTT ms min/avg/max (loss) | Pi->FPGA Mb/s: board (sent) loss   | FPGA->Pi Mb/s: Pi (board) loss        
+    64 | 1.20/1.21/2.42 (0/100)   | 6.11 (14.9) 1179/2000              | 0.77 (0.77) 0/2000                    
+   512 | 2.43/2.45/2.68 (0/100)   | 48.18 (62.5) 460/2000              | 3.92 (3.92) 0/2000                    
+  1472 | 4.84/4.87/5.13 (0/100)   | 95.75 (110.6) 0/2000               | 6.33 (6.33) 0/2000                    

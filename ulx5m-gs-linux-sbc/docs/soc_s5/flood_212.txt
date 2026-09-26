@@ -1,0 +1,9 @@
+== ping -f -s 64 (2000)
+2000 packets transmitted, 2000 received, 0% packet loss, time 658ms
+rtt min/avg/max/mdev = 0.215/0.223/0.602/0.021 ms, ipg/ewma 0.329/0.226 ms
+== ping -f -s 512 (2000)
+2000 packets transmitted, 2000 received, 0% packet loss, time 932ms
+rtt min/avg/max/mdev = 0.303/0.371/0.564/0.033 ms, ipg/ewma 0.466/0.388 ms
+== ping -f -s 1472 (2000)
+2000 packets transmitted, 2000 received, 0% packet loss, time 699ms
+rtt min/avg/max/mdev = 0.705/0.716/0.900/0.016 ms, ipg/ewma 0.849/0.715 ms

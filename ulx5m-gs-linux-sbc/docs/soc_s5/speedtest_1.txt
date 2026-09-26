@@ -1,0 +1,7 @@
+Done
+100
+ULX5M-GS speed test -> 192.168.10.213 (speedtest.bin, VexRiscv @ 20 MHz); count 2000
+  size | RTT ms min/avg/max (loss) | Pi->FPGA Mb/s: board (sent) loss   | FPGA->Pi Mb/s: Pi (board) loss        
+    64 | 1.20/1.22/2.42 (0/100)   | 6.10 (8.8) 620/2000                | 0.77 (0.77) 0/2000                    
+   512 | 2.41/2.45/2.67 (0/100)   | 43.03 (47.1) 175/2000              | 3.92 (3.92) 0/2000                    
+  1472 | 4.84/4.86/5.06 (0/100)   | 95.69 (110.5) 0/2000               | 6.33 (6.33) 0/2000                    

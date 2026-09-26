@@ -1,0 +1,8 @@
+Net "clk25"  Loc = "IO_SB_A8" | SCHMITT_TRIGGER=true;
+Net "uart_a" Loc = "IO_NA_A4";
+Net "uart_b" Loc = "IO_NB_B5";
+Net "mdc"    Loc = "IO_EB_B6";
+Net "mdio"   Loc = "IO_EB_A6";
+Net "rst_n"  Loc = "IO_EB_B3";
+Net "rxc"    Loc = "IO_EB_A7";
+Net "rx_ctl" Loc = "IO_EB_A8";
