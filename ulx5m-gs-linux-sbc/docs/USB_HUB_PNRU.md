@@ -378,7 +378,7 @@ TIOCSTI). No report arrived in the 15 min after the request to type (20:00–20:
 so the key path is **not yet shown on the board** (it is covered by the host test, `test_usbh` 18/18, including
 the FS composite receiver). The Pi keeps recording the console (`~/t5051/run7_cap2.txt`, until ~21:05) while the
 board stays in this state. To repeat: `lxrun.sh ETH_GateMateA1_2609_1646_Linux_GbE_DVI_USBPNRU_pll60s1.bit
-rv32_usb4.dtb rootfs_usb6.cpio 1500` + `cap.sh`, then type on the wireless keyboard: expected
+rv32_usb4.dtb rootfs_usb6.cpio 1500` + `tools/linux/cap.sh <out> 900`, then type on the wireless keyboard: expected
 `kbd: 00 00 0b 00 …` lines and characters on the DVI console.
 
 ### 7.2 Remaining order
