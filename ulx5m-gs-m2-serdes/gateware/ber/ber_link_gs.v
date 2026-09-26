@@ -1,3 +1,5 @@
+// ber_link_gs.v = ber_link.v as of 965520c (TASK-5063): one-hot aux write, single-cycle compare/popcount. Used for gs:
+// the pipelined ber_link.v does not route on gs (nextpnr router2 "Failed to route" / assertion near the SerDes).
 // ber_link.v — fabric BER generator/checker for the GS<->M2 CC_SERDES link (TASK-5055).
 // 80-bit datapath, 8b10b on: one 64-bit word (8 bytes) per SerDes word clock.
 //   byte0      K28.5 (0xBC, K flag)          -> word alignment
@@ -95,30 +97,11 @@ module ber_rx #(parameter [2:0] MY_ID = 3'd5, parameter [2:0] PEER_ID = 3'd2) (
     ber_prbs40_step8 u_e(.s(expv), .n(exp_n));
     ber_prbs40_step8 u_p(.s(pay),  .n(pay_n));
     wire [39:0] diff = pay ^ expv;
-    // bit-error count is pipelined (d1 -> 5 byte popcounts pb -> sum p2 -> err_bits): a 40-bit popcount in one
-    // cycle was the rclk critical path (TASK-5063: needed for the 62.5 MHz word clock of 5 Gb/s)
-    reg  [39:0] d1 = 0; reg e1 = 0, e2 = 0, e3 = 0; reg [5:0] p2 = 0;
-    reg  [3:0] pb [0:4];
-    function [3:0] pop8(input [7:0] x);
-        integer b; begin pop8 = 0; for (b = 0; b < 8; b = b + 1) pop8 = pop8 + x[b]; end
-    endfunction
-    genvar gb;
-    generate for (gb = 0; gb < 5; gb = gb + 1) begin : g_pb
-        initial pb[gb] = 0;
-        always @(posedge clk) pb[gb] <= pop8(d1[gb*8 +: 8]);
-    end endgenerate
-    // compare stage G (TASK-5063): per-byte pay==expv flags and the id checks are registered, the word decision
-    // (good) is taken one cycle later from 7 flag bits. The 40-bit compare -> counters path was the next rclk
-    // critical path after the popcount. Everything downstream of good uses the *_g copies of that word.
-    reg [4:0] eqb = 0; reg idp_g = 0, idm_g = 0, wv_g = 0, wce_g = 0;
-    reg [39:0] diff_g = 0; reg [4:0] slot_g = 0; reg [7:0] aux_g = 0; integer q;
-    always @(posedge clk) begin
-        for (q = 0; q < 5; q = q + 1) eqb[q] <= pay[q*8 +: 8] == expv[q*8 +: 8];
-        idp_g <= id == PEER_ID; idm_g <= id == MY_ID; wv_g <= wv; wce_g <= wce;
-        diff_g <= diff; slot_g <= wslot; aux_g <= aux;
-    end
-    wire match = wv_g && idp_g && &eqb;          // this word came from the peer with the expected PRBS
-    wire good  = synced && match;
+    // bit-error count is pipelined (d1 -> pop -> p2 -> err_bits): popcount+add was the rclk critical path
+    reg  [39:0] d1 = 0; reg e1 = 0, e2 = 0; reg [5:0] p2 = 0;
+    reg  [5:0] pop;
+    always @* begin pop = 0; for (i = 0; i < 40; i = i + 1) pop = pop + d1[i]; end
+    wire good = wv && id == PEER_ID && diff == 40'b0;
 
     reg [4:0] good_run = 0; reg [6:0] bad_run = 0;
     reg clr_q = 0; wire clr = clr_tgl ^ clr_q;
@@ -134,14 +117,13 @@ module ber_rx #(parameter [2:0] MY_ID = 3'd5, parameter [2:0] PEER_ID = 3'd2) (
     always @(posedge clk) begin
         clr_q <= clr_tgl;
         peer_stb <= 1'b0;
-        e1 <= synced && !good;  d1 <= wv_g ? diff_g : {40{1'b1}};
-        e2 <= e1;               p2 <= pb[0] + pb[1] + pb[2] + pb[3] + pb[4];
-        e3 <= e2;
-        if (e3) err_bits <= err_bits + p2;
-        if (wv_g && idm_g) self_seen <= 1'b1;
+        e1 <= synced && !good;  d1 <= wv ? diff : {40{1'b1}};
+        e2 <= e1;               p2 <= pop;
+        if (e2) err_bits <= err_bits + p2;
+        if (wv && id == MY_ID) self_seen <= 1'b1;
         if (!synced) begin
             expv <= pay_n;                        // self-seed from what we just got
-            if (match) begin
+            if (wv && id == PEER_ID && pay == expv) begin
                 if (good_run == 5'd15) begin synced <= 1'b1; bad_run <= 0; end
                 good_run <= good_run + 5'd1;
             end else good_run <= 0;
@@ -153,13 +135,13 @@ module ber_rx #(parameter [2:0] MY_ID = 3'd5, parameter [2:0] PEER_ID = 3'd2) (
                 bad_run   <= bad_run + 7'd1;
                 if (bad_run == 7'd63) begin synced <= 1'b0; good_run <= 0; loss_cnt <= loss_cnt + 5'd1; end
             end else bad_run <= 0;
-            if (wce_g) code_err <= code_err + 32'd1;
+            if (wce) code_err <= code_err + 32'd1;
         end
         // back-channel frame (only from error-free, contiguous words); one register stage after the
         // 40-bit compare so the compare and the 32-way byte demux are not one path
-        a_ok <= match;
-        a_slot <= slot_g; a_byte <= aux_g;
-        a_we <= 32'd1 << slot_g; a_first <= slot_g == 5'd0; a_last <= slot_g == 5'd31; a_inc <= slot_g == a_slot + 5'd1;
+        a_ok <= good || (!synced && wv && id == PEER_ID && pay == expv);
+        a_slot <= wslot; a_byte <= aux;
+        a_we <= 32'd1 << wslot; a_first <= wslot == 5'd0; a_last <= wslot == 5'd31; a_inc <= wslot == a_slot + 5'd1;
         for (k = 0; k < 32; k = k + 1) if (a_ok && a_we[k]) fr[k*8 +: 8] <= a_byte;
         if (a_ok) begin
             if (a_first) fr_ok <= 1'b1;

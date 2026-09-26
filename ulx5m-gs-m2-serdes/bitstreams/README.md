@@ -7,8 +7,18 @@
 | `ber_gs_0g3_CFGRST.bit` / `ber_m2_0g3_CFGRST.bit` | gs / m2 | `gateware/ber/` BER design, N=1,2,3, OUTDIV 4 → **0.3 Gb/s** | 26.09.2026 19:00: 1.14·10⁹ words per direction, 0 errors; `verify_external_link.sh --load` uses these |
 | `ber_gs_1g25_CFGRST.bit` / `ber_m2_1g25_CFGRST.bit` | gs / m2 | same design, N=1,5,5, OUTDIV 4 → **1.25 Gb/s** (DCO 2500 MHz, in spec) | 26.09.2026 19:10: 1.885·10⁹ words per direction, 0 errors |
 
-`gateware/ber/build_ber.sh gs od4 1`, `… m2 od4 1`, `… gs n155od4 1 N2 5 N3 5 OUTDIV 4`, `… m2 n155od4 1 N2 5 N3 5 OUTDIV 4`
-rebuild the four BER bitstreams byte for byte (oss-cad-suite 2026-09-23).
+| `ber_gs_2g5_CFGRST.bit` / `ber_m2_2g5_txneg_CFGRST.bit` | gs / m2 | BER design, N=1,5,5, OUTDIV 2 → **2.5 Gb/s**; m2 with `TX_NEG=1`; gs checker `ber_link_gs.v`, seed 7 | 26.09.2026 21:40 (TASK-5063), analog set over JTAG (`RX_AFE_PEAK=24 RX_AFE_GAIN=0 RX_AFE_VCMSEL=3 RX_RTERM_VCMSEL=3 TX_AMP=24` on both): m2→gs 3.76·10⁹ words, BER 1.1·10⁻⁷; gs→m2 BER 3·10⁻⁵. **Not error-free.** |
+| `ber_gs_5g_txneg_CFGRST.bit` / `ber_m2_5g_txneg_CFGRST.bit` | gs / m2 | same, OUTDIV 1 → **5 Gb/s** (DCO 2500 MHz), `TX_NEG=1` on both | 26.09.2026 21:30: PLL lock, measured 5000.04 Mb/s; CDR locks and JTAG samples are PEER 9–10/10 only with DFE + TX pre/post-emphasis (see `docs/VERIFY_20260926_RATES.md`); fabric BER ~6·10⁻², and the gs checker is too slow for 62.5 MHz (Fmax 44 MHz) |
+
+The 0.3 and 1.25 Gb/s BER bitstreams rebuild byte for byte from the sources of commit 4ee6031
+(`build_ber.sh gs od4 1`, `… m2 od4 1`, `… gs n155od4 1 N2 5 N3 5 OUTDIV 4`, `… m2 n155od4 1 N2 5 N3 5 OUTDIV 4`,
+oss-cad-suite 2026-09-23). The 2.5/5 Gb/s ones rebuild byte for byte from this tree
+(`TMPDIR=~/.tmp/yt`, oss-cad-suite 2026-09-23):
+
+    LINK=ber_link_gs.v FREQ=40 build_ber.sh gs 2g5 7 N1 1 N2 5 N3 5 OUTDIV 2
+    FREQ=40 build_ber.sh m2 2g5_txneg 1 N1 1 N2 5 N3 5 OUTDIV 2 TX_NEG 1
+    LINK=ber_link_gs.v FREQ=65 build_ber.sh gs 5g_txneg 7 N1 1 N2 5 N3 5 OUTDIV 1 TX_NEG 1
+    FREQ=65 build_ber.sh m2 5g_txneg 1 N1 1 N2 5 N3 5 OUTDIV 1 TX_NEG 1
 
 Check the checksums with `sha256sum -c SHA256SUMS` and CFGRST with `python3 ../tools/gm_cfgrst_check.py <file>`.
 Load order: m2 first, then gs.

@@ -11,6 +11,10 @@ module ber_top #(
     parameter RX_POL = 1'b1,
     parameter [2:0] LOOPBACK_SEL = 3'b000,
     parameter SEC = 25_000_000,            // clk_i cycles per report (sim: small)
+    parameter CLK_DIRECT = 0,              // 1: TX_CLK_I/RX_CLK_I straight from PLL_CLK_O/RX_CLK_O as in pu-cc serdes_lb.v (no CC_BUFG)
+    parameter TX_NEG = 0,                  // 1: TX_DATA_I from a negedge register (SerDes ports are not timed by nextpnr)
+    parameter RX_NEG = 0,                  // 1: RX_DATA_O captured on negedge first
+    parameter EYE_EN = 0,                  // RX_EYE_MEAS_EN in the bitstream (eye counters did not count with 0, TASK-5063)
     parameter PROFILE = 0                  // analog/CDR set: 0 = serdes_lb.v (0.3-1.25 Gb/s proven), 1 = pu-cc 5G (ab7ce94)
 ) (
     input  wire clk_i,          // IO_SB_A8 (GS: 25 MHz)
@@ -63,6 +67,15 @@ module ber_top #(
 
     wire pll_clk_o, rx_clk_o, tclk, rclk;
     wire [63:0] tx_data, rx_data; wire [7:0] tx_k, rx_k, rx_nit, rx_disp;
+    // nextpnr (himbaechel/gatemate delay.cc) marks every SERDES port TMG_IGNORE: the fabric<->SerDes data paths are
+    // not timed. TX_NEG/RX_NEG move the transfer half a word clock away from the rising edge (TASK-5063).
+    reg [63:0] txd_n = 0, rxd_n = 0; reg [7:0] txk_n = 0, rxk_n = 0, rxnit_n = 0, rxdisp_n = 0;
+    wire [63:0] rx_data_o; wire [7:0] rx_k_o, rx_nit_o, rx_disp_o;
+    always @(negedge tclk) begin txd_n <= tx_data; txk_n <= tx_k; end
+    always @(negedge rclk) begin rxd_n <= rx_data_o; rxk_n <= rx_k_o; rxnit_n <= rx_nit_o; rxdisp_n <= rx_disp_o; end
+    wire [63:0] txd_s = TX_NEG ? txd_n : tx_data; wire [7:0] txk_s = TX_NEG ? txk_n : tx_k;
+    assign rx_data = RX_NEG ? rxd_n : rx_data_o; assign rx_k = RX_NEG ? rxk_n : rx_k_o;
+    assign rx_nit = RX_NEG ? rxnit_n : rx_nit_o; assign rx_disp = RX_NEG ? rxdisp_n : rx_disp_o;
     wire txrd, rxrd, txde, txdp, txbe, rxbe, prbse;
     CC_BUFG u_bt (.I(pll_clk_o), .O(tclk));
     CC_BUFG u_br (.I(rx_clk_o),  .O(rclk));
@@ -75,16 +88,16 @@ module ber_top #(
         .RX_PMA_RESET_I(1'b0), .RX_EQA_RESET_I(1'b0), .RX_CDR_RESET_I(1'b0), .RX_PCS_RESET_I(1'b0),
         .RX_BUF_RESET_I(1'b0), .TX_PCS_RESET_I(1'b0), .TX_PMA_RESET_I(1'b0),
         .TX_RESET_DONE_O(txrd), .RX_RESET_DONE_O(rxrd),
-        .TX_CLK_I(tclk), .TX_DATA_I(tx_data), .TX_POWER_DOWN_N_I(1'b1), .TX_POLARITY_I(1'b0),
+        .TX_CLK_I(CLK_DIRECT ? pll_clk_o : tclk), .TX_DATA_I(txd_s), .TX_POWER_DOWN_N_I(1'b1), .TX_POLARITY_I(1'b0),
         .TX_PRBS_SEL_I(3'b000), .TX_PRBS_FORCE_ERR_I(1'b0), .TX_8B10B_EN_I(1'b1), .TX_8B10B_BYPASS_I(8'h0),
-        .TX_CHAR_IS_K_I(tx_k), .TX_CHAR_DISPMODE_I(8'h0), .TX_CHAR_DISPVAL_I(8'h0),
+        .TX_CHAR_IS_K_I(txk_s), .TX_CHAR_DISPMODE_I(8'h0), .TX_CHAR_DISPVAL_I(8'h0),
         .TX_ELEC_IDLE_I(1'b0), .TX_DETECT_RX_I(1'b1), .TX_BUF_ERR_O(txbe),
-        .RX_CLK_I(rclk), .RX_POWER_DOWN_N_I(1'b1), .RX_POLARITY_I(RX_POL),
+        .RX_CLK_I(CLK_DIRECT ? rx_clk_o : rclk), .RX_POWER_DOWN_N_I(1'b1), .RX_POLARITY_I(RX_POL),
         .RX_PRBS_SEL_I(3'b000), .RX_PRBS_CNT_RESET_I(1'b0), .RX_PRBS_ERR_O(prbse),
         .RX_8B10B_EN_I(1'b1), .RX_8B10B_BYPASS_I(8'h0), .RX_EN_EI_DETECTOR_I(1'b0),
         .RX_COMMA_DETECT_EN_I(1'b1), .RX_SLIDE_I(1'b0), .RX_MCOMMA_ALIGN_I(1'b1), .RX_PCOMMA_ALIGN_I(1'b1),
-        .RX_DATA_O(rx_data), .RX_NOT_IN_TABLE_O(rx_nit), .RX_CHAR_IS_COMMA_O(), .RX_CHAR_IS_K_O(rx_k),
-        .RX_DISP_ERR_O(rx_disp), .TX_DETECT_RX_DONE_O(txde), .TX_DETECT_RX_PRESENT_O(txdp),
+        .RX_DATA_O(rx_data_o), .RX_NOT_IN_TABLE_O(rx_nit_o), .RX_CHAR_IS_COMMA_O(), .RX_CHAR_IS_K_O(rx_k_o),
+        .RX_DISP_ERR_O(rx_disp_o), .TX_DETECT_RX_DONE_O(txde), .TX_DETECT_RX_PRESENT_O(txdp),
         .RX_BUF_ERR_O(rxbe), .RX_BYTE_IS_ALIGNED_O(), .RX_BYTE_REALIGN_O(), .RX_EI_EN_O(),
         .REGFILE_CLK_I(1'b0), .REGFILE_WE_I(1'b0), .REGFILE_EN_I(1'b0), .REGFILE_ADDR_I(8'h0),
         .REGFILE_DI_I(16'h0), .REGFILE_MASK_I(16'h0), .REGFILE_DO_O(), .REGFILE_RDY_O()
@@ -197,15 +210,15 @@ module ber_top #(
 endmodule
 
 module top_gs #(parameter N1 = 1, N2 = 2, N3 = 3, OUTDIV = 4, parameter [5:0] FCNTRL = 6'h3A,
-                parameter RX_POL = 1'b1, parameter [2:0] LOOPBACK_SEL = 3'b000, parameter PROFILE = 0)
+                parameter RX_POL = 1'b1, parameter [2:0] LOOPBACK_SEL = 3'b000, parameter CLK_DIRECT = 0, parameter TX_NEG = 0, parameter RX_NEG = 0, parameter PROFILE = 0, parameter EYE_EN = 0)
                (input wire clk_i, output wire uart_tx, input wire uart_rx);
     ber_top #(.ROLE(0), .N1(N1), .N2(N2), .N3(N3), .OUTDIV(OUTDIV), .FCNTRL(FCNTRL), .RX_POL(RX_POL),
-              .LOOPBACK_SEL(LOOPBACK_SEL), .PROFILE(PROFILE)) u (.clk_i(clk_i), .uart_tx(uart_tx), .uart_rx(uart_rx));
+              .LOOPBACK_SEL(LOOPBACK_SEL), .CLK_DIRECT(CLK_DIRECT), .TX_NEG(TX_NEG), .RX_NEG(RX_NEG), .PROFILE(PROFILE), .EYE_EN(EYE_EN)) u (.clk_i(clk_i), .uart_tx(uart_tx), .uart_rx(uart_rx));
 endmodule
 
 module top_m2 #(parameter N1 = 1, N2 = 2, N3 = 3, OUTDIV = 4, parameter [5:0] FCNTRL = 6'h3A,
-                parameter RX_POL = 1'b1, parameter [2:0] LOOPBACK_SEL = 3'b000, parameter PROFILE = 0)
+                parameter RX_POL = 1'b1, parameter [2:0] LOOPBACK_SEL = 3'b000, parameter CLK_DIRECT = 0, parameter TX_NEG = 0, parameter RX_NEG = 0, parameter PROFILE = 0, parameter EYE_EN = 0)
                (input wire clk_i);
     ber_top #(.ROLE(1), .N1(N1), .N2(N2), .N3(N3), .OUTDIV(OUTDIV), .FCNTRL(FCNTRL), .RX_POL(RX_POL),
-              .LOOPBACK_SEL(LOOPBACK_SEL), .PROFILE(PROFILE)) u (.clk_i(clk_i), .uart_tx(), .uart_rx(1'b1));
+              .LOOPBACK_SEL(LOOPBACK_SEL), .CLK_DIRECT(CLK_DIRECT), .TX_NEG(TX_NEG), .RX_NEG(RX_NEG), .PROFILE(PROFILE), .EYE_EN(EYE_EN)) u (.clk_i(clk_i), .uart_tx(), .uart_rx(1'b1));
 endmodule

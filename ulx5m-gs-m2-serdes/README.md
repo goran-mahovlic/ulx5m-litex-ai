@@ -28,9 +28,13 @@ The only connection between the two FPGAs is this SerDes lane (TX and RX pairs).
 
 ## What does not work yet / not proven
 
-- **2.5 Gb/s does not work yet** (1·5·5, OUTDIV 2): BER ~10⁻⁴, and m2 keeps losing sync. The analog settings
-  (no TX pre-emphasis, RX equalizer off) and the 4 % timing margin of the gs checker at 31.25 MHz have not been
-  separated yet.
+- **2.5 Gb/s works but is not clean** (1·5·5, OUTDIV 2, measured 2500.02 Mb/s): best 120 s run m2→gs 3.76·10⁹ words,
+  BER 1.1·10⁻⁷; gs→m2 10⁻⁷…3·10⁻⁵ depending on the load. Needed: RX AFE `GAIN 0` (+ PEAK 24, VCM 3) over the regfile
+  (was the main cause: 3·10⁻⁴ → 10⁻⁷), and `TX_NEG=1` because nextpnr does not time the fabric↔SerDes ports
+  (`delay.cc`: SERDES = `TMG_IGNORE`). Details: `docs/VERIFY_20260926_RATES.md`.
+- **5 Gb/s: the link comes up but is not usable.** With DFE + TX pre/post-emphasis + AFE GAIN 0 the CDR locks and
+  JTAG RX samples carry the right sender ID (PEER 9–10/10), but the fabric BER is ~6·10⁻².
+- The on-chip eye counters (regfile 0x14–0x1D) never count; the upstream `tc_eyemeas` is an empty stub.
 - **The 1·2·3 recipe is only clean at 0.3 Gb/s.** Its DCO runs at 600 MHz, below the 1250–2500 MHz in DS1001.
   At 0.6 Gb/s one direction has errors, and at 1.2 Gb/s both do. Use 1·5·5.
 - Rate sweep table: `docs/VERIFY_20260926.md` §6.
@@ -56,7 +60,7 @@ The only connection between the two FPGAs is this SerDes lane (TX and RX pairs).
 | `gateware/upstream/` | Unchanged CologneChip `serdes_lb.v`, for reference |
 | `bitstreams/` | Bitstreams tested on the boards (all with CFGRST) + `SHA256SUMS` |
 | `tools/` | JTAG and UART tools, `verify_external_link.sh`, unit tests |
-| `docs/` | `REVIEW_20260926.md` (review and measurements), `SOURCES_20260926.md` (datasheet and reference designs), `VERIFY_20260926.md` (verification report) |
+| `docs/` | `REVIEW_20260926.md` (review and measurements), `SOURCES_20260926.md` (datasheet and reference designs), `VERIFY_20260926.md` (verification report), `VERIFY_20260926_RATES.md` (2.5 / 5 Gb/s, TASK-5063) |
 
 ## Bitstreams
 
@@ -128,9 +132,10 @@ pattern (gs must reject it) → **"pull the SerDes cable now"** (both sides must
 
 ## Next steps
 
-1. 2.5 Gb/s: TX pre/post-emphasis and the RX equalizer (over the regfile first), plus a faster checker path on gs.
+1. 2.5 Gb/s clean: time or hand-place the SerDes data ports (`TX_NEG`/`RX_NEG`, seed choice by a short BER run),
+   bake the AFE setting into the bitstream, then a long run. See `docs/VERIFY_20260926_RATES.md` §7.
 2. Cable steps of `verify_external_link.sh` on the boards.
-3. Eye scan (CologneChip `gm_serdes_lb` has `tc_eyemeas`) at the highest rate that works.
+3. Eye scan: `tools/eyescan.py` is ready, but the counters do not count — ask CologneChip how to start them.
 4. Trace the P/N swap in the schematics (GS → CM4 baseboard → PCIe slot → adapter → M2).
 
 ## Built on

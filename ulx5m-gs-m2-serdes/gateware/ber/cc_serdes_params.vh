@@ -47,7 +47,7 @@
     .RX_COMMA_DETECT_EN_OVR(1'h0),
     .RX_COMMA_DETECT_EN(1'h0),
     .RX_SLIDE(2'h0),
-    .RX_EYE_MEAS_EN(1'h0),
+    .RX_EYE_MEAS_EN(EYE_EN[0]),
     .RX_EYE_MEAS_CFG(RX_EYE_MEAS_CFG),
     .RX_MON_PH_OFFSET(6'h0),
     .RX_EI_BIAS(4'h4),
