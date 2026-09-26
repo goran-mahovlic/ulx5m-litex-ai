@@ -116,6 +116,34 @@ Set `OSS_CAD_SUITE` and `LXROOT` to point to them. Then run:
 Different seeds give different timing, and not every seed produces a working Ethernet receiver. Seed 3 is
 tested on the board. If you change the design, test the new bitstream on the board.
 
+### Important: every bitstream must start with a configuration reset (`gmpack --reset`)
+
+**The problem.** gmpack writes a "sparse" bitstream. It contains only the parts of the FPGA that the design
+uses. The rest of the chip is not touched. When you load a new design into the FPGA's SRAM, parts of the
+previous design can therefore stay behind and mix with the new one.
+
+**What we saw:**
+- A bitstream that worked a minute earlier stopped working after another design had been loaded.
+- The UART showed stuck bits, or went completely silent.
+- Ethernet sent no frames at all.
+
+Only a power cycle helped. And on our setup the board's power cannot be switched off from software
+(the USB hub does not support it).
+
+**Why `openFPGALoader -r` does not fix it.** With the DirtyJTAG cable, `-r` only sends a very short reset
+pulse and does not wait. We could not show that this pulse reaches the FPGA's `RST_N` pin at all.
+
+**The fix.** `gmpack --reset` puts the command `CMD_CFGRST` at the start of the bitstream. This command clears
+all configuration latches before the new design is written, so every load starts from a clean chip.
+
+**Proof.** The same design without `--reset` sent 0 frames and 0 bytes on the UART. With `--reset` it
+immediately sent 58 frames and a clean UART. Since then, every recommended bitstream works 3 times out of 3,
+even when a "dirty" design was loaded just before it.
+
+**In this project.** LiteX does not add `--reset` on its own. `gateware/target_soc.py` adds it to the gmpack
+options for every build, so you do not have to do anything. If you build the bitstream in another way (other
+scripts, or gmpack by hand), add `--reset` yourself. All bitstreams in `bitstreams/` already contain it.
+
 ### About the LiteX patch (`docs/litex-b6ae9e0b2-local.patch`)
 
 **You do not need this patch to build.** It records two small changes in our local LiteX copy:
