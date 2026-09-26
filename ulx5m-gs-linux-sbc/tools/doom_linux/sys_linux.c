@@ -15,6 +15,7 @@
 #define SYS_fcntl64       25
 #define SYS_ioctl         29
 #define SYS_chdir         49
+#include "openflags.h"   /* newlib -> Linux open() flags (TASK-5051) */
 #define SYS_openat        56
 #define SYS_close         57
 #define SYS_llseek        62
@@ -37,7 +38,7 @@ long sys6(long n, long a, long b, long c, long d, long e, long f)
 
 static int ret(long r) { if (r < 0 && r > -4096) { errno = -r; return -1; } return r; }
 
-int _open(const char *path, int flags, int mode) { return ret(sys6(SYS_openat, AT_FDCWD, (long)path, flags, mode, 0, 0)); }
+int _open(const char *path, int flags, int mode) { return ret(sys6(SYS_openat, AT_FDCWD, (long)path, lx_open_flags(flags), mode, 0, 0)); }
 int _close(int fd) { return ret(sys3(SYS_close, fd, 0, 0)); }
 int _read(int fd, void *buf, size_t n) { return ret(sys3(SYS_read, fd, buf, n)); }
 int _write(int fd, const void *buf, size_t n) { return ret(sys3(SYS_write, fd, buf, n)); }

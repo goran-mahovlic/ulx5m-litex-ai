@@ -9,7 +9,7 @@
 
 
         chosen {
-            bootargs = "consoleblank=0 usbhostd=-v sbcdiag=0xf0002800 fbcon=font:6x8 logo.nologo console=tty0 console=liteuart earlycon=liteuart,0xf0001000 rootwait root=/dev/ram0 ip=192.168.10.213:192.168.10.14:192.168.10.14:255.255.255.0::eth0:off:::";
+            bootargs = "consoleblank=0 usbhostd=-v,-s,60 sbcdiag=0xf0002800 fbcon=font:6x8 logo.nologo console=tty0 console=liteuart earlycon=liteuart,0xf0001000 rootwait root=/dev/ram0 ip=192.168.10.213:192.168.10.14:192.168.10.14:255.255.255.0::eth0:off:::";
             linux,initrd-start = <0x41000000>;
             linux,initrd-end   = <0x41c00000>;
         };
