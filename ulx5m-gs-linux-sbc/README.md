@@ -1,168 +1,78 @@
-# LiteX Ethernet for the Radiona ULX5M-GS (GateMate)
+# ulx5m-gs-linux-sbc — LiteX Linux computer on the ULX5M-GS
 
-A minimal, CPU-less 100 Mbps Ethernet design for the **Radiona ULX5M-GS**
-(CologneChip **GateMate CCGM1A1** + Microchip **KSZ9031** RGMII PHY), built
-entirely with the **open toolchain** (Yosys -> nextpnr-himbaechel -> gmpack).
+This folder turns the [ULX5M-GS](https://github.com/intergalaktik/ulx5m-gs) board (GateMate CCGM1A1,
+KSZ9031 PHY, 64 MB SDRAM) into a small Linux computer:
+- a VexRiscv-SMP RISC-V CPU at 20 MHz,
+- 64 MB of SDRAM,
+- **1000 Mb/s Ethernet**,
+- a 640×480 DVI picture.
 
-The design is a UDP/IP endpoint with no soft CPU:
+Linux 5.14 boots over TFTP, and DOOM runs on the screen.
 
-```
-KSZ9031 RGMII PHY (100M) -> LiteEth MAC/ARP/IP/ICMP/UDP core -> UDP echo engine
-```
+**Quick start** (which bitstream to use, how to boot Linux, how to rebuild) is in the
+[main README](../README.md). This file describes what is inside the folder.
 
-- **ICMP ping** is answered automatically, in hardware.
-- **UDP echo**: any datagram sent to `<ip>:<port>` is echoed back to its sender.
-- No CPU, no BIOS, no vendor tools.
+## Three designs in one folder
 
-It is meant as a clean starting point: swap the `UDPEcho` engine for your own
-sys-domain application on a UDP port and you have a bare-metal networked FPGA.
+The project grew in three steps. All three top-level files still build:
 
-## Hardware
-
-| Item | Value |
-|---|---|
-| Board | Radiona ULX5M-GS (v0.4) |
-| FPGA | CologneChip GateMate CCGM1A1 |
-| PHY | Microchip KSZ9031 (RGMII) |
-| Link | 100 Mbps, full duplex (fixed; no MDIO negotiation driven) |
-| Default IP | 10.10.10.50 |
-| Default UDP echo port | 7000 |
-| Programmer | on-board FT232 (`openFPGALoader -c ft232`) |
-
-## Repository layout
-
-```
-gateware/
-  target_eth.py           # top-level SoC (SoCMini): PHY + stack + UDP echo + LEDs
-  crg.py                  # split-clock CRG (two GateMate PLLs off the 25 MHz osc)
-  phy_rgmii_gatemate.py   # GateMate RGMII PHY (100M fixed; no DELAYG primitive)
-  eth_stack.py            # LiteEth stack wrapper (EthUDPStack) + UDPEcho engine
-  ulx5m_eth_platform.py   # RGMII/MDIO pin extension (installed platform untouched)
-  status_leds.py          # 8-LED bring-up ladder (heartbeat, link, RX/TX, build-id)
-sim/
-  tb_stack.py             # migen sim: ICMP ping + ARP resolve + UDP echo
-build/
-  Makefile                # build + JTAG/flash/DFU helpers
-test_script/
-  udp_echo_test.py        # host-side UDP echo smoke test
-docs/
-  GATEMATE_CLOCKING.md    # the split-clock architecture and its three hard traps
-  PINMAP.md               # RGMII/MDIO ball map
-  LITEETH_INTEGRATION.md  # how the CPU-less core is assembled + the UDP port API
-env.sh                    # toolchain + LiteX environment (override paths via env)
-```
-
-## Prerequisites
-
-- An **oss-cad-suite** install (Yosys, nextpnr-himbaechel, gmpack, openFPGALoader).
-- A **LiteX** checkout tree containing `migen`, `litex`, `liteeth`, `litedram`
-  and `litex-boards`.
-
-`env.sh` points at both. Override the locations if yours differ:
-
-```bash
-OSS_CAD_SUITE=/opt/oss-cad-suite LXROOT=/opt/litex source ./env.sh
-```
-
-> Note: `env.sh` puts the LiteX fork's `migen` ahead of any oss-cad bundled
-> `migen`. The migen simulator's memory transform crashes if the order is wrong.
-
-## Build
-
-```bash
-source ./env.sh
-python3 gateware/target_eth.py --build
-# -> build/eth/gateware/intergalaktik_ulx5m_gs.bit
-```
-
-Or via the Makefile (also stages the bitstream into `build/`):
-
-```bash
-cd build
-make bit
-```
-
-Useful options on `target_eth.py`: `--ip`, `--udp-port`, `--sys-clk-freq`,
-`--build-id`, `--seed`.
-
-## Full LiteX SoC (phase 2, TASK-5032/5033, branch `soc-sdram-sd`)
-
-`gateware/target_soc.py`: VexRiscv @ 20 MHz, 64 MiB SDRAM (IS42VM16320E, GENSDRPHY), BIOS serial on
-GPIO5 (TX, IO_NB_B5) / GPIO4 (RX, IO_NA_B6), 1000 Mb/s Ethernet (hardware ARP/ICMP on 192.168.10.212 +
-Etherbone UDP 1234), LiteSDCard. Build (environment: `tools/soc_build.sh`, LiteX tree `~/app/litex-1g-deps`):
-
-```bash
-tools/soc_build.sh <name> --sdram-clk inv --cpu-variant standard --with-gbe --with-sdcard --seed 9          # --boot none
-tools/soc_build.sh <name> --sdram-clk inv --cpu-variant lite --with-gbe --with-sdcard --boot netboot --seed 9
-```
-
-`--boot` selects the BIOS boot source:
-
-| `--boot` | BIOS | notes |
+| Top file | What it is | Ethernet |
 |---|---|---|
-| `none` (default) | console only (`BIOS_NO_BOOT`) | without it the BIOS hangs in the SD boot when no card is inserted |
-| `serial` | serialboot (`litex_term --kernel`), then console | `SDCARD_BOOT_DISABLE`, `NET_BOOT_DISABLE` |
-| `sdcard` | SD card (boot.json / boot.bin) first, then serial | `SDCARD_BOOT_PRIORITY=-1`, `NET_BOOT_DISABLE` |
-| `netboot` | TFTP boot.json / boot.bin from `--remote-ip` (default 192.168.10.14), then serial | adds a CPU port to the MAC (hybrid, MAC 10:e2:d5:00:00:01, `--local-ip` 192.168.10.213); needs `--with-gbe`; with `standard` the SoC no longer places (77 % LT, 4 CC_MULT) -> use `--cpu-variant lite` |
+| `gateware/target_eth.py` | No CPU. LiteEth answers ping and UDP echo in hardware. | 100 Mb/s |
+| `gateware/target_gbe.py` | No CPU. Same idea, using our own gigabit PHY. | 1000 Mb/s |
+| `gateware/target_soc.py` | **The Linux computer.** CPU, SDRAM, BIOS, Ethernet, DVI, optional USB keyboard and SD card. | 1000 Mb/s |
 
-`sim/test_boot_option.py` checks the generated BIOS defines of every mode. The TFTP server is the Pi
-(service `tftp-litex`, root `/srv/tftp`), see `docs/SOC_FAZA2_20260925_TASK-5033.md`. Board tests on the Pi:
-`tools/gbe/soc_accept.sh` (BIOS + 64 MiB mem_test + ping sweep + Etherbone) and `tools/gbe/nb_accept.sh` (netboot).
+The bitstreams in `bitstreams/` are built from `target_soc.py`.
 
-## Load and test
+## Gigabit Ethernet: how it works here
 
-```bash
-cd build
-make jtag        # load into SRAM over JTAG (volatile, non-destructive)
-# or: make flash # write to SPI flash@0 (persistent)
-```
+**The link runs at 1000 Mb/s.** The PHY is told to advertise only 1000BASE-T full duplex, and the PHY status
+register reads 1000 Mb/s full duplex. So the board needs a gigabit switch. It cannot link directly to a
+device that only supports 100 Mb/s.
 
-Put a host NIC on the same subnet and test:
+**Why our own PHY (`gateware/gbe_phy.py`) and not LiteEth's RGMII PHY.** At 1 Gb/s the RGMII clocks run at
+125 MHz. LiteEth places its clock-crossing FIFOs in those 125 MHz domains, and on GateMate they only reach
+52–65 MHz after routing. Our PHY keeps only the I/O registers and a small shift register at 125 MHz. Each
+frame crosses into the 20 MHz system clock through a 4 KiB block RAM in each direction.
 
-```bash
-sudo ip addr add 10.10.10.1/24 dev <iface>
-ping 10.10.10.50
-python3 ../test_script/udp_echo_test.py --ip 10.10.10.50 --port 7000
-```
+**Speed.** The link is 1 Gb/s, but the data rate is limited by the 20 MHz system clock and the CPU:
+- The MAC is 8 bits wide at 20 MHz, so at most about 160 Mb/s can pass through it.
+- A short burst is received at full line rate, but only as much as fits into the 4 KiB buffer.
+- Measured without Linux, on a smaller CPU: 6.3 Mb/s sent from the board. Our test partner (a Raspberry Pi)
+  has only a 100 Mb/s port, so the receive direction topped out at 96 Mb/s. Throughput under Linux has not
+  been measured yet.
+- nextpnr reaches 19–27 MHz for the system clock, depending on the seed. That is why it stays at 20 MHz.
 
-## Status LEDs
+**The receive clock pin.** The PHY's receive clock arrives on `IO_EB_A7`, which is not a dedicated clock pin.
+On GateMate any pin can drive the global clock network through `CC_BUFG`, and this works at 125 MHz.
+(An older version of this README said gigabit was impossible because of this pin. That was wrong.)
 
-Active-high; left-to-right on the board silk (LED0..LED7):
+## Other things worth knowing
 
-| LED | Meaning |
+- **DVI.** `gateware/video_sbc.py` reads a 320×240 framebuffer and doubles every pixel and line in hardware.
+  A full 640×480 framebuffer would use 92 % of the SDRAM bandwidth.
+- **PLL lock.** `--pll-lock-req 0` keeps the PLL outputs running when the lock detector flickers.
+  `--video-recover` restarts the video path if the picture is lost. Details: `docs/SBC_DVI_USB_TASK-5047.md`.
+- **USB keyboard.** `gateware/usb_hid.py` wraps Emard's low-speed USB HID host (`gateware/verilog/usbhost/`).
+  `tools/usbhidd/` passes the key presses to the Linux console. Not tested on the board yet.
+- **Configuration reset.** Every bitstream starts with `CMD_CFGRST` (`gmpack --reset`). See the main README.
+
+## Folder layout
+
+| Folder | Contents |
 |---|---|
-| 7 | heartbeat (~1 Hz) - sys clock alive, reset released |
-| 6 | reset released (sticky) |
-| 5 | UDP TX activity (stretched) |
-| 4 | UDP RX activity (stretched) |
-| 1 | link up (RGMII in-band status) |
-| 3, 2, 0 | 3-bit build-id tag (`--build-id`), MSB->LSB |
+| `gateware/` | The FPGA design (Python/migen + some Verilog) |
+| `bitstreams/` | Ready-made bitstreams; `bitstreams/README.md` lists what each one does |
+| `tools/` | Build scripts, Linux/netboot helpers, DOOM and rootfs, USB daemon, board diagnostics |
+| `sim/` | Simulations and test benches |
+| `test_script/` | Host-side tests (UDP echo, UART) |
+| `docs/` | Measurements, investigations and lessons (`docs/LESSONS_GATEMATE.md`) |
+| `build/` | Build output; only `csr.json`/`csr.csv` of the two recommended builds are kept |
+| `env.sh` | Sets up the toolchain and LiteX paths (`OSS_CAD_SUITE`, `LXROOT`) |
 
-## Simulation
-
-```bash
-source ./env.sh
-python3 sim/tb_stack.py     # -> ALL TESTS PASSED
-```
-
-Runs the LiteEth core against LiteEth's pure-migen model PHY: ICMP ping, ARP
-resolution, and UDP echo, independent of RGMII I/O timing.
-
-## Design notes
-
-The two things that make Ethernet work on this specific board are documented in
-`docs/`:
-
-1. **100 Mbps datapath, not gigabit.** RXC (25 MHz) lands on a non-clock-capable
-   pin (`IO_EB_A7`); gigabit's 125 MHz RXC cannot be clocked. The PHY runs the
-   RGMII datapath in fixed 10/100 nibble-gearing mode (`fixed_100m=True`) and
-   forwards a 25 MHz TXC. See `docs/LITEETH_INTEGRATION.md`.
-2. **Split-clock CRG.** A single 25 MHz fabric clock does not close timing on
-   this board. Two PLLs are used: 25 MHz for the thin TX serdes, 16 MHz for the
-   fabric/packet pipeline. See `docs/GATEMATE_CLOCKING.md`, including the three
-   toolchain traps (no CC_BUFG on RXC, the GateMatePLL lock caveat, no duplicate
-   create_clock on PLL-derived clocks).
+Loading uses the DirtyJTAG programmer: `openFPGALoader -c dirtyJtag <file.bit> -r`.
 
 ## License
 
-BSD-2-Clause. See `LICENSE`.
+BSD-2-Clause. See `LICENSE`. The first, CPU-less 100 Mb/s design comes from the LiteX-Ethernet-ULX5M-GS
+contributors. The USB host is by Emard (`gateware/verilog/usbhost/README.md`).
