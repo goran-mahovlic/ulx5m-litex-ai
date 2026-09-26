@@ -5,7 +5,9 @@ cd "$(dirname "$0")/.."
 source tools/sbc_env.sh
 n=$1; shift
 mkdir -p ~/.tmp/t5032
-python3 gateware/target_soc.py --build --output-dir build/s_$n "$@" > ~/.tmp/t5032/soc_$n.log 2>&1
+# NEXTPNR=<path> (env) selects an alternative nextpnr-himbaechel (see env.sh); the one used is logged.
+echo "[soc_build] nextpnr=$(command -v nextpnr-himbaechel)" > ~/.tmp/t5032/soc_$n.log
+python3 gateware/target_soc.py --build --output-dir build/s_$n "$@" >> ~/.tmp/t5032/soc_$n.log 2>&1
 rc=$?
 echo "$n exit=$rc $(date +%T)" >> ~/.tmp/t5032/soc_done.txt
 exit $rc

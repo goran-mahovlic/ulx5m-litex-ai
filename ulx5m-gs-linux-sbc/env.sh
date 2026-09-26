@@ -21,6 +21,19 @@ else
     echo "[env] WARNING: $OSS_CAD_SUITE/environment not found; set OSS_CAD_SUITE=<path> and re-source." >&2
 fi
 
+# Optional alternative nextpnr (default: the one from oss-cad-suite). LiteX calls nextpnr-himbaechel by name,
+# so its directory goes to the front of PATH. Patched setup/hold build (abd0731, see
+# docs/NEXTPNR_SETUPHOLD_PATCH.md):
+#   NEXTPNR=/home/klaudio/app/raid/tools/nextpnr-gatemate-setuphold/bin/nextpnr-himbaechel source ./env.sh
+if [ -n "${NEXTPNR:-}" ]; then
+    if [ -x "$NEXTPNR" ] && [ "$(basename "$NEXTPNR")" = nextpnr-himbaechel ]; then
+        export PATH="$(dirname "$NEXTPNR"):$PATH"
+        echo "[env] NEXTPNR=$NEXTPNR" >&2
+    else
+        echo "[env] WARNING: NEXTPNR=$NEXTPNR is not an executable nextpnr-himbaechel; using oss-cad-suite" >&2
+    fi
+fi
+
 export LXROOT
 export PYTHONPATH="$LXROOT/migen:$LXROOT/litex:$LXROOT/liteeth:$LXROOT/litedram:$LXROOT/litex-boards"
 # optional cores (SD card): added when present in the LiteX tree
