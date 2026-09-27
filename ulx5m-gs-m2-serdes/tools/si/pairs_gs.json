@@ -1,0 +1,1 @@
+{"TX_BC(U4->C134/5)":["/serdes/PCIe_TX_BC_P","/serdes/PCIe_TX_BC_N"],"TX(C->J1)":["/cm4-hsio/PCIe_TX_P","/cm4-hsio/PCIe_TX_N"],"RX(J1->U4)":["/cm4-hsio/PCIe_RX_P","/cm4-hsio/PCIe_RX_N"],"SER_CLK(X2->caps)":["/serdes/SER_CLK_P","/serdes/SER_CLK_N"],"SER_CK(C129/130->U4)":["/serdes/SER_CK_P","/serdes/SER_CK_N"],"PCIe_CLK(C136/7->J1)":["/cm4-hsio/PCIe_CLK_P","/cm4-hsio/PCIe_CLK_N"]}

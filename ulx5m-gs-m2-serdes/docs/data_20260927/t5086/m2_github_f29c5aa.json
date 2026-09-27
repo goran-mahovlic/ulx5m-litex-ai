@@ -1,0 +1,1186 @@
+{
+ "RX(J10->U4)": {
+  "nets": {
+   "/M.2 M Key/PCIe_RX_P": {
+    "total": 15.19,
+    "by_layer": {
+     "F.Cu": 15.19
+    },
+    "widths": {
+     "F.Cu": [
+      0.147
+     ]
+    },
+    "vias": [],
+    "pads": [
+     {
+      "ref": "U4",
+      "pad": "U11",
+      "lib": "ulx5m-gs:BGA-324_15.0x15.0mm_Layout18x18_P0.8mm_Ball0.45mm_Pad0.4mm_NSMD",
+      "side": "F.Cu",
+      "type": "smd",
+      "shape": "circle",
+      "size": [
+       0.4,
+       0.4
+      ],
+      "at": [
+       159.79,
+       130.24
+      ]
+     },
+     {
+      "ref": "J10",
+      "pad": "49",
+      "lib": "PCIexpress:M.2 M Key Connector",
+      "side": "F.Cu",
+      "type": "smd",
+      "shape": "rect",
+      "size": [
+       0.35,
+       1.7
+      ],
+      "at": [
+       155.55,
+       142.93
+      ]
+     },
+     {
+      "ref": "R107",
+      "pad": "1",
+      "lib": "Resistor_SMD:R_0402_1005Metric",
+      "side": "F.Cu",
+      "type": "smd",
+      "shape": "roundrect",
+      "size": [
+       0.54,
+       0.64
+      ],
+      "at": [
+       157.039,
+       133.599
+      ]
+     }
+    ],
+    "ref_plane_mm": {
+     "F.Cu->In1.Cu:GND": 13.61,
+     "F.Cu->In1.Cu:NONE": 1.58
+    },
+    "ref_gap_samples": [
+     [
+      "In1.Cu",
+      155.6,
+      138.03
+     ],
+     [
+      "In1.Cu",
+      155.6,
+      138.13
+     ],
+     [
+      "In1.Cu",
+      155.6,
+      138.23
+     ],
+     [
+      "In1.Cu",
+      155.6,
+      138.33
+     ],
+     [
+      "In1.Cu",
+      155.6,
+      138.43
+     ],
+     [
+      "In1.Cu",
+      155.6,
+      138.53
+     ]
+    ],
+    "n_ref_gap": 15
+   },
+   "/M.2 M Key/PCIe_RX_N": {
+    "total": 14.79,
+    "by_layer": {
+     "F.Cu": 14.79
+    },
+    "widths": {
+     "F.Cu": [
+      0.147
+     ]
+    },
+    "vias": [],
+    "pads": [
+     {
+      "ref": "U4",
+      "pad": "V11",
+      "lib": "ulx5m-gs:BGA-324_15.0x15.0mm_Layout18x18_P0.8mm_Ball0.45mm_Pad0.4mm_NSMD",
+      "side": "F.Cu",
+      "type": "smd",
+      "shape": "circle",
+      "size": [
+       0.4,
+       0.4
+      ],
+      "at": [
+       159.79,
+       131.04
+      ]
+     },
+     {
+      "ref": "J10",
+      "pad": "47",
+      "lib": "PCIexpress:M.2 M Key Connector",
+      "side": "F.Cu",
+      "type": "smd",
+      "shape": "rect",
+      "size": [
+       0.35,
+       1.7
+      ],
+      "at": [
+       156.05,
+       142.93
+      ]
+     },
+     {
+      "ref": "R107",
+      "pad": "2",
+      "lib": "Resistor_SMD:R_0402_1005Metric",
+      "side": "F.Cu",
+      "type": "smd",
+      "shape": "roundrect",
+      "size": [
+       0.54,
+       0.64
+      ],
+      "at": [
+       157.76,
+       134.32
+      ]
+     }
+    ],
+    "ref_plane_mm": {
+     "F.Cu->In1.Cu:GND": 13.2,
+     "F.Cu->In1.Cu:NONE": 1.58
+    },
+    "ref_gap_samples": [
+     [
+      "In1.Cu",
+      156.05,
+      142.56
+     ],
+     [
+      "In1.Cu",
+      156.05,
+      142.66
+     ],
+     [
+      "In1.Cu",
+      156.05,
+      142.77
+     ],
+     [
+      "In1.Cu",
+      156.05,
+      142.88
+     ],
+     [
+      "In1.Cu",
+      156.0,
+      138.01
+     ],
+     [
+      "In1.Cu",
+      156.0,
+      138.11
+     ]
+    ],
+    "n_ref_gap": 15
+   }
+  },
+  "pn_gap": {
+   "F.Cu": {
+    "coupled_mm": 15.11,
+    "gap_median": 0.253,
+    "gap_min": 0.253,
+    "hist": [
+     [
+      0.25,
+      118
+     ],
+     [
+      0.35,
+      12
+     ],
+     [
+      0.32,
+      3
+     ],
+     [
+      0.28,
+      3
+     ]
+    ]
+   }
+  },
+  "skew_mm": 0.4
+ },
+ "TX(U4->C143/4)": {
+  "nets": {
+   "/M.2 M Key/PCIe_TX_P": {
+    "total": 10.23,
+    "by_layer": {
+     "F.Cu": 10.23
+    },
+    "widths": {
+     "F.Cu": [
+      0.13,
+      0.147
+     ]
+    },
+    "vias": [],
+    "pads": [
+     {
+      "ref": "U4",
+      "pad": "U13",
+      "lib": "ulx5m-gs:BGA-324_15.0x15.0mm_Layout18x18_P0.8mm_Ball0.45mm_Pad0.4mm_NSMD",
+      "side": "F.Cu",
+      "type": "smd",
+      "shape": "circle",
+      "size": [
+       0.4,
+       0.4
+      ],
+      "at": [
+       161.39,
+       130.24
+      ]
+     },
+     {
+      "ref": "C144",
+      "pad": "2",
+      "lib": "Capacitor_SMD:C_0402_1005Metric",
+      "side": "F.Cu",
+      "type": "smd",
+      "shape": "roundrect",
+      "size": [
+       0.56,
+       0.62
+      ],
+      "at": [
+       156.85,
+       138.59
+      ]
+     },
+     {
+      "ref": "R110",
+      "pad": "1",
+      "lib": "Resistor_SMD:R_0402_1005Metric",
+      "side": "F.Cu",
+      "type": "smd",
+      "shape": "roundrect",
+      "size": [
+       0.54,
+       0.64
+      ],
+      "at": [
+       159.969,
+       134.289
+      ]
+     }
+    ],
+    "ref_plane_mm": {
+     "F.Cu->In1.Cu:GND": 9.43,
+     "F.Cu->In1.Cu:NONE": 0.8
+    },
+    "ref_gap_samples": [
+     [
+      "In1.Cu",
+      157.07,
+      138.37
+     ],
+     [
+      "In1.Cu",
+      156.98,
+      138.46
+     ],
+     [
+      "In1.Cu",
+      156.89,
+      138.55
+     ],
+     [
+      "In1.Cu",
+      157.12,
+      137.96
+     ],
+     [
+      "In1.Cu",
+      157.12,
+      138.06
+     ],
+     [
+      "In1.Cu",
+      157.12,
+      138.16
+     ]
+    ],
+    "n_ref_gap": 7
+   },
+   "/M.2 M Key/PCIe_TX_N": {
+    "total": 10.38,
+    "by_layer": {
+     "F.Cu": 10.38
+    },
+    "widths": {
+     "F.Cu": [
+      0.13
+     ]
+    },
+    "vias": [],
+    "pads": [
+     {
+      "ref": "U4",
+      "pad": "V13",
+      "lib": "ulx5m-gs:BGA-324_15.0x15.0mm_Layout18x18_P0.8mm_Ball0.45mm_Pad0.4mm_NSMD",
+      "side": "F.Cu",
+      "type": "smd",
+      "shape": "circle",
+      "size": [
+       0.4,
+       0.4
+      ],
+      "at": [
+       161.39,
+       131.04
+      ]
+     },
+     {
+      "ref": "C143",
+      "pad": "2",
+      "lib": "Capacitor_SMD:C_0402_1005Metric",
+      "side": "F.Cu",
+      "type": "smd",
+      "shape": "roundrect",
+      "size": [
+       0.56,
+       0.62
+      ],
+      "at": [
+       157.77,
+       138.59
+      ]
+     },
+     {
+      "ref": "R110",
+      "pad": "2",
+      "lib": "Resistor_SMD:R_0402_1005Metric",
+      "side": "F.Cu",
+      "type": "smd",
+      "shape": "roundrect",
+      "size": [
+       0.54,
+       0.64
+      ],
+      "at": [
+       160.691,
+       135.011
+      ]
+     }
+    ],
+    "ref_plane_mm": {
+     "F.Cu->In1.Cu:GND": 9.66,
+     "F.Cu->In1.Cu:NONE": 0.72
+    },
+    "ref_gap_samples": [
+     [
+      "In1.Cu",
+      157.55,
+      138.37
+     ],
+     [
+      "In1.Cu",
+      157.64,
+      138.46
+     ],
+     [
+      "In1.Cu",
+      157.73,
+      138.55
+     ],
+     [
+      "In1.Cu",
+      157.5,
+      138.03
+     ],
+     [
+      "In1.Cu",
+      157.5,
+      138.15
+     ],
+     [
+      "In1.Cu",
+      157.5,
+      138.26
+     ]
+    ],
+    "n_ref_gap": 6
+   }
+  },
+  "pn_gap": {
+   "F.Cu": {
+    "coupled_mm": 10.12,
+    "gap_median": 0.253,
+    "gap_min": 0.253,
+    "hist": [
+     [
+      0.25,
+      59
+     ],
+     [
+      0.27,
+      29
+     ],
+     [
+      0.4,
+      2
+     ],
+     [
+      0.43,
+      1
+     ]
+    ]
+   }
+  },
+  "skew_mm": -0.15
+ },
+ "PET0(C->J10)": {
+  "nets": {
+   "/M.2 M Key/PET0P": {
+    "total": 3.5,
+    "by_layer": {
+     "F.Cu": 3.5
+    },
+    "widths": {
+     "F.Cu": [
+      0.147
+     ]
+    },
+    "vias": [],
+    "pads": [
+     {
+      "ref": "C144",
+      "pad": "1",
+      "lib": "Capacitor_SMD:C_0402_1005Metric",
+      "side": "F.Cu",
+      "type": "smd",
+      "shape": "roundrect",
+      "size": [
+       0.56,
+       0.62
+      ],
+      "at": [
+       156.85,
+       139.55
+      ]
+     },
+     {
+      "ref": "J10",
+      "pad": "43",
+      "lib": "PCIexpress:M.2 M Key Connector",
+      "side": "F.Cu",
+      "type": "smd",
+      "shape": "rect",
+      "size": [
+       0.35,
+       1.7
+      ],
+      "at": [
+       157.05,
+       142.93
+      ]
+     }
+    ],
+    "ref_plane_mm": {
+     "F.Cu->In1.Cu:GND": 3.08,
+     "F.Cu->In1.Cu:NONE": 0.43
+    },
+    "ref_gap_samples": [
+     [
+      "In1.Cu",
+      157.05,
+      142.88
+     ],
+     [
+      "In1.Cu",
+      157.05,
+      142.77
+     ],
+     [
+      "In1.Cu",
+      157.05,
+      142.66
+     ],
+     [
+      "In1.Cu",
+      157.05,
+      142.56
+     ]
+    ],
+    "n_ref_gap": 4
+   },
+   "/M.2 M Key/PET0N": {
+    "total": 3.55,
+    "by_layer": {
+     "F.Cu": 3.55
+    },
+    "widths": {
+     "F.Cu": [
+      0.147
+     ]
+    },
+    "vias": [],
+    "pads": [
+     {
+      "ref": "C143",
+      "pad": "1",
+      "lib": "Capacitor_SMD:C_0402_1005Metric",
+      "side": "F.Cu",
+      "type": "smd",
+      "shape": "roundrect",
+      "size": [
+       0.56,
+       0.62
+      ],
+      "at": [
+       157.77,
+       139.55
+      ]
+     },
+     {
+      "ref": "J10",
+      "pad": "41",
+      "lib": "PCIexpress:M.2 M Key Connector",
+      "side": "F.Cu",
+      "type": "smd",
+      "shape": "rect",
+      "size": [
+       0.35,
+       1.7
+      ],
+      "at": [
+       157.55,
+       142.93
+      ]
+     }
+    ],
+    "ref_plane_mm": {
+     "F.Cu->In1.Cu:GND": 3.13,
+     "F.Cu->In1.Cu:NONE": 0.43
+    },
+    "ref_gap_samples": [
+     [
+      "In1.Cu",
+      157.55,
+      142.88
+     ],
+     [
+      "In1.Cu",
+      157.55,
+      142.77
+     ],
+     [
+      "In1.Cu",
+      157.55,
+      142.66
+     ],
+     [
+      "In1.Cu",
+      157.55,
+      142.56
+     ]
+    ],
+    "n_ref_gap": 4
+   }
+  },
+  "pn_gap": {
+   "F.Cu": {
+    "coupled_mm": 3.5,
+    "gap_median": 0.253,
+    "gap_min": 0.253,
+    "hist": [
+     [
+      0.25,
+      18
+     ],
+     [
+      0.35,
+      11
+     ],
+     [
+      0.3,
+      1
+     ],
+     [
+      0.4,
+      1
+     ]
+    ]
+   }
+  },
+  "skew_mm": -0.05
+ },
+ "PCIe_CLK(J10->C136/7)": {
+  "nets": {
+   "/M.2 M Key/PCIe_CLK_P": {
+    "total": 3.5,
+    "by_layer": {
+     "F.Cu": 3.5
+    },
+    "widths": {
+     "F.Cu": [
+      0.147
+     ]
+    },
+    "vias": [],
+    "pads": [
+     {
+      "ref": "C136",
+      "pad": "2",
+      "lib": "Capacitor_SMD:C_0402_1005Metric",
+      "side": "F.Cu",
+      "type": "smd",
+      "shape": "roundrect",
+      "size": [
+       0.56,
+       0.62
+      ],
+      "at": [
+       153.82,
+       139.57
+      ]
+     },
+     {
+      "ref": "J10",
+      "pad": "55",
+      "lib": "PCIexpress:M.2 M Key Connector",
+      "side": "F.Cu",
+      "type": "smd",
+      "shape": "rect",
+      "size": [
+       0.35,
+       1.7
+      ],
+      "at": [
+       154.05,
+       142.93
+      ]
+     }
+    ],
+    "ref_plane_mm": {
+     "F.Cu->In1.Cu:GND": 3.07,
+     "F.Cu->In1.Cu:NONE": 0.43
+    },
+    "ref_gap_samples": [
+     [
+      "In1.Cu",
+      154.05,
+      142.88
+     ],
+     [
+      "In1.Cu",
+      154.05,
+      142.77
+     ],
+     [
+      "In1.Cu",
+      154.05,
+      142.66
+     ],
+     [
+      "In1.Cu",
+      154.05,
+      142.56
+     ]
+    ],
+    "n_ref_gap": 4
+   },
+   "/M.2 M Key/PCIe_CLK_N": {
+    "total": 3.49,
+    "by_layer": {
+     "F.Cu": 3.49
+    },
+    "widths": {
+     "F.Cu": [
+      0.147
+     ]
+    },
+    "vias": [],
+    "pads": [
+     {
+      "ref": "C137",
+      "pad": "2",
+      "lib": "Capacitor_SMD:C_0402_1005Metric",
+      "side": "F.Cu",
+      "type": "smd",
+      "shape": "roundrect",
+      "size": [
+       0.56,
+       0.62
+      ],
+      "at": [
+       154.76,
+       139.57
+      ]
+     },
+     {
+      "ref": "J10",
+      "pad": "53",
+      "lib": "PCIexpress:M.2 M Key Connector",
+      "side": "F.Cu",
+      "type": "smd",
+      "shape": "rect",
+      "size": [
+       0.35,
+       1.7
+      ],
+      "at": [
+       154.55,
+       142.93
+      ]
+     }
+    ],
+    "ref_plane_mm": {
+     "F.Cu->In1.Cu:GND": 3.06,
+     "F.Cu->In1.Cu:NONE": 0.43
+    },
+    "ref_gap_samples": [
+     [
+      "In1.Cu",
+      154.55,
+      142.88
+     ],
+     [
+      "In1.Cu",
+      154.55,
+      142.77
+     ],
+     [
+      "In1.Cu",
+      154.55,
+      142.66
+     ],
+     [
+      "In1.Cu",
+      154.55,
+      142.56
+     ]
+    ],
+    "n_ref_gap": 4
+   }
+  },
+  "pn_gap": {
+   "F.Cu": {
+    "coupled_mm": 3.5,
+    "gap_median": 0.279,
+    "gap_min": 0.253,
+    "hist": [
+     [
+      0.25,
+      17
+     ],
+     [
+      0.35,
+      11
+     ],
+     [
+      0.28,
+      1
+     ],
+     [
+      0.59,
+      1
+     ]
+    ]
+   }
+  },
+  "skew_mm": 0.01
+ },
+ "SER_CLK(C136/7->C129/30,X2)": {
+  "nets": {
+   "/serdes/SER_CLK_P": {
+    "total": 0,
+    "by_layer": {},
+    "widths": {},
+    "vias": [],
+    "pads": [],
+    "ref_plane_mm": {},
+    "ref_gap_samples": [],
+    "n_ref_gap": 0
+   },
+   "/serdes/SER_CLK_N": {
+    "total": 0,
+    "by_layer": {},
+    "widths": {},
+    "vias": [],
+    "pads": [],
+    "ref_plane_mm": {},
+    "ref_gap_samples": [],
+    "n_ref_gap": 0
+   }
+  },
+  "pn_gap": {},
+  "skew_mm": 0
+ },
+ "SER_CK(C129/30->U4)": {
+  "nets": {
+   "/serdes/SER_CK_P": {
+    "total": 16.08,
+    "by_layer": {
+     "F.Cu": 4.98,
+     "B.Cu": 11.1
+    },
+    "widths": {
+     "F.Cu": [
+      0.127,
+      0.147
+     ],
+     "B.Cu": [
+      0.127,
+      0.147
+     ]
+    },
+    "vias": [
+     {
+      "at": [
+       160.160001,
+       129.84
+      ],
+      "size": 0.4,
+      "drill": 0.2,
+      "layers": [
+       "F.Cu",
+       "B.Cu"
+      ]
+     },
+     {
+      "at": [
+       153.9385,
+       134.4
+      ],
+      "size": 0.45,
+      "drill": 0.2,
+      "layers": [
+       "F.Cu",
+       "B.Cu"
+      ]
+     }
+    ],
+    "pads": [
+     {
+      "ref": "U4",
+      "pad": "T12",
+      "lib": "ulx5m-gs:BGA-324_15.0x15.0mm_Layout18x18_P0.8mm_Ball0.45mm_Pad0.4mm_NSMD",
+      "side": "F.Cu",
+      "type": "smd",
+      "shape": "circle",
+      "size": [
+       0.4,
+       0.4
+      ],
+      "at": [
+       160.59,
+       129.44
+      ]
+     },
+     {
+      "ref": "C136",
+      "pad": "1",
+      "lib": "Capacitor_SMD:C_0402_1005Metric",
+      "side": "F.Cu",
+      "type": "smd",
+      "shape": "roundrect",
+      "size": [
+       0.56,
+       0.62
+      ],
+      "at": [
+       153.82,
+       138.61
+      ]
+     },
+     {
+      "ref": "R108",
+      "pad": "1",
+      "lib": "Resistor_SMD:R_0402_1005Metric",
+      "side": "B.Cu",
+      "type": "smd",
+      "shape": "roundrect",
+      "size": [
+       0.54,
+       0.64
+      ],
+      "at": [
+       160.06,
+       131.71
+      ]
+     },
+     {
+      "ref": "X2",
+      "pad": "4",
+      "lib": "Oscillator:Oscillator_SMD_SiTime_PQFD-6L_3.2x2.5mm",
+      "side": "B.Cu",
+      "type": "smd",
+      "shape": "roundrect",
+      "size": [
+       1.0,
+       1.05
+      ],
+      "at": [
+       153.625,
+       134.9
+      ]
+     }
+    ],
+    "ref_plane_mm": {
+     "F.Cu->In1.Cu:NONE": 0.79,
+     "F.Cu->In1.Cu:GND": 4.19,
+     "B.Cu->In2.Cu:GND": 10.38,
+     "B.Cu->In2.Cu:NONE": 0.72
+    },
+    "ref_gap_samples": [
+     [
+      "In1.Cu",
+      153.87,
+      138.56
+     ],
+     [
+      "In1.Cu",
+      153.95,
+      138.48
+     ],
+     [
+      "In1.Cu",
+      154.05,
+      138.38
+     ],
+     [
+      "In1.Cu",
+      154.09,
+      138.29
+     ],
+     [
+      "In1.Cu",
+      154.09,
+      138.19
+     ],
+     [
+      "In1.Cu",
+      154.09,
+      138.08
+     ]
+    ],
+    "n_ref_gap": 14
+   },
+   "/serdes/SER_CK_N": {
+    "total": 15.13,
+    "by_layer": {
+     "F.Cu": 4.98,
+     "B.Cu": 10.15
+    },
+    "widths": {
+     "F.Cu": [
+      0.127,
+      0.147
+     ],
+     "B.Cu": [
+      0.127,
+      0.147
+     ]
+    },
+    "vias": [
+     {
+      "at": [
+       154.6415,
+       134.4
+      ],
+      "size": 0.45,
+      "drill": 0.2,
+      "layers": [
+       "F.Cu",
+       "B.Cu"
+      ]
+     },
+     {
+      "at": [
+       160.97,
+       129.849998
+      ],
+      "size": 0.4,
+      "drill": 0.2,
+      "layers": [
+       "F.Cu",
+       "B.Cu"
+      ]
+     }
+    ],
+    "pads": [
+     {
+      "ref": "U4",
+      "pad": "T13",
+      "lib": "ulx5m-gs:BGA-324_15.0x15.0mm_Layout18x18_P0.8mm_Ball0.45mm_Pad0.4mm_NSMD",
+      "side": "F.Cu",
+      "type": "smd",
+      "shape": "circle",
+      "size": [
+       0.4,
+       0.4
+      ],
+      "at": [
+       161.39,
+       129.44
+      ]
+     },
+     {
+      "ref": "C137",
+      "pad": "1",
+      "lib": "Capacitor_SMD:C_0402_1005Metric",
+      "side": "F.Cu",
+      "type": "smd",
+      "shape": "roundrect",
+      "size": [
+       0.56,
+       0.62
+      ],
+      "at": [
+       154.76,
+       138.61
+      ]
+     },
+     {
+      "ref": "R108",
+      "pad": "2",
+      "lib": "Resistor_SMD:R_0402_1005Metric",
+      "side": "B.Cu",
+      "type": "smd",
+      "shape": "roundrect",
+      "size": [
+       0.54,
+       0.64
+      ],
+      "at": [
+       161.08,
+       131.71
+      ]
+     },
+     {
+      "ref": "X2",
+      "pad": "5",
+      "lib": "Oscillator:Oscillator_SMD_SiTime_PQFD-6L_3.2x2.5mm",
+      "side": "B.Cu",
+      "type": "smd",
+      "shape": "roundrect",
+      "size": [
+       1.0,
+       0.65
+      ],
+      "at": [
+       154.75,
+       134.9
+      ]
+     }
+    ],
+    "ref_plane_mm": {
+     "F.Cu->In1.Cu:NONE": 0.79,
+     "F.Cu->In1.Cu:GND": 4.19,
+     "B.Cu->In2.Cu:GND": 10.05,
+     "B.Cu->In2.Cu:NONE": 0.1
+    },
+    "ref_gap_samples": [
+     [
+      "In1.Cu",
+      154.75,
+      138.61
+     ],
+     [
+      "In1.Cu",
+      154.49,
+      138.3
+     ],
+     [
+      "In1.Cu",
+      154.49,
+      138.2
+     ],
+     [
+      "In1.Cu",
+      154.49,
+      138.09
+     ],
+     [
+      "In1.Cu",
+      154.49,
+      137.99
+     ],
+     [
+      "In1.Cu",
+      154.71,
+      138.57
+     ]
+    ],
+    "n_ref_gap": 9
+   }
+  },
+  "pn_gap": {
+   "F.Cu": {
+    "coupled_mm": 4.84,
+    "gap_median": 0.253,
+    "gap_min": 0.253,
+    "hist": [
+     [
+      0.25,
+      37
+     ],
+     [
+      0.51,
+      1
+     ],
+     [
+      0.4,
+      1
+     ],
+     [
+      0.3,
+      1
+     ]
+    ]
+   },
+   "B.Cu": {
+    "coupled_mm": 10.67,
+    "gap_median": 0.253,
+    "gap_min": 0.233,
+    "hist": [
+     [
+      0.25,
+      76
+     ],
+     [
+      0.23,
+      6
+     ],
+     [
+      0.38,
+      2
+     ],
+     [
+      0.29,
+      2
+     ]
+    ]
+   }
+  },
+  "skew_mm": 0.95
+ }
+}

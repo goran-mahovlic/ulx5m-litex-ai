@@ -50,6 +50,10 @@ The only connection between the two FPGAs is this SerDes lane (TX and RX pairs).
   without the fabric, already have 2.5–17.5 % bad headers. The next suspects are in hardware: supply noise at the
   SerDes (E9: ferrite or extra µF at C127/C128 on GS), the channel, and the refclk at M2.
   Details: `docs/VERIFY_20260926_RATES.md` §9.8–§9.10, `docs/TUNING_5G.md`.
+- **The PCB channel is not what limits 5 Gb/s** (SI analysis, TASK-5086). GS v005 on JLC's default 6-layer stack is 97–103 Ω
+  (M2 88 Ω). The whole chain loses 3.0 dB (nominal) to 4.8 dB (worst) at 2.5 GHz, and a linear model with a 3-tap DFE keeps a
+  5 Gb/s eye of 0.59–0.70. 5 Gb/s is also the silicon maximum (DS1001). Left for 5 G: the refclk at M2, the unidentified
+  FFC→M.2 adapter, FFC crosstalk. Details and next-revision changes: `docs/SI_SERDES_GS_v004.md`.
 - The on-chip eye counters (regfile 0x14–0x1D) never count; the upstream `tc_eyemeas` is an empty stub.
 - **The 1·2·3 recipe is only clean at 0.3 Gb/s.** Its DCO runs at 600 MHz, below the 1250–2500 MHz in DS1001.
   At 0.6 Gb/s one direction has errors, and at 1.2 Gb/s both do. Use 1·5·5.
@@ -75,8 +79,8 @@ The only connection between the two FPGAs is this SerDes lane (TX and RX pairs).
 | `gateware/ber/` | Fabric BER generator/checker (`ber_link.v`), top level (`ber_top.v`, `top_gs`/`top_m2`), `.ccf` for gs and m2, `build_ber.sh`, simulation (`sim/`, iverilog) |
 | `gateware/upstream/` | Unchanged CologneChip `serdes_lb.v`, for reference |
 | `bitstreams/` | Bitstreams tested on the boards (all with CFGRST) + `SHA256SUMS` |
-| `tools/` | JTAG and UART tools, `verify_external_link.sh`, unit tests |
-| `docs/` | `REVIEW_20260926.md` (review and measurements), `SOURCES_20260926.md` (datasheet and reference designs), `VERIFY_20260926.md` (verification report), `VERIFY_20260926_RATES.md` (2.5 / 5 Gb/s, TASK-5063/5066/5073), `TUNING_5G.md` (what to tune for 5 Gb/s) |
+| `tools/` | JTAG and UART tools, `verify_external_link.sh`, `si/` (PCB SI extraction, 2-D field solver, channel cascade), unit tests |
+| `docs/` | `REVIEW_20260926.md` (review and measurements), `SOURCES_20260926.md` (datasheet and reference designs), `VERIFY_20260926.md` (verification report), `VERIFY_20260926_RATES.md` (2.5 / 5 Gb/s, TASK-5063/5066/5073), `TUNING_5G.md` (what to tune for 5 Gb/s), `SI_SERDES_GS_v004.md` (PCB SI of GS v005 / M2, max rate, next-revision changes, TASK-5086) |
 
 ## Bitstreams
 
