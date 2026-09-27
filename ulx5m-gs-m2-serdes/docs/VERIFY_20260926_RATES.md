@@ -488,3 +488,71 @@ vs PROFILE 2 187/200 (6.5 %) and 195/200 (2.5 %) in §9.7. The raw PCS words are
    A hardware fix should move both in the same direction. A register change so far only moves one against the other.
 4. `ab_table.py`: `--runs` (per-load rows), `--rank` (synced share gs→m2, then BER), and the pooled bit count no longer adds
    corrupted counters (was 6.2·10¹⁴ bits for (b)). Tests: 60 pass (`python3 -m unittest discover -s tools/tests`).
+
+## 10. TASK-5078: A/B after the 1 µF capacitors on GS (E9/H2), 27.09.2026
+
+**Change (Goran, 27.09. 15:54):** 1 µF in parallel to C128 (VDD_SER), C127 (VDD_SER_PLL) and C42 (VDD_PLL, fabric PLLs) on
+**GS only**; M2 not touched. Pass criterion (TUNING_5G.md E9/H2): ≥ 3× lower BER. **Done by:** Jelena, gs lease `TASK-5078`,
+fpga-jtag, SRAM `-r`, no power-cycle. **Bits = the baseline bits**: sha256 checked on the Pi before loading
+(`gs_sd_2g5p1_txneg_s7` 36f09752…, `m2_e1_2g5p1_txneg_s2` b1b98a5d…, PROFILE 2 bec33f07…/ac8132bd…, PROFILE 3 074d2d54…/0f638565…),
+all six `CFGRST` (`gm_cfgrst_check.py`). **Raw data:** `data_20260927/t5078/` (`lab8.sh`/`lab8.out` as run, ber_mon + health
+JSONs, `diag_16h20.txt`); DVI part in `../ulx5m-gs-linux-sbc/docs/data_20260927/t5078/`. New tool: `tools/lab/health_table.py`
+(0x55 PLL flags + CDR/EQA per load and per point; test `test_health_table.py`, suite 63 pass).
+
+### 10.1 SerDes: the GS↔M2 link is down — not measurable, and not because of the capacitors
+
+The 2.5 G best pair (§9.3/§9.7) gave **no sync at all** in both directions in 2 of 2 loads × 300 s (0 words, BER 0.5). The run was
+stopped and the link checked without the fabric checkers:
+
+| Check | Baseline (same bits) | After the caps (27.09. 16:00–16:20) |
+|---|---|---|
+| ber_mon 2.5 G, 300 s, words gs→m2 / m2→gs | 9.4·10⁹ / 9.4·10⁹, BER 4.7·10⁻¹⁰ … 1.2·10⁻⁸ / 1.6·10⁻¹¹ … 4.5·10⁻⁸ | **0 / 0** (r1, r2) |
+| `ber_jtag_check` RX words (JTAG regfile) 2.5 G | 200/200 PEER on both (§9.7) | **ZERO 50/50 on both** |
+| same at **0.3 G** and **1.25 G** (repo bits `ber_*_0g3`, `ber_*_1g25`) | 0 errors in 1.1·10⁹ words (§8, TASK-5055) | **ZERO 50/50 on both, both rates** |
+| TX word rate m2 − gs (one shared 100 MHz refclk) | **0.0 ppm** (26.09. and 27.09.) | **−9.0 / −7.6 ppm**, drifting |
+| m2 SerDes PLL `PLL_CAP_FT` (0x55) | 506–517, FT_OF 0 | **842–1007, FT_OF = 1** in r1 |
+| gs SerDes PLL `PLL_CAP_FT` (0x55), FT_OF/UF | 433–440, 0/0 | 432–435, 0/0 (unchanged) |
+| gs RX: CDR lock / `RX_DETECT_DONE` / `RX_TH_MON` | 1 / 1 / 15 | 0 / 0 / 0 in 3 of 3 loads |
+
+Reading:
+- M2 no longer gets the **shared refclk**: its TX rate differs from GS by ~8 ppm (it was 0.0) and its PLL fine-tune sits far off
+  (842–1007 vs ~510, overflow flag). M2's refclk and both lanes run the same path GS → CM4 IO board → PCIe slot →
+  PCIe→M.2 adapter → M2 (`VERIFY_20260926.md` K5). Losing the refclk **and** all data in both directions at every rate, including
+  0.3 G, points at that path (not seated / disturbed while GS was reworked), not at supply noise.
+- GS itself is fine at the SerDes PLL: locked, CAP_FT as before, rate exactly as before. The capacitors are on supply rails, not
+  on the refclk or the lanes, and M2 was not touched, so they cannot remove M2's refclk.
+- **Open (needs Goran at the board):** reseat the GS → PCIe slot → M.2 adapter → M2 chain (and check that nothing was bridged near
+  C127/C128/C129/C130 on GS). Then re-run `lab8.sh` unchanged (2.5 G 3 × 300 s; 5 G PROFILE 2 + PROFILE 3, 3 × 60 s interleaved + 300 s,
+  `ber_jtag_check` 200) — the E9/H2 verdict for SerDes is **not yet known**.
+
+### 10.2 DVI / fabric PLLs (C42 on VDD_PLL): the lock drops under SDRAM load are gone
+
+Same procedure as the TASK-5047 baseline (`ab3.sh`, `SBC_DVI_USB_TASK-5047.md` §2.4): BIOS → test image → re-arm STDY → 20 s idle →
+2 × `mem_test` 32 MiB at 0x41000000 with 30 grabber snapshots → counters (`main_pll_sys_unlocks`/`tx_unlocks`/`stdy` from 0xf000280c,
+`main_video_recoveries` 0xf0002800). Script `ab_dvi.sh` = `ab3.sh` with fpga-jtag and the gs by-id console. Same bit as the baseline
+(`…DVI_lr0_rec3.bit`, sha256 1ee3ba40…, CFGRST).
+
+| Build / run | idle 20 s sys / tx drops | 2 × mem_test 32 MiB: sys / tx drops | STDY after load | recoveries | Memtest |
+|---|---|---|---|---|---|
+| grec_3 **baseline** (25.09., TASK-5047) | +0 / +3 | **+8930 / +43 333** | 0x0 | 0 | OK |
+| TASK-5040 reference (dvipll_1, 8 MiB) | +0 / +0 | +3787 / +2665 | – | – | OK |
+| grec_3 after caps, r1 | +0 / +0 | **+0 / +0** | 0x3 | 0 | OK |
+| grec_3 after caps, r2 | +0 / +0 | **+22 / +0** | 0x2 | 0 | OK |
+| pll60 s1 (`…USBPNRU_pll60s1.bit`, 9aeda4dc…) after caps | +0 / +0 | **+0 / +0** | 0x3 | 0 | OK |
+
+(Video frame counter advanced by ~11 000 frames per run in all three, so the video path was running.)
+- **≥ 400× fewer sys PLL drops and 0 tx (video) PLL drops** (from 43 333) with the identical bit and test. This confirms hypothesis
+  **P1** of `SBC_DVI_USB_TASK-5047`/TASK-5040 §8–§9 (VDD_CORE noise into VDD_PLL through R23 1 Ω + C42 100 nF) as the main path; P2
+  (+1V8 → Y1) cannot be the main cause, since only VDD_PLL was changed. The few sys drops in r2 are a small residue.
+- **Image not verified:** the HDMI grabber returned a uniform (7,7,7) frame in all 99 snapshots, the same as with the known-good
+  bit in TASK-5072 (grabber/HDMI chain), so image stability under load needs a look at the monitor.
+- Linux 6.12 boot on pll60 s1 was not repeated; the BIOS stress test is the one with a baseline.
+
+### 10.3 Before / after
+
+| Item | Before | After 1 µF on GS | Verdict |
+|---|---|---|---|
+| 2.5 G BER (best pair) | 4.7·10⁻¹⁰ … 1.2·10⁻⁸ / 1.6·10⁻¹¹ … 4.5·10⁻⁸ | link down (0 words; M2 lost refclk) | **not measurable** – setup fault |
+| 5 G PROFILE 2 / 3 | 6.3·10⁻² / 2.0·10⁻² (P2 300 s) | not run (link down) | **not measurable** |
+| fabric PLL drops, 2 × mem_test | +8930 / +43 333 | +0…22 / +0 | **better (≥ 400×)** |
+| DVI watchdog recoveries | 0 | 0 | same |

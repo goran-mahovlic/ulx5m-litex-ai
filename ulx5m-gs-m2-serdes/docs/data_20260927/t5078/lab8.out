@@ -1,0 +1,16 @@
+36f09752d8b85ebdf51b6fe8e34d9a646aa9e768a17ec86ced53dee63335e344  gs_sd_2g5p1_txneg_s7.bit
+b1b98a5d946169d1be8b465503c6bee94fb72f44380a20b69bce8bfb6285af4e  m2_e1_2g5p1_txneg_s2.bit
+bec33f074c13cb27d6dd3d4b083251ae76587336e1cfab6eed1346670f9b1b87  gs_p2_5g_txneg_s7.bit
+ac8132bdfc3a995a7d144a029d86469eb756d6af43817e316fc2991143a9670e  m2_p2_5g_txneg_s1.bit
+074d2d54716841094ead3302e150190aaa7bb14eee7e43d9f146ec4dda1302bb  gs_p3_5g_txneg_s7.bit
+0f6385650a8519a7ceb60f566a316739d8f4c7ee4b0dd6676b1c10c229bfe8ec  m2_p3_5g_txneg_s1.bit
+== 2.5G 15:58:15
+HEALTH board=m2 t78_2g5_gs7_m22 r1 problems=PLL_CAP_FT_OF,PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t78_2g5_gs7_m22 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+== t78_2g5_gs7_m22 r1: gs->m2 5.00e-01  m2->gs 5.00e-01
+HEALTH board=m2 t78_2g5_gs7_m22 r2 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t78_2g5_gs7_m22 r2 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+== t78_2g5_gs7_m22 r2: gs->m2 5.00e-01  m2->gs 5.00e-01
+HEALTH board=m2 t78_2g5_gs7_m22 r3 problems=PLL_BISC_TIMER_DONE=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t78_2g5_gs7_m22 r3 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+KILLED by jelena 16:11:29: 2.5G no sync r1/r2 -> diagnostics

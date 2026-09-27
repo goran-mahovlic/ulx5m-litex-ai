@@ -1,0 +1,13 @@
+# TASK-5078 16:20 CEST, after lab8 was stopped (2.5 G r1/r2 no sync). fpga-jtag, CFGRST bits, SRAM -r, no power-cycle.
+# ber_jtag_check.py --samples 50 (fabric-independent RX words via the JTAG regfile); baseline §9.7: 200/200 PEER on both at 2.5 G.
+2g5 (r3 bits still loaded) m2: PLL_LOCKED=1 CDR=1 LOOPBACK_SEL=0 rx: ZERO 50/50 distinct=1 -> FAIL
+2g5 (r3 bits still loaded) gs: PLL_LOCKED=1 CDR=0 LOOPBACK_SEL=0 rx: ZERO 50/50 distinct=1 -> FAIL
+0g3  ber_{m2,gs}_0g3_CFGRST.bit (sha256 d665c109.. / 17799f59..) m2: PLL_LOCKED=1 CDR=1 rx: ZERO 50/50 -> FAIL
+0g3  gs: PLL_LOCKED=1 CDR=1 rx: ZERO 50/50 -> FAIL
+1g25 ber_{m2,gs}_1g25_CFGRST.bit (16b353d3.. / 3f39a262..) m2: rx: ZERO 50/50 -> FAIL
+1g25 gs: rx: ZERO 50/50 -> FAIL
+# TX word rate gs vs m2 from ber_mon (shared 100 MHz refclk -> must be equal):
+sd_gs7_m22_r1 (26.09)      gs 2500019600  m2 2500019600  diff  0.0 ppm
+best_2g5_gs7_m22_r1 (27.09) gs 2500019520  m2 2500019520  diff  0.0 ppm
+t78_2g5_gs7_m22_r1         gs 2500019360  m2 2499996800  diff -9.0 ppm
+t78_2g5_gs7_m22_r2         gs 2500019360  m2 2500000320  diff -7.6 ppm

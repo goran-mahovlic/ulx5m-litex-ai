@@ -1,0 +1,47 @@
+bit sha256 1ee3ba4034d63d21 csr sys_unl=0xf000280c rec=0xf0002800 stdy_rst=0xf0002818 frames=0xf0003818
+litex> mem_write 0x43e00000 0 2048 4
+litex> 
+t0_testimg colours 1 px (7, 7, 7) (7, 7, 7)
+t0 0xf000280c  01 00 00 00 00 00 00 00 02 00 00 00              ............    
+t0 0xf0003818  62 1c 00 00 00 00 00 00 00 00 00 00              b...........    
+t0 0xf0002800  00 00 00 00                                      ....            
+t20_idle colours 1 px (7, 7, 7) (7, 7, 7)
+t20_idle 0xf000280c  01 00 00 00 00 00 00 00 03 00 00 00              ............    
+t20_idle 0xf0003818  65 24 00 00 00 00 00 00 00 00 00 00              e$..........    
+t20_idle 0xf0002800  00 00 00 00                                      ....            
+load_01 colours 1 px (7, 7, 7) (7, 7, 7)
+load_02 colours 1 px (7, 7, 7) (7, 7, 7)
+load_03 colours 1 px (7, 7, 7) (7, 7, 7)
+load_04 colours 1 px (7, 7, 7) (7, 7, 7)
+load_05 colours 1 px (7, 7, 7) (7, 7, 7)
+load_06 colours 1 px (7, 7, 7) (7, 7, 7)
+load_07 colours 1 px (7, 7, 7) (7, 7, 7)
+load_08 colours 1 px (7, 7, 7) (7, 7, 7)
+load_09 colours 1 px (7, 7, 7) (7, 7, 7)
+load_10 colours 1 px (7, 7, 7) (7, 7, 7)
+load_11 colours 1 px (7, 7, 7) (7, 7, 7)
+load_12 colours 1 px (7, 7, 7) (7, 7, 7)
+load_13 colours 1 px (7, 7, 7) (7, 7, 7)
+load_14 colours 1 px (7, 7, 7) (7, 7, 7)
+load_15 colours 1 px (7, 7, 7) (7, 7, 7)
+load_16 colours 1 px (7, 7, 7) (7, 7, 7)
+load_17 colours 1 px (7, 7, 7) (7, 7, 7)
+load_18 colours 1 px (7, 7, 7) (7, 7, 7)
+load_19 colours 1 px (7, 7, 7) (7, 7, 7)
+load_20 colours 1 px (7, 7, 7) (7, 7, 7)
+load_21 colours 1 px (7, 7, 7) (7, 7, 7)
+load_22 colours 1 px (7, 7, 7) (7, 7, 7)
+load_23 colours 1 px (7, 7, 7) (7, 7, 7)
+load_24 colours 1 px (7, 7, 7) (7, 7, 7)
+load_25 colours 1 px (7, 7, 7) (7, 7, 7)
+load_26 colours 1 px (7, 7, 7) (7, 7, 7)
+load_27 colours 1 px (7, 7, 7) (7, 7, 7)
+load_28 colours 1 px (7, 7, 7) (7, 7, 7)
+load_29 colours 1 px (7, 7, 7) (7, 7, 7)
+load_30 colours 1 px (7, 7, 7) (7, 7, 7)
+Memtest at 0x41000000 (32.0MiB)...
+Memtest OK
+after_load 0xf000280c  01 00 00 00 00 00 00 00 03 00 00 00              ............    
+after_load 0xf0003818  d4 47 00 00 00 00 00 00 00 00 00 00              .G..........    
+after_load 0xf0002800  00 00 00 00                                      ....            
+after colours 1 px (7, 7, 7) (7, 7, 7)
