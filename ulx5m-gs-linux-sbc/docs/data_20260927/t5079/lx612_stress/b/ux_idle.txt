@@ -1,0 +1,14 @@
+
+
+csdiag: up 1268.53 load 2.79 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+rpeek 0xf000280c 2 60000 2
+
+.[01;32mroot@buildroot.[00m:.[01;34m~.[00m# 
+
+.[01;32mroot@buildroot.[00m:.[01;34m~.[00m# csrpeek 0xf000280c 2 60000 2
+
+0 ms: 00006ccc 000048c8
+
+diag: up 1327.07 load 3.06 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+

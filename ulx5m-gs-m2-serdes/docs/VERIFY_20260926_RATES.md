@@ -556,3 +556,99 @@ Same procedure as the TASK-5047 baseline (`ab3.sh`, `SBC_DVI_USB_TASK-5047.md` �
 | 5 G PROFILE 2 / 3 | 6.3·10⁻² / 2.0·10⁻² (P2 300 s) | not run (link down) | **not measurable** |
 | fabric PLL drops, 2 × mem_test | +8930 / +43 333 | +0…22 / +0 | **better (≥ 400×)** |
 | DVI watchdog recoveries | 0 | 0 | same |
+
+### 10.4 TASK-5079: the chain reseated (Goran 27.09. 16:40) — SerDes A/B measured, DVI image checked
+
+**Done by:** Jelena, gs lease `TASK-5079`, fpga-jtag, CFGRST bits, SRAM `-r`, no power-cycle. **Raw data:** `data_20260927/t5079/`
+(`h79.sh`/`h79.out` health check, `lab9.sh` = `lab8.sh` of §10 with only lease/log/labels renamed, `lab9.out`, ber_mon + health
+JSONs); DVI in `../ulx5m-gs-linux-sbc/docs/data_20260927/t5079/`. Bits checked by sha256 in `lab9.out` (same six as §10).
+
+**Health first (the §10.1 fault is gone):**
+
+| Check | §10.1 (link down) | 27.09. 16:48 after reseat | Baseline |
+|---|---|---|---|
+| TX word rate m2 − gs at 2.5 G | −9.0 / −7.6 ppm | **0.0 ppm** (health run + all 3 lab loads) | 0.0 ppm |
+| m2 `PLL_CAP_FT` / FT_OF | 842–1007 / 1 | **506–509 / 0** (2.5 G), 513–517 / 0 (5 G) | 506–517 / 0 |
+| gs `PLL_CAP_FT` / FT_OF | 432–435 / 0 | 434–440 / 0 | 433–440 / 0 |
+| `ber_jtag_check` 0.3 G, m2 / gs | ZERO 50/50 | **PEER 200/200 / 200/200** | 200/200 |
+| `ber_jtag_check` 2.5 G, m2 / gs | ZERO 50/50 | **PEER 200/200 / 200/200** | 200/200 (§9.7) |
+
+**2.5 Gb/s, best pair (gs `TX_NEG` s7 + m2 s2), 3 loads × 300 s** (`ab_table.py --runs --rank`):
+
+| Load | BER gs→m2 | BER m2→gs* | synced share |
+|---|---|---|---|
+| before the caps: `sd_gs7_m22` (26.09.) | 4.68·10⁻¹⁰ | 1.58·10⁻¹¹ | 1.00 |
+| before the caps: `best_2g5_gs7_m22` (27.09.) | 1.21·10⁻⁸ | 4.54·10⁻⁸ | 0.97 |
+| **after: t79 r1** | 6.87·10⁻¹⁰ | 2.55·10⁻¹⁰ | 1.00 |
+| **after: t79 r2** | 4.29·10⁻¹⁰ | 8.00·10⁻¹² | 0.96 |
+| **after: t79 r3** | 5.97·10⁻¹⁰ | 1.33·10⁻¹¹ | 0.96 |
+
+| | gs→m2 | m2→gs* |
+|---|---|---|
+| before: geometric mean of 2 loads / worst | 2.4·10⁻⁹ / 1.2·10⁻⁸ | 8.5·10⁻¹⁰ / 4.5·10⁻⁸ |
+| after: median of 3 / worst | 6.0·10⁻¹⁰ / 6.9·10⁻¹⁰ | 1.3·10⁻¹¹ / 2.6·10⁻¹⁰ |
+| ratio (before / after): typical, worst | **4×, 17×** | **65×, 180×** |
+| spread between loads (max / min) | ×26 → **×1.6** | ×2900 → **×32** |
+
+(* m2→gs is counted by the gs checker, rclk below 62.5 MHz: indicative only, §9 intro.)
+
+**5 Gb/s, PROFILE 2 and PROFILE 3, 3 loads × 60 s interleaved + 1 × 300 s:**
+
+| Point | BER gs→m2 med (worst) | BER m2→gs* med (worst) | synced gs→m2 / m2→gs* med | `ber_jtag_check` 200 m2 / gs |
+|---|---|---|---|---|
+| P2 before (§9.7 `e8_p2_60s`) | 7.3·10⁻² (9.9·10⁻²) | 1.8·10⁻² (2.9·10⁻²) | 1.3·10⁻³ / 3.8·10⁻⁴ | 187 / 195 PEER |
+| **P2 after** | 4.9·10⁻² (5.3·10⁻²) | 2.0·10⁻² (3.3·10⁻²) | 8.1·10⁻⁴ / 3.4·10⁻⁴ | 181 / 192 PEER |
+| P2 300 s before → after | 6.3·10⁻² → 5.9·10⁻² | 2.0·10⁻² → 2.7·10⁻² | 1.7·10⁻³ → 8.7·10⁻⁵ | |
+| P3 before (§9.10 `t73f_p3_60s`) | 1.04·10⁻¹ (1.10·10⁻¹) | 1.68·10⁻¹ (1.76·10⁻¹) | 3.2·10⁻² / 9.3·10⁻³ | 182 / 165 PEER |
+| **P3 after** | 6.2·10⁻² (6.5·10⁻²) | 1.01·10⁻¹ (1.07·10⁻¹) | 8.1·10⁻³ / 3.1·10⁻⁴ | 183 / 182 PEER |
+| P3 300 s before → after | 1.18·10⁻¹ → 6.4·10⁻² | 2.01·10⁻¹ → 9.5·10⁻² | 5.0·10⁻³ → 9.1·10⁻⁵ | |
+
+Health at 5 G: all PLLs locked, FT_OF/UF 0 on both boards in every load. The RX CDR lock flag in the snapshot before each run
+was set in 1 of 8 loads on gs (baseline §9.7 + §9.10: 1 of 8, so no change) and in **5 of 8 on m2** (baseline: 0 of 8). The 5 G rate counter shows m2 − gs −1…−11 ppm, and the baseline showed −1…−42 ppm. At 5 G the fabric
+rclk is too slow for this counter, so these numbers are not a refclk fault.
+
+Reading (E9/H2 criterion: ≥ 3× lower BER and/or a smaller spread between loads):
+- **2.5 G: better, and the criterion is met in both directions.** The typical value is 4× / 65× lower, the worst load 17× / 180×
+  lower, and the load-to-load spread dropped from ×26 / ×2900 to ×1.6 / ×32. All 3 loads are at or below the best load before
+  the caps. Caveat: the baseline for this exact pair has only 2 loads, so the size of the gain is uncertain. The direction is
+  not in doubt: the worst load after the caps is below the geometric mean before them.
+- **5 G: the same, within the noise.** The BER while synced is 1.5–2× lower (P3 gs→m2 1.7×, P3 m2→gs 1.7×, P2 gs→m2 1.5×,
+  P2 m2→gs unchanged), which is below the 3× threshold and within the ×10–15 load spread of §9.10. The synced share did not
+  improve; in the 300 s runs it is lower. The raw RX words (`ber_jtag_check`) are unchanged for P2 and better on gs for P3
+  (165 → 182/200). 5 G is still not usable (10⁻² … 10⁻¹).
+- So the 1 µF on the GS SerDes supplies (C127/C128) removed most of the load-to-load lottery at 2.5 G. At 5 G it did not
+  change the result, which is limited by something else (M2 side still without the caps, the channel H3, or the refclk H4).
+  Next step (Goran, 27.09. 18:43): the same 1 µF on **M2** C127/C128, then the health check + `lab9.sh` again.
+
+**DVI (pll60 s1, `…USBPNRU_pll60s1.bit` 9aeda4dc…), with the grabber working again:**
+
+| Test | Image on the grabber (:8090) | Lock drops sys / tx | recoveries | Other |
+|---|---|---|---|---|
+| BIOS, `ab_dvi.sh` (§10.2 procedure), 20 s idle + 2 × mem_test 32 MiB | **33/33 snapshots = the test image** (8 colour bars, 0 pixels differ by > 40 from t0) | idle +0/+0, load **+0 / +0** | 0 | Memtest OK, ~11 100 frames |
+| Linux 6.12 (`linux/k612`, sha256 of all 4 files = README), `lxrun.sh` as user `pi` | kernel log, then `buildroot login:` on tty1 (73 snapshots) | at 217 s up: 921 / 465 (boot + TFTP) | 0 | **login after 266 s** (same as `README`) |
+| Linux, idle shell, 62 s | stable | **+85 / +54** (≈ 1.4 / 0.9 per s) | 0 | `S92sbcdiag`: vrec 0 all the time |
+| Linux, SDRAM stress: `dd` 24 MiB to tmpfs, then `md5sum` 4 × 24 MiB | **86/86 snapshots identical** (0 changed 10×10 blocks, 6 min) | not read after the stress (see below) | 0 (`diag` lines) | |
+
+- **The image is there and stable**, in BIOS and in Linux, under SDRAM load. The TASK-5078 7,7,7 frames were the grabber/HDMI
+  path. Goran reconnected it, and the grabber now shows the picture (`snaps/*.jpg`).
+- **New finding, Linux only:** the PLL lock-drop counters keep counting under Linux (≈ 1.4 sys / 0.9 tx per second in an idle shell,
+  +26 700 / +18 000 between 217 s and 1155 s up, which included the `dd`). The BIOS test on the same bit gives +0/+0. There is
+  **no Linux baseline from before the caps**: every earlier DVI A/B was BIOS-only. So this is not a regression claim. It shows
+  that Linux load (CPU + Ethernet + USB + fbcon) still upsets the PLL lock signal, even though the video watchdog never had to
+  recover and the image did not change.
+- **Not done:** counters after the `md5sum` stress. The prompt had not come back after about 18 min (slow soft CPU; the serial
+  console is slow and drops characters). Then Goran stopped all board work at 18:43 to solder M2, so the counters were
+  not read.
+- Two lab traps: (1) `/tmp/lx_run.txt` on the Pi belongs to `pi`. Running `lxrun.sh` as `fpga-klaudio` reads a stale file and
+  reports "LOGIN after 5 s" (run discarded, `lx612/invalid_fpga-klaudio/`), so run it as `pi`. (2) `csrpeek ADDR N INTERVAL COUNT`
+  hangs, because `sys_ms()` returns 0 on this rootfs. Read the counters twice by hand instead.
+- The Pi dropped off the network twice (17:14–17:23 and ~18:15–18:29) with `Under-voltage detected` in dmesg. It did not reboot
+  (up since 26.09. 11:30), and every lab run finished locally. Goran switched Wi-Fi off at 18:34.
+
+| Item | Before 1 µF on GS | After (§10.4) | Verdict |
+|---|---|---|---|
+| 2.5 G BER, best pair (typ. / worst) | 2.4·10⁻⁹ / 1.2·10⁻⁸ ; 8.5·10⁻¹⁰ / 4.5·10⁻⁸ | 6.0·10⁻¹⁰ / 6.9·10⁻¹⁰ ; 1.3·10⁻¹¹ / 2.6·10⁻¹⁰ | **better (4–180×), E9/H2 met** |
+| 2.5 G spread between loads | ×26 / ×2900 | ×1.6 / ×32 | **better** |
+| 5 G P2 / P3 BER (60 s median) | 7.3·10⁻² / 1.04·10⁻¹ (gs→m2) | 4.9·10⁻² / 6.2·10⁻² | **same (< 3×)** |
+| DVI image under SDRAM load | not seen (grabber) | stable, BIOS 33/33 and Linux 86/86 | **OK** |
+| fabric PLL drops, BIOS 2 × mem_test | +8930 / +43 333 | +0 / +0 | **better** (§10.2 confirmed) |

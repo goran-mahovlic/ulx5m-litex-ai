@@ -1,0 +1,6 @@
+
+
+date; csrpeek 0xf000280c 2; csrdiag: up 1838.82 load 3.28 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+peek 0xf0002800
+

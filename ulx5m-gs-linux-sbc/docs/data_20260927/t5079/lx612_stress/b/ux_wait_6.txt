@@ -1,0 +1,10 @@
+ 0
+
+diag: up 2594.05 load 3.25 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 2650.95 load 3.17 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+
+
+
+

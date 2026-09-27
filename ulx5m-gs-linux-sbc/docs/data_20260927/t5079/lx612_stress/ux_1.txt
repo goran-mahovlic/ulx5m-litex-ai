@@ -1,0 +1,8 @@
+
+
+csrpeek 0xf000280c 3; csrpeek 0xf0002800; csrpeek 0xf0004018
+
+diag: up 285.04 load 3.65 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+date; dd if=/dev/zero of=/tmp/s bs=1M count=24; date
+

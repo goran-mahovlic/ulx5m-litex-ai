@@ -1,0 +1,12 @@
+
+
+.[01;32mroot@buildroot.[00m:.[01;34m~.[00m# csrpeek 0xf000280c 3
+
+0 ms: 00006be3 0000481e 00000000
+
+.[01;32mroot@buildroot.[00m:.[01;34m~.[00m# csrpeek 0xf0002800
+
+0 ms: 00000000
+
+.[01;32mroot@buildroot.[00m:.[01;34m~.[00m# diag: up 1155.19 load 3.19 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+

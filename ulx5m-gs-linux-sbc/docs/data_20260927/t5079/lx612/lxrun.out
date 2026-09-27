@@ -1,0 +1,128 @@
+Done
+LOGIN after 266 s
+[    0.000000] rcu: Hierarchical RCU implementation.
+[    0.000000] rcu: .RCU event tracing is enabled.
+[    0.000000] rcu: .RCU restricting CPUs from NR_CPUS=32 to nr_cpu_ids=1.
+[    0.000000] rcu: RCU calculated value of scheduler-enlistment delay is 10 jiffies.
+[    0.000000] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=1
+[    0.000000] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[    0.000000] riscv-intc: 32 local interrupts mapped
+[    0.000000] riscv: providing IPIs using SBI IPI extension
+[    0.000000] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    0.000000] clocksource: riscv_clocksource: mask: 0xffffffffffffffff max_cycles: 0x49cd42e20, max_idle_ns: 440795202120 ns
+[    0.000288] sched_clock: 64 bits at 20MHz, resolution 50ns, wraps every 4398046511100ns
+[    0.032953] Console: colour dummy device 80x25
+[    0.044532] printk: legacy console [tty0] enabled
+[    0.344528] Calibrating delay loop (skipped), value calculated using timer frequency.. 40.00 BogoMIPS (lpj=200000)
+[    0.372786] pid_max: default: 32768 minimum: 301
+[    0.421653] Mount-cache hash table entries: 1024 (order: 0, 4096 bytes, linear)
+[    0.444209] Mountpoint-cache hash table entries: 1024 (order: 0, 4096 bytes, linear)
+[    1.011340] ASID allocator using 9 bits (512 entries)
+[    1.090723] rcu: Hierarchical SRCU implementation.
+[    1.104652] rcu: .Max phase no-delay instances is 1000.
+[    1.334472] smp: Bringing up secondary CPUs ...
+[    1.350306] smp: Brought up 1 node, 1 CPU
+[    1.381554] Memory: 42436K/65536K available (6842K kernel code, 583K rwdata, 1076K rodata, 278K init, 253K bss, 22680K reserved, 0K cma-reserved)
+[    1.514593] devtmpfs: initialized
+[    2.114532] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604462750000 ns
+[    2.138008] futex hash table entries: 256 (order: 2, 16384 bytes, linear)
+[    2.573188] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    2.724416] DMA: preallocated 128 KiB GFP_KERNEL pool for atomic allocations
+[    3.866872] cpu0: Ratio of byte access time to unaligned word access is 0.00, unaligned accesses are slow
+[    4.197362] platform soc: Fixed dependency cycle(s) with /soc/interrupt-controller@f0c00000
+[    4.361330] platform soc: Fixed dependency cycle(s) with /soc/interrupt-controller@f0c00000
+[    4.911154] pps_core: LinuxPPS API ver. 1 registered
+[    4.925203] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[    4.952685] PTP clock support registered
+[    5.021583] FPGA manager framework
+[    5.265673] clocksource: Switched to clocksource riscv_clocksource
+[    9.565016] NET: Registered PF_INET protocol family
+[    9.637560] IP idents hash table entries: 2048 (order: 2, 16384 bytes, linear)
+[    9.787096] tcp_listen_portaddr_hash hash table entries: 512 (order: 0, 4096 bytes, linear)
+[    9.815986] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    9.839289] TCP established hash table entries: 1024 (order: 0, 4096 bytes, linear)
+[    9.868523] TCP bind hash table entries: 1024 (order: 2, 16384 bytes, linear)
+[    9.896344] TCP: Hash tables configured (established 1024 bind 1024)
+[    9.928015] UDP hash table entries: 256 (order: 1, 8192 bytes, linear)
+[    9.954198] UDP-Lite hash table entries: 256 (order: 1, 8192 bytes, linear)
+[   10.345528] Unpacking initramfs...
+[   10.893536] workingset: timestamp_bits=30 max_order=14 bucket_order=0
+[   11.013862] io scheduler mq-deadline registered
+[   11.027951] io scheduler kyber registered
+[   11.048057] io scheduler bfq registered
+[   11.514973] riscv-plic: interrupt-controller@f0c00000: mapped 32 interrupts with 1 handlers for 2 contexts.
+[   11.679087] simple-framebuffer 43f00000.framebuffer: framebuffer at 0x43f00000, 0x26000 bytes
+[   11.706552] simple-framebuffer 43f00000.framebuffer: format=r5g6b5, mode=320x240x16, linelength=640
+[   12.319484] Console: switching to colour frame buffer device 53x30
+[   12.988054] simple-framebuffer 43f00000.framebuffer: fb0: simplefb registered!
+[   13.128020] LiteX SoC Controller driver initialized
+[   13.277750] f0001000.serial: ttyLXU0 at MMIO 0x0 (irq = 12, base_baud = 0) is a liteuart
+[   13.778879] printk: legacy console [liteuart0] enabled
+[   13.778879] printk: legacy console [liteuart0] enabled
+[   14.113488] printk: legacy bootconsole [liteuart0] disabled
+[   14.113488] printk: legacy bootconsole [liteuart0] disabled
+[   16.919319] liteeth f0000800.mac eth0: irq 13 slots: tx 2 rx 2 size 2048
+[   17.273616] PPP generic driver version 2.4.2
+[   18.797612] i2c_dev: i2c /dev entries driver
+[   19.203923] NET: Registered PF_INET6 protocol family
+[   20.898022] Segment Routing with IPv6
+[   21.094291] In-situ OAM (IOAM) with IPv6
+[   21.277566] sit: IPv6, IPv4 and MPLS over IPv4 tunneling driver
+[   21.814438] NET: Registered PF_PACKET protocol family
+[   34.686790] IP-Config: Complete:
+[   34.867895]      device=eth0, hwaddr=10:e2:d5:00:00:01, ipaddr=192.168.10.213, mask=255.255.255.0, gw=192.168.10.14
+[   35.384182]      host=192.168.10.213, domain=, nis-domain=(none)
+[   35.724141]      bootserver=192.168.10.14, rootserver=192.168.10.14, rootpath=
+[   35.764822] clk: Disabling unused clocks
+[   54.516047] Freeing initrd memory: 12288K
+[   54.833707] Freeing unused kernel image (initmem) memory: 276K
+[   55.177923] Kernel memory protection not selected by kernel config.
+[   55.549031] Run /init as init process
+mount: mounting devpts on /dev/pts failed: No such device
+Saving 256 bits of non-creditable seed for next boot
+Starting syslogd: OK
+Starting klogd: OK
+Running sysctl: OK
+Starting network: ip: RTNETLINK answers: File exists
+FAIL
+Starting crond: OK
+crond[76]: crond (busybox 1.38.0) started, log level 8
+fbperf: fbcon=font:6x8 1000 chars in one write: 1080 ms; 100 single-char writes: 7540 ms (same loop to /dev/null 3540 ms); 40 lines (scrolling): 5580 ms
+[  173.627183] input: usb_pnru boot keyboard/mouse as /devices/virtual/input/input0
+Welcome to Buildroot
+buildroot login: root
+uname -a
+                   __   _
+                  / /  (_)__  __ ____ __
+                 / /__/ / _ \/ // /\ \ /
+                /____/_/_//_/\_,_//_\_\
+                      / _ \/ _ \
+   __   _ __      _  _\___/_//_/         ___  _
+  / /  (_) /____ | |/_/__| | / /____ __ / _ \(_)__ _____  __
+ / /__/ / __/ -_)>  </___/ |/ / -_) \ // , _/ (_-</ __/ |/ /
+/____/_/\__/\__/_/|_|____|___/\__/_\_\/_/|_/_/___/\__/|___/
+                  / __/  |/  / _ \
+                 _\ \/ /|_/ / ___/
+                /___/_/  /_/_/
+  32-bit RISC-V Linux running on LiteX / VexRiscv-SMP.
+login[105]: root login on 'console'
+csrpeek 0xf000280c 3
+csrpeek 0xf0002800
+date; dd if=/deroot@buildroot:~# csrpeek 0xf000280c 3
+te
+0 ms: 00000399 000001d1 00000000
+root@buildroot:~# csrpeek 0xf0002800
+0 ms: 00000000
+root@buildroot:~# date; dd if=/dev/zero of=/tmp/s bs=1M count=24; date
+ 2 3 4 5 6 7 8 9 10; do md5sum /tmp/s; done; date
+Thu Jan  1 00:04:18 UTC 1970
+csrpeek 0xf000280c 3
+diag: up 217.39 load 3.06 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+csrpeek 0xf0002800
+free
+{
+  "Image":       "0x40000000",
+  "rv32.dtb":    "0x40ef0000",
+  "rootfs.cpio": "0x41000000",
+  "opensbi.bin": "0x40f00000"
+}

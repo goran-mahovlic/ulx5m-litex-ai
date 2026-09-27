@@ -1,0 +1,4 @@
+
+
+date; csrpeek 0xf000280c 3; csrpeek 0xf0002800; csrpeek 0xf0004018; free
+

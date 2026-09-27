@@ -1,0 +1,11 @@
+
+
+date; csrpeek 0xf024+0 records in
+
+24+0 records out
+
+00280c 3; csrpeek 0xf0002800; csrpeek 0xf0004018; ls -la /tmp/s
+
+Thu Jan  1 00:07:02 UTC 1970
+
+.[01;32mroot@buildroot.[00m:.[01;34m~.[00m# date; for

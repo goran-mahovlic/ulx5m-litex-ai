@@ -1,0 +1,83 @@
+Done
+lxrun.sh: line 14: /tmp/lx_run.txt: Permission denied
+LOGIN after 5 s
+[    4.214438] platform soc: Fixed dependency cycle(s) with /soc/interrupt-controller@f0c00000
+[    4.378935] platform soc: Fixed dependency cycle(s) with /soc/interrupt-controller@f0c00000
+[    4.929092] pps_core: LinuxPPS API ver. 1 registered
+[    4.943194] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[    4.974252] PTP clock support registered
+[    5.042801] FPGA manager framework
+[    5.287255] clocksource: Switched to clocksource riscv_clocksource
+[    9.569390] NET: Registered PF_INET protocol family
+[    9.645082] IP idents hash table entries: 2048 (order: 2, 16384 bytes, linear)
+[    9.795516] tcp_listen_portaddr_hash hash table entries: 512 (order: 0, 4096 bytes, linear)
+[    9.820377] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    9.847706] TCP established hash table entries: 1024 (order: 0, 4096 bytes, linear)
+[    9.876480] TCP bind hash table entries: 1024 (order: 2, 16384 bytes, linear)
+[    9.899867] TCP: Hash tables configured (established 1024 bind 1024)
+[    9.935459] UDP hash table entries: 256 (order: 1, 8192 bytes, linear)
+[    9.958191] UDP-Lite hash table entries: 256 (order: 1, 8192 bytes, linear)
+[   10.349940] Unpacking initramfs...
+[   10.905268] workingset: timestamp_bits=30 max_order=14 bucket_order=0
+[   11.026229] io scheduler mq-deadline registered
+[   11.039953] io scheduler kyber registered
+[   11.059829] io scheduler bfq registered
+[   11.508975] riscv-plic: interrupt-controller@f0c00000: mapped 32 interrupts with 1 handlers for 2 contexts.
+[   11.676794] simple-framebuffer 43f00000.framebuffer: framebuffer at 0x43f00000, 0x26000 bytes
+[   11.700474] simple-framebuffer 43f00000.framebuffer: format=r5g6b5, mode=320x240x16, linelength=640
+[   12.334317] Console: switching to colour frame buffer device 53x30
+[   12.969680] simple-framebuffer 43f00000.framebuffer: fb0: simplefb registered!
+[   13.108688] LiteX SoC Controller driver initialized
+[   13.260688] f0001000.serial: ttyLXU0 at MMIO 0x0 (irq = 12, base_baud = 0) is a liteuart
+[   13.766854] printk: legacy console [liteuart0] enabled
+[   13.766854] printk: legacy console [liteuart0] enabled
+[   14.096791] printk: legacy bootconsole [liteuart0] disabled
+[   14.096791] printk: legacy bootconsole [liteuart0] disabled
+[   16.945595] liteeth f0000800.mac eth0: irq 13 slots: tx 2 rx 2 size 2048
+[   17.294539] PPP generic driver version 2.4.2
+[   18.779956] i2c_dev: i2c /dev entries driver
+[   19.187930] NET: Registered PF_INET6 protocol family
+[   20.915674] Segment Routing with IPv6
+[   21.107310] In-situ OAM (IOAM) with IPv6
+[   21.296945] sit: IPv6, IPv4 and MPLS over IPv4 tunneling driver
+[   21.829970] NET: Registered PF_PACKET protocol family
+[   34.520855] IP-Config: Complete:
+[   34.699122]      device=eth0, hwaddr=10:e2:d5:00:00:01, ipaddr=192.168.10.213, mask=255.255.255.0, gw=192.168.10.14
+[   35.210094]      host=192.168.10.213, domain=, nis-domain=(none)
+[   35.550227]      bootserver=192.168.10.14, rootserver=192.168.10.14, rootpath=
+[   35.596697] clk: Disabling unused clocks
+[   54.449851] Freeing initrd memory: 12288K
+[   54.755517] Freeing unused kernel image (initmem) memory: 276K
+[   55.097018] Kernel memory protection not selected by kernel config.
+[   55.459593] Run /init as init process
+mount: mounting devpts on /dev/pts failed: No such device
+Saving 256 bits of non-creditable seed for next boot
+Starting syslogd: OK
+Starting klogd: OK
+Running sysctl: OK
+Starting network: ip: RTNETLINK answers: File exists
+FAIL
+Starting crond: OK
+crond[76]: crond (busybox 1.38.0) started, log level 8
+fbperf: fbcon=font:6x8 1000 chars in one write: 1070 ms; 100 single-char writes: 7550 ms (same loop to /dev/null 3400 ms); 40 lines (scrolling): 5460 ms
+[  172.707450] input: usb_pnru boot keyboard/mouse as /devices/virtual/input/input0
+Welcome to Buildroot
+buildroot login: root
+uname -a > /dev/tty1
+                   __   _
+                  / /  (_)__  __ ____ __
+                 / /__/ / _ \/ // /\ \ /
+                /____/_/_//_/\_,_//_\_\
+                      / _ \/ _ \
+   __   _ __      _  _\___/_//_/         ___  _
+  / /  (_) /____ | |/_/__| | / /____ __ / _ \(_)__ _____  __
+ / /__/ / __/ -_)>  </___/ |/ / -_) \ // , _/ (_-</ __/ |/ /
+/____/_/\__/\__/_/|_|____|___/\__/_\_\/_/|_/_/___/\__/|___/
+                  / __/  |/  / _ \
+                 _\ \/ /|_/ / ___/
+                /___/_/  /_/_/
+  32-bit RISC-V Linux running on LiteX / VexRiscv-SMP.
+login[104]: root login on 'console'
+echo REGOC TASK-5074 DVI test tty1 $(date) > /dev/tty1
+ls / > /dev/tty1
+root@buildroot:~# echo REGOC TASK-5074 DVI test 

@@ -1,0 +1,29 @@
+ in 1 2 3 4 5 6 7 8 9 10; do md5sum /tmp/s; done; d
+
+
+ate
+
+Thu Jan  1 00:07:21 UTC 1970
+
+diag: up 421.00 load 3.28 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 480.24 load 3.46 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 537.29 load 3.27 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 594.33 load 3.35 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 651.38 load 3.27 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 707.61 load 3.19 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 764.24 load 3.20 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 819.59 load 3.29 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 874.65 load 3.20 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 930.19 load 3.18 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 986.99 load 3.17 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+

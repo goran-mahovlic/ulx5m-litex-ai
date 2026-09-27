@@ -1,0 +1,17 @@
+1790525387
+
+
+.[01;32mroot@buildroot.[00m:.[01;34m~.[00m# csrpeek 0xf000280c 2; csrpeek 0xf0002800; date
+
+0 ms: 00006db7 0000497a
+
+0 ms: 00000000
+
+md5sum /tmp/s /tmp/s /tmp/s /tmp/s > /dev/ttyThu Jan  1 00:26:04 UTC 1970
+
+1; date; csrpee.[01;32mroot@buildroot.[00m:.[01;34m~.[00m# md5sum /tmp/s /tmp/s /tmp/s /tmp/s > /dev/tty1; date; csrpeek 
+
+
+0xf000280c 2; csrpeek 0xf0002800
+
+1790525416
