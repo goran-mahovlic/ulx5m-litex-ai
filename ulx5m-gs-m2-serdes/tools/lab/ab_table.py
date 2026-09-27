@@ -27,9 +27,10 @@ def ber(side):
 
 
 def run_ber(r, d):
-    """BER of one direction of one run; a word count above secs x word rate x 1.05 is a corrupted counter -> 0.5."""
+    """BER of one direction of one run; more words than (secs + 10 s) x word rate x 1.05 is a corrupted counter
+    -> 0.5 (the counters start at the clear, a few seconds before the first status line)."""
     rate = r.get('gs_tx_rate_bps') or 0
-    if rate and r[d]['words'] > 1.05 * r['secs'] * rate / 80 + 1000:
+    if rate and r[d]['words'] > 1.05 * (r['secs'] + 10) * rate / 80:
         return 0.5
     return ber(r[d])
 

@@ -15,7 +15,7 @@ module ber_top #(
     parameter TX_NEG = 0,                  // 1: TX_DATA_I from a negedge register (SerDes ports are not timed by nextpnr)
     parameter RX_NEG = 0,                  // 1: RX_DATA_O captured on negedge first
     parameter EYE_EN = 0,                  // RX_EYE_MEAS_EN in the bitstream (eye counters did not count with 0, TASK-5063)
-    parameter PROFILE = 0,                 // analog/CDR set: 0 = serdes_lb.v (0.3-1.25 Gb/s proven), 1 = pu-cc 5G (ab7ce94)
+    parameter PROFILE = 0,                 // analog/CDR set: 0 = serdes_lb.v (0.3-1.25 Gb/s proven), 1 = pu-cc 5G (ab7ce94), 2 = TASK-5066 5G
     parameter TX_DET_RX = 0,               // TX_DETECT_RX_I: 0 = upstream since pu-cc dda07f7 (TASK-5066 E1); bits before 5066 had 1
     parameter TX_CALIB = 1,                // TX_CALIB_EN in every profile (TASK-5066 E1); bits before 5066: PROFILE 0 had 0
     parameter PLL_RTERM = 1                // PLL_REF_RTERM (refclk LVDS termination; E6: 0 on gs, TUNING_5G.md §2.4)
@@ -37,23 +37,27 @@ module ber_top #(
     // ------------------------------------------------ CC_SERDES analog/CDR profile
     // PROFILE 1 = Patrick Urban's "prepare 5G tests" set (pu-cc/gm_serdes_lb ab7ce94): DFE adaption on, more AFE
     // peaking, TX pre/post-cursor 5 of 12 branches, full TX current, TX termination calibration, faster CDR loop.
-    localparam P1 = (PROFILE == 1);
+    // PROFILE 2 = PROFILE 1 + the best 5 Gb/s point of the TASK-5066 JTAG sweeps (docs/VERIFY_20260926_RATES.md §9):
+    // AFE GAIN 0 PEAK 12 (E2), CDR CKP 0x1E TRANS_TH 16 (E4), TX FFE post-cursor only: 31 post branches,
+    // DC_ENABLE 47 = (0+63+31)/2, SEL_POST 12 (E3). No point of the sweeps was clearly better than PROFILE 1 at 5 G.
+    localparam P1 = (PROFILE == 1) || (PROFILE == 2);
+    localparam P2 = (PROFILE == 2);
     localparam [4:0] A_TIMER_PRESC  = P1 ? 5'h4  : 5'h0;
     localparam [2:0] A_RTERM_VCMSEL = P1 ? 3'h3  : 3'h4;
     localparam [0:0] A_EN_EQA       = P1 ? 1'h1  : 1'h0;
     localparam [3:0] A_EQA_LOCK_CFG = P1 ? 4'hC  : 4'h0;
-    localparam [4:0] A_AFE_PEAK     = P1 ? 5'h18 : 5'hF;
+    localparam [4:0] A_AFE_PEAK     = P2 ? 5'hC  : P1 ? 5'h18 : 5'hF;
     localparam [3:0] A_AFE_GAIN     = P1 ? 4'h0  : 4'h8;
     localparam [2:0] A_AFE_VCMSEL   = P1 ? 3'h3  : 3'h4;
-    localparam [7:0] A_CDR_CKP      = P1 ? 8'h3E : 8'hF8;
-    localparam [8:0] A_CDR_TRANS_TH = P1 ? 9'h08 : 9'h80;   // the primitive field is 7 bits (default 7'h08)
+    localparam [7:0] A_CDR_CKP      = P2 ? 8'h1E : P1 ? 8'h3E : 8'hF8;
+    localparam [8:0] A_CDR_TRANS_TH = P2 ? 9'h10 : P1 ? 9'h08 : 9'h80;   // the primitive field is 7 bits (default 7'h08)
     localparam [7:0] A_CDR_LOCK_CFG = P1 ? 8'hD5 : 8'h0B;
-    localparam [4:0] A_TX_SEL_PRE   = P1 ? 5'h5  : 5'h0;
-    localparam [4:0] A_TX_SEL_POST  = P1 ? 5'h5  : 5'h0;
+    localparam [4:0] A_TX_SEL_PRE   = P2 ? 5'h0  : P1 ? 5'h5  : 5'h0;
+    localparam [4:0] A_TX_SEL_POST  = P2 ? 5'hC  : P1 ? 5'h5  : 5'h0;
     localparam [4:0] A_TX_AMP       = P1 ? 5'h1F : 5'hF;
-    localparam [4:0] A_TX_BR_PRE    = P1 ? 5'hC  : 5'h0;
-    localparam [4:0] A_TX_BR_POST   = P1 ? 5'hC  : 5'h0;
-    localparam [6:0] A_TX_DC_ENABLE = P1 ? 7'h2B : 7'h3F;   // (12+63+12)/2 = 43 as in ab7ce94
+    localparam [4:0] A_TX_BR_PRE    = P2 ? 5'h0  : P1 ? 5'hC  : 5'h0;
+    localparam [4:0] A_TX_BR_POST   = P2 ? 5'h1F : P1 ? 5'hC  : 5'h0;
+    localparam [6:0] A_TX_DC_ENABLE = P2 ? 7'h2F : P1 ? 7'h2B : 7'h3F;   // P1: (12+63+12)/2 = 43 as in ab7ce94
     localparam [0:0] A_TX_CALIB_EN  = TX_CALIB[0];
 
     // ------------------------------------------------ CC_SERDES (parameters as serdes_lb_dut.v)

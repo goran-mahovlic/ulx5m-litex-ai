@@ -35,6 +35,9 @@ class AB(unittest.TestCase):
         r['gs_tx_rate_bps'] = 5e9
         self.assertEqual(A.run_ber(r, 'gs_to_m2'), 0.5)
         self.assertEqual(A.run_ber(r, 'm2_to_gs'), 0.0)
+        # the counters start at the clear, a few s before the first status line: 64 s of words in a 60 s run is fine
+        ok = run(64 * 31.25e6, 0, 64 * 31.25e6, 0); ok['gs_tx_rate_bps'] = 2.5e9
+        self.assertEqual(A.run_ber(ok, 'gs_to_m2'), 0.0)
 
     def test_median(self):
         rs = [run(100, 4, 100, 0), run(100, 40, 100, 0), run(100, 0, 100, 400)]

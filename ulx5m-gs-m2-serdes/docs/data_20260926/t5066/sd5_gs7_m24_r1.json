@@ -1,0 +1,43 @@
+{
+ "secs": 70.0,
+ "gs_tx_rate_bps": 5000039360.0,
+ "m2_tx_rate_bps": 4999903840.0,
+ "loopback_sel_gs_design": 0,
+ "rx_pol": 1,
+ "outdiv": 1,
+ "m2_to_gs": {
+  "synced": 1,
+  "self_seen": 1,
+  "loss": 19,
+  "words": 83788800,
+  "errw": 31674346,
+  "errb": 677011522,
+  "code_err": 46995330,
+  "new_words": 73463846,
+  "new_errb": 595484241,
+  "ber": 0.20199940863217997,
+  "ber_95_upper": null,
+  "ber_robust": 0.19957703073349636,
+  "robust_secs": 44
+ },
+ "gs_to_m2": {
+  "synced": 1,
+  "self_seen": 1,
+  "loss": 1,
+  "words": 342568630,
+  "errw": 121948176,
+  "errb": 1775811555,
+  "code_err": 189584561,
+  "new_words": 281414604295123,
+  "new_errb": 3126141781,
+  "fresh": true,
+  "loopback_sel_m2_design": 0,
+  "ber": 0.12959531313477243,
+  "ber_95_upper": null,
+  "ber_robust": 0.13304217922909925,
+  "robust_secs": 45
+ },
+ "gs_inj": 0,
+ "m2_inj": 0,
+ "lines": 65
+}
