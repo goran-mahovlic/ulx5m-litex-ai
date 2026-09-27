@@ -53,6 +53,19 @@ class AB(unittest.TestCase):
         self.assertEqual(m['m2_to_gs'], 0.0)
         self.assertAlmostEqual(m['m2_to_gs_ub95'], 3.0 / (3 * 1000 * 40))
 
+    def test_sync_fraction(self):
+        # 5 G: BER is counted only while synced (1e-5 ... 0.5 of the time), so a point is ranked by BOTH the BER and
+        # the synced share of the word clock (TASK-5070: e2_g0_p24 0.43 vs PROFILE 2 base e2_g0_p12 6e-4)
+        r = run(0.25 * 60 * 62.5e6, 0, 60 * 62.5e6, 0); r['gs_tx_rate_bps'] = 5e9
+        self.assertAlmostEqual(A.run_sync(r, 'm2_to_gs'), 0.25)
+        self.assertAlmostEqual(A.run_sync(r, 'gs_to_m2'), 1.0)
+        self.assertIsNone(A.run_sync(run(10, 0, 10, 0), 'gs_to_m2'))    # no rate recorded -> unknown
+        bad = run(10, 0, 1.33e11, 0); bad['gs_tx_rate_bps'] = 5e9
+        self.assertIsNone(A.run_sync(bad, 'gs_to_m2'))                  # corrupted counter -> unknown, not > 1
+        m = A.point([r, dict(r, gs_tx_rate_bps=5e9), bad])
+        self.assertAlmostEqual(m['m2_to_gs_sync'], 0.25)                # median over known runs only
+        self.assertAlmostEqual(m['gs_to_m2_sync'], 1.0)
+
 
 if __name__ == '__main__':
     unittest.main()

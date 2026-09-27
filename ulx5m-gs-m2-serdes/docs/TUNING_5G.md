@@ -40,6 +40,7 @@ to `serdes_lb.v`, and `ab7ce94` is "prepare 5G tests".
 4. **At 5 Gb/s the RX needs more peaking, not less.** DS p.78: `RX_AFE_PEAK` **0 = maximum, 31 = minimum** peaking. VERIFIED (DS), consistent with the measurements.
    - The pu-cc 5G value 24 (0x18) is *less* peaking than the default 16. At 5 Gb/s Jelena measured PEAK 15 → 6·10⁻² and PEAK 24 → 7–12·10⁻².
    - The unexplored direction is **PEAK 15 → 0**, with GAIN 0…3 and the DFE on.
+   - **Update 27.09. (VERIFY_20260926_RATES.md §9.9):** measured E2 shows no BER gain toward PEAK 0, and PEAK 24 held sync ~660× longer than PEAK 12 (single loads). Re-test with 3 loads before choosing.
 5. **The channel is moderate-loss.** Insertion loss is estimated at ≈ 5–7 dB at 2.5 GHz (DERIVED/UNVERIFIED, §2). That is well inside what a 5 Gb/s SerDes with TX FFE + CTLE + DFE is designed for.
    - So loss alone does not explain 5–12 % BER. Supply (1), refclk/jitter (§2.4) and reflections (the 90 Ω FFC, connectors) are more likely.
    - Supporting evidence: GAIN 0 is best, i.e. the input is large, and TX FFE *hurt* at 2.5 Gb/s, i.e. little ISI at 1.25 GHz.

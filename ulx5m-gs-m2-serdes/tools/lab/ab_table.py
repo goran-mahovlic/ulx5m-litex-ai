@@ -26,13 +26,25 @@ def ber(side):
     return min(0.5, side['errb'] / (40.0 * side['words'])) if side['words'] else 0.5
 
 
-def run_ber(r, d):
-    """BER of one direction of one run; more words than (secs + 10 s) x word rate x 1.05 is a corrupted counter
-    -> 0.5 (the counters start at the clear, a few seconds before the first status line)."""
+def corrupted(r, d):
+    """More words than (secs + 10 s) x word rate x 1.05 is a corrupted counter (the counters start at the clear,
+    a few seconds before the first status line)."""
     rate = r.get('gs_tx_rate_bps') or 0
-    if rate and r[d]['words'] > 1.05 * (r['secs'] + 10) * rate / 80:
-        return 0.5
-    return ber(r[d])
+    return bool(rate) and r[d]['words'] > 1.05 * (r['secs'] + 10) * rate / 80
+
+
+def run_ber(r, d):
+    """BER of one direction of one run; a corrupted counter -> 0.5."""
+    return 0.5 if corrupted(r, d) else ber(r[d])
+
+
+def run_sync(r, d):
+    """Synced share of the word clock: words / (secs x rate / 80), capped at 1; None if unknown (no rate, corrupted).
+    At 5 G the BER is counted only while synced, so it must be read together with this (TASK-5070)."""
+    rate = r.get('gs_tx_rate_bps') or 0
+    if not rate or corrupted(r, d):
+        return None
+    return min(1.0, r[d]['words'] / (r['secs'] * rate / 80.0))
 
 
 def point(runs):
@@ -44,6 +56,8 @@ def point(runs):
         bits = sum(40 * r[d]['words'] for r in runs)
         out[d + '_ub95'] = 3.0 / bits if bits and not any(r[d]['errb'] for r in runs) else None
         out[d + '_bits'] = bits
+        sync = [v for v in (run_sync(r, d) for r in runs) if v is not None]
+        out[d + '_sync'] = statistics.median(sync) if sync else None
     return out
 
 
@@ -51,16 +65,21 @@ def fmt_ber(v, ub=None):
     return ('0 (<%.1e)' % ub) if (v == 0 and ub) else ('%.2e' % v)
 
 
+def fmt_sync(v):
+    return '–' if v is None else '%.1e' % v
+
+
 def main(paths):
     groups = {}
     for p in filter(is_run, paths):
         groups.setdefault(label_of(p), []).append(json.load(open(p)))
-    print('| Point | n | BER gs→m2 median (worst) | BER m2→gs median (worst) | bits per direction |\n|---|---|---|---|---|')
+    print('| Point | n | BER gs→m2 median (worst) | BER m2→gs median (worst) | bits per direction | synced share gs→m2 / m2→gs |\n|---|---|---|---|---|---|')
     for lab, runs in groups.items():
         m = point(runs)
-        print('| %s | %d | %s (%s) | %s (%s) | %.2e |' % (
+        print('| %s | %d | %s (%s) | %s (%s) | %.2e | %s / %s |' % (
             lab, m['n'], fmt_ber(m['gs_to_m2'], m['gs_to_m2_ub95']), fmt_ber(m['gs_to_m2_max']),
-            fmt_ber(m['m2_to_gs'], m['m2_to_gs_ub95']), fmt_ber(m['m2_to_gs_max']), m['gs_to_m2_bits']))
+            fmt_ber(m['m2_to_gs'], m['m2_to_gs_ub95']), fmt_ber(m['m2_to_gs_max']), m['gs_to_m2_bits'],
+            fmt_sync(m['gs_to_m2_sync']), fmt_sync(m['m2_to_gs_sync'])))
 
 
 if __name__ == '__main__':

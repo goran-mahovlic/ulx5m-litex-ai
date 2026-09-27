@@ -354,3 +354,65 @@ is at least as large as the seed effect, so a seed must be chosen by **several**
 5. Eye counters: still 0 with the register-map fixes → question to CologneChip (E7).
 6. Tools: `abrun.sh`/`ab_table.py` (point = fresh load, medians, corrupted-counter guard), `eyescan.py health/recal`,
    E7 fixes; tests 57 pass (`python3 -m unittest discover -s tools/tests`).
+
+### 9.9 Review of §9 (Manda, TASK-5070, 27.09.2026): re-computation and one metric that changes the reading
+
+**Re-computed from the raw data.** `tools/lab/ab_table.py docs/data_20260926/t5066/*.json` gives every median and worst
+value in §9.2–§9.7 again (72 points; no number differs).
+
+**Experiment numbering.** The task text (TASK-5066/5070) uses the *old* TUNING_5G.md order (`8b8582e`). §9 uses the
+*new* order (`6747484`/`09df250`, after J3 = 1.1 V was confirmed). The two map as follows:
+
+| Task text (old) | §9 (new) | What |
+|---|---|---|
+| E0 | E0 | health snapshot (§9.1) |
+| E1 | — | supply TP10/TP8: not measured, J3 = 2-3 (1.1 V) on both boards per Goran |
+| E2 | E1 | `TX_DETECT_RX_I` 1 → 0, `TX_CALIB_EN` = 1 (§9.2) |
+| E3 | E2 | 5 G RX AFE GAIN × PEAK (§9.4) |
+| E4 | E3 | 5 G TX FFE / TX_AMP (§9.5) |
+| E5 | E4 | CDR CKP × TRANS_TH (§9.5) |
+| E6 | E5 | VCM (§9.5) |
+| E7 | E6 | gs `PLL_REF_RTERM=0` (§9.5) |
+| E8 | E7 | eye scan (§9.6) |
+| E9 | E8 | PROFILE 2 in the bitstream + 300 s (§9.7); the soak was not run because the gate was not reached |
+| — | E9 | supply noise H2 (ferrite / µF): Goran, hardware |
+
+**E1 (§9.2) is a null result, not "slightly worse".** Mann–Whitney on the 6 + 6 loads at 2.5 G gives U = 21/36 (gs→m2) and
+22/36 (m2→gs). For n = 6 + 6, two-sided α = 0.05 needs U ≤ 5 or ≥ 31. So neither direction shows a difference. The
+det0/det1 bits used for E1 are not in `bitstreams/`, so the "3-byte difference" claim cannot be re-checked from the repo.
+
+**At 5 G the BER in §9.4–§9.7 is conditional on sync.** The checkers count only while synced. The synced share of the
+word clock (`words / (secs × rate / 80)`, new last column of `ab_table.py`, test `test_sync_fraction`) spans
+**10⁻⁵ … 0.5** across the 5 G loads. It is only weakly related to the BER: the Spearman correlation is +0.20 over the
+72 valid gs→m2 loads. Ranking by BER alone therefore picks different points than ranking by "how long the link stays
+up".
+
+| Point (1 load unless noted) | BER gs→m2 / m2→gs | synced share gs→m2 / m2→gs |
+|---|---|---|
+| **E2 GAIN 0 PEAK 24** (least peaking in the sweep) | 4.8e-2 / **9.5e-3** | **0.43 / 0.49** |
+| sd5 gs s7 + m2 s3 | 4.0e-2 / 2.6e-2 | 0.38 / 0.65* |
+| E3 SEL_POST 0 / 6 | 4.4e-2 / 7.7e-2 | 0.31 / 0.28 (gs→m2) |
+| E2 GAIN 0 PEAK 12 (= **base of E3–E6 and PROFILE 2**) | 4.3e-2 / 2.4e-2 | **6.5e-4 / 3.6e-4** |
+| PROFILE 2, 300 s | 6.3e-2 / 2.0e-2 | 1.7e-3 / 1.4e-5 |
+| PROFILE 1 (E1 5 G, 3 loads, median) | 7.8e-2 / 1.0e-1 | 4.5e-3 / 2.1e-3 |
+
+(* m2→gs is counted by the gs checker, which cannot run at 62.5 MHz (§9 intro), so treat it as indicative only.)
+
+Reading:
+- PEAK 12 was chosen as the base of every later sweep because its conditional BER was lowest, but that BER comes from
+  only 9.7·10⁷ bits: the link was synced 0.06 % of the time. PEAK 24 held sync ~660× longer, with the lowest m2→gs BER in the
+  whole data set. The same holds for SEL_POST 0/6 (TX post-cursor off or small), where the synced share is ~200× higher
+  than at SEL_POST 12, which went into PROFILE 2.
+- So **PROFILE 2 combines the settings with the shortest synced time**. §9.8 item 1 ("nothing moves 5 G out of
+  10⁻² … 10⁻¹") still holds for the BER while synced. But the claim that no register point is better than another
+  is not supported: all 5 G sweeps are single loads, and the load-to-load spread (E1 5 G: synced share 10⁻⁴ … 8·10⁻³ for the
+  same bit) is large, so neither PEAK 24 nor PEAK 12 is proven.
+- This also corrects TUNING_5G.md §1 item 4 ("5 G needs more peaking, PEAK 15 → 0"). That item was written from conditional
+  BER. The E2 row GAIN 0 shows no BER gain toward PEAK 0, and the synced share is highest at PEAK 24.
+- Still consistent with §9.7: the regfile RX words are 2.5–6.5 % bad without the fabric, so even the best point has a
+  real error floor in the PCS. The synced share decides whether a longer soak can collect meaningful statistics.
+
+**Next step (lab, ~1 h, gs lease):** before any hardware change (E9/H2), re-run 3 loads × 60 s each of
+(a) GAIN 0 PEAK 24, (b) PEAK 24 + SEL_POST 0, (c) PEAK 24 + SEL_POST 6, (d) PEAK 24 + TRANS_TH 16 CKP 0x1E, and (e) PROFILE 2 as the control.
+Rank the points by the median synced share gs→m2 first and by BER second (`ab_table.py` prints both). If (a)–(d)
+stay ≥ 10× above (e) in synced share, rebuild PROFILE 2 on PEAK 24 and repeat §9.7. Otherwise §9.8 stands as written.
