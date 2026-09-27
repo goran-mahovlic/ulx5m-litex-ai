@@ -1,4 +1,15 @@
-# Linux on ULX5M-GS (TASK-5033, branch linux-vexriscv-smp)
+# Linux on ULX5M-GS
+
+**Current (27.09.2026): Linux 6.12** built with Buildroot (`buildroot/build_buildroot.sh`), on the bitstream
+`bitstreams/ETH_GateMateA1_2609_1646_Linux_GbE_DVI_USBPNRU_pll60s1.bit`. Login prompt in 266 s. Ready-made images,
+checksums and how they were built: `../../linux/k612/README.md`. Board measurements: `docs/USB_HUB_PNRU.md` §7.3.
+
+    # on the Pi, with Image612, opensbi612.bin, rootfs612.cpio, rv32_k612.dtb in /srv/tftp:
+    IMAGE=Image612 SBI=opensbi612.bin bash lxrun.sh <pll60s1.bit> rv32_k612.dtb rootfs612.cpio 900 "uname -a"
+
+The rest of this file is the history of the first Linux boot (Linux 5.14, TASK-5033).
+
+## Linux 5.14 (TASK-5033, branch linux-vexriscv-smp)
 
 **Result (25. 9. 2026): Linux 5.14 (linux-on-litex-vexriscv prebuilt `linux_2022_03_23`) boots to a Buildroot
 root shell over BIOS TFTP netboot**, bitstream `bitstreams/ETH_GateMateA1_2509_1250_Linux_SMP.bit`
@@ -7,8 +18,8 @@ root shell over BIOS TFTP netboot**, bitstream `bitstreams/ETH_GateMateA1_2509_1
 - eth0 = 192.168.10.213 after `ip addr add`, ping Linux -> Pi 3/3, Pi -> Linux 5/5;
 - log: `docs/linux/linux_boot_smp8_9.txt`.
 
-The DTS files kept here are for the two bitstreams in `bitstreams/`: `rv32_grec_3.dts` (recommended) and
-`rv32_ghrec_1.dts` (+ USB HID). DTS files of older builds are in the git tag `pre-cleanup-20260926`.
+The DTS files kept here: `rv32_usb5_pll60_s1_k612.dts` (recommended, Linux 6.12), `rv32_grec_3.dts` and
+`rv32_ghrec_1.dts` (+ USB HID), `rv32_usb2_pll48_s1.dts` (first PNRU build). DTS files of older builds are in the git tag `pre-cleanup-20260926`.
 
 ## SoC
 

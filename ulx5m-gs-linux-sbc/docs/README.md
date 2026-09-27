@@ -44,6 +44,10 @@ the current state of the project is in the [project README](../README.md).
 | [SBC_DVI_USB_TASK-5040.md](SBC_DVI_USB_TASK-5040.md) | Building the standalone computer: DVI test image, Linux console on DVI, DOOM from Linux and the USB host. |
 | [SBC_DVI_USB_TASK-5047.md](SBC_DVI_USB_TASK-5047.md) | Why the PLL loses lock under SDRAM load (timing or power supply), with board measurements and the gateware fix. |
 | [doom/](doom/) | Raw nextpnr resource report of the DVI colour-bar build. |
+| [USB_HUB_PNRU.md](USB_HUB_PNRU.md) | The PNRU USB 1.1 host (full speed, low speed, hub): port, simulation, clock options, the `usbhostd` driver, Linux 6.12 and the board tests (keyboard, autorepeat, 33 min run). **Current state of USB and Linux 6.12.** |
+| [linux/k612_20260926/](linux/k612_20260926/) | Raw logs of the Linux 6.12 boot and the 30 min run (ping, USB statistics). |
+| [linux/t5075_20260927/](linux/t5075_20260927/) | DVI grabber pictures of tty1 before and after the autorepeat fix. |
+| [linux/dvi_grabber_20260927/](linux/dvi_grabber_20260927/README.md) | Why the HDMI grabber showed a black frame: the grabber chain, not the design. |
 
 ## Lessons
 

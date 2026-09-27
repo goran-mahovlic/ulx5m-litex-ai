@@ -22,7 +22,15 @@ contain paths from our build machine. Change them before use.
 | File | What it does |
 |---|---|
 | `linux/mkdts.py <build dir>` | Writes the Linux device tree for a build (from its `csr.json`): LiteX's `litex_json2dts_linux` plus our Ethernet node and, with DVI, the framebuffer node. |
-| `linux/rv32_grec_3.dts`, `linux/rv32_ghrec_1.dts` | Device trees for the two bitstreams in `bitstreams/` (output of `mkdts.py`). |
+| `linux/mkdts.py … --font 6x8 --append "…"` | Same, with a small fbcon font and extra kernel arguments (used for Linux 6.12). |
+| `linux/rv32_usb5_pll60_s1_k612.dts` | Device tree for the recommended bitstream and Linux 6.12 (compiled: `../linux/k612/rv32_k612.dtb.gz`). |
+| `linux/rv32_grec_3.dts`, `linux/rv32_ghrec_1.dts`, `linux/rv32_usb2_pll48_s1.dts` | Device trees of older builds (output of `mkdts.py`). |
+| `linux/buildroot/build_buildroot.sh [dir]` | Builds Linux 6.12, OpenSBI and the root file system with Buildroot (1–2 h, ~15 GB). **Local paths** (default work dir). |
+| `linux/buildroot/linux_sbc.fragment` | Our kernel config additions: fbcon on DVI, small fonts, uinput/evdev, `ip=`, `/dev/mem`, SPI-SD. |
+| `linux/buildroot/rootfs/etc/init.d/` | Init scripts for the root file system: `S20console` (no blinking cursor), `S89fbperf` and `S92sbcdiag` (diagnostics, only with `sbcdiag=` on the kernel command line). |
+| `linux/lxrun.sh <bit> <dtb> <rootfs> [secs] "<cmd>"…` | Netboots Linux with the given files (`IMAGE=Image612 SBI=opensbi612.bin` for 6.12), logs in and types commands. **Pi.** |
+| `linux/cap.sh <out> <secs>` | Records the serial console without typing. **Pi.** |
+| `linux/cpio_append.py <in.cpio> <out.cpio> <path>=<file>…` | Replaces files in a padded initramfs without unpacking it (keeps root ownership). |
 | `linux/netboot_app.sh <app>` | Chooses what the BIOS loads over TFTP on the next boot (`linux`, `linuxdvi`, `linuxsd`, `speedtest`, `demo`) by writing `/srv/tftp/boot.json`. **Pi.** |
 | `linux/linux_boot.sh <bit> [secs]` | Loads a bitstream, netboots Linux, waits for the login prompt, logs in and pings the board. **Pi.** |
 | `linux/lx_cmd.sh "<cmd>" [wait]` | Types one command into the Linux serial console (slowly, so no characters are lost) and prints the output. **Pi.** |
@@ -36,9 +44,19 @@ contain paths from our build machine. Change them before use.
 | `rootfs/interfaces`, `rootfs/banner`, `rootfs/banner_ascii` | The files that `mkrootfs.py` adds (the banners are static rv32 binaries). |
 | `doom_linux/mkrootfs_dvi.py <in.cpio> <out.cpio>` | Same as `mkrootfs.py`, plus DOOM, `csrpeek` and `doom1.wad` (set `WAD=`; the WAD is not included). |
 | `doom_linux/*.c`, `*.h`, `Makefile` | DOOM for Linux on the framebuffer (from smunaut/doom_riscv, GPL v2+), plus `csrpeek.c` (reads CSRs from Linux). |
-| `doom_linux/doom`, `csrpeek`, `usbhidd` | Prebuilt rv32 binaries of the above and of `usbhidd`, so `mkrootfs_dvi.py` works without a RISC-V compiler. |
+| `doom_linux/doom`, `csrpeek`, `usbhidd`, `usbhostd`, `usbdiag` | Prebuilt rv32 binaries (static, raw Linux syscalls in `sys_linux.c`), so the rootfs scripts work without a RISC-V compiler. |
 
-## USB keyboard (`usbhidd/`)
+## USB host driver (`usbhostd/`)
+
+| File | What it does |
+|---|---|
+| `usbhostd/usbhostd.c`, `usbh.c`, `usbh.h`, `hidinput.h` | Linux user-space driver for the PNRU USB host: enumeration, hub, boot keyboard and mouse, passed to Linux through `/dev/uinput` (with autorepeat). Build: `make -C doom_linux usbhostd`. |
+| `usbhostd/S90usbhostd` | Init script: starts `usbhostd` (options from `usbhostd=` on the kernel command line) and a login on tty1. |
+| `usbhostd/test_usbh.c` | Host-side test of the driver against a simulated device, with descriptors read on the board. |
+| `usbhostd/usbdiag.c`, `S91usbdiag` | Board test without typing: raw GET_DESCRIPTOR and a timed `usbhostd` run. |
+| `usbhostd/reptest.c` | Checks the autorepeat of the input device on the board. |
+
+## Older USB keyboard (`usbhidd/`)
 
 | File | What it does |
 |---|---|

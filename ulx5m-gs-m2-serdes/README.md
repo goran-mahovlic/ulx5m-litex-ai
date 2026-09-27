@@ -26,15 +26,30 @@ The only connection between the two FPGAs is this SerDes lane (TX and RX pairs).
   word carries the sender's ID. If m2's TX is idled, gs loses the data, and the other way round.
 - **Every bitstream starts with a configuration reset** (`gmpack --reset`, CMD_CFGRST), checked with `tools/gm_cfgrst_check.py`.
 
+## Summary by rate
+
+| Rate | Result |
+|---|---|
+| 0.3 Gb/s | 0 errors (BER < 6.7·10⁻¹¹) |
+| 1.25 Gb/s | 0 errors (BER < 4·10⁻¹¹) |
+| 2.5 Gb/s | Works, but not error-free: BER about 10⁻⁹ … 10⁻¹¹, and it changes from one load to the next |
+| 5 Gb/s | Does not work: BER 10⁻² … 10⁻¹ |
+
 ## What does not work yet / not proven
 
-- **2.5 Gb/s is near-clean, not yet error-free** (1·5·5, OUTDIV 2, measured 2500.02 Mb/s): with the pu-cc 5G analog
-  set in the bitstream (`PROFILE=1`, `bitstreams/ber_*_2g5_p1_*`), 300 s: m2→gs 9.39·10⁹ words, 25 bit errors
-  (**BER 6.7·10⁻¹¹**), gs→m2 435 (**1.2·10⁻⁹**). Keys: RX AFE `GAIN 0` (the as-built GAIN 8 gave 10⁻⁴), and `TX_NEG=1`
-  because nextpnr does not time the fabric↔SerDes ports (`delay.cc`: SERDES = `TMG_IGNORE`).
-  Details: `docs/VERIFY_20260926_RATES.md`.
-- **5 Gb/s: the link comes up but is not usable.** With DFE + TX pre/post-emphasis + AFE GAIN 0 the CDR locks and
-  JTAG RX samples carry the right sender ID (PEER 9–10/10), but the fabric BER is ~6·10⁻².
+- **2.5 Gb/s works, but not without errors** (1·5·5, OUTDIV 2, measured 2500.02 Mb/s). With the pu-cc 5G analog set
+  in the bitstream (`PROFILE=1`), 300 s runs give BER about 10⁻⁹ … 10⁻¹¹ per direction. The pair in `bitstreams/`
+  (`ber_*_2g5_p1_*`, `TX_NEG=1` on m2 only) gave m2→gs 6.7·10⁻¹¹ and gs→m2 1.2·10⁻⁹. With `TX_NEG=1` on gs as well
+  (§9.3, built from the same sources) the best load gave m2→gs 1.6·10⁻¹¹ and gs→m2 4.7·10⁻¹⁰, but the same
+  bitstreams loaded again were 25 to 3000 times worse. The cause is that nextpnr does not time the fabric↔SerDes ports (`delay.cc`: SERDES =
+  `TMG_IGNORE`), so the TX/RX paths change with every placement. `TX_NEG=1` on gs improves gs→m2 about 60 times.
+  RX AFE `GAIN 0` is needed (the as-built GAIN 8 gave 10⁻⁴). Details: `docs/VERIFY_20260926_RATES.md` §9.3, §9.7.
+- **5 Gb/s does not work.** The PLL locks (measured 5000.04 Mb/s), but the CDR does not hold lock and the fabric BER
+  stays at 10⁻² … 10⁻¹. About 60 register settings were tried (RX AFE and DFE, CDR, TX FFE, VCM, refclk
+  termination, seeds, `PROFILE` 2 and 3 in the bitstream). None left that range. The RX words read over JTAG,
+  without the fabric, already have 2.5–17.5 % bad headers. The next suspects are in hardware: supply noise at the
+  SerDes (E9: ferrite or extra µF at C127/C128 on GS), the channel, and the refclk at M2.
+  Details: `docs/VERIFY_20260926_RATES.md` §9.8–§9.10, `docs/TUNING_5G.md`.
 - The on-chip eye counters (regfile 0x14–0x1D) never count; the upstream `tc_eyemeas` is an empty stub.
 - **The 1·2·3 recipe is only clean at 0.3 Gb/s.** Its DCO runs at 600 MHz, below the 1250–2500 MHz in DS1001.
   At 0.6 Gb/s one direction has errors, and at 1.2 Gb/s both do. Use 1·5·5.
@@ -61,7 +76,7 @@ The only connection between the two FPGAs is this SerDes lane (TX and RX pairs).
 | `gateware/upstream/` | Unchanged CologneChip `serdes_lb.v`, for reference |
 | `bitstreams/` | Bitstreams tested on the boards (all with CFGRST) + `SHA256SUMS` |
 | `tools/` | JTAG and UART tools, `verify_external_link.sh`, unit tests |
-| `docs/` | `REVIEW_20260926.md` (review and measurements), `SOURCES_20260926.md` (datasheet and reference designs), `VERIFY_20260926.md` (verification report), `VERIFY_20260926_RATES.md` (2.5 / 5 Gb/s, TASK-5063) |
+| `docs/` | `REVIEW_20260926.md` (review and measurements), `SOURCES_20260926.md` (datasheet and reference designs), `VERIFY_20260926.md` (verification report), `VERIFY_20260926_RATES.md` (2.5 / 5 Gb/s, TASK-5063/5066/5073), `TUNING_5G.md` (what to tune for 5 Gb/s) |
 
 ## Bitstreams
 
@@ -70,8 +85,10 @@ The only connection between the two FPGAs is this SerDes lane (TX and RX pairs).
 | `serdes_p1_rxpol1_CFGRST.bit` | **both** gs and m2 | 0.3 Gb/s, 8b10b, K28.5 + 7 × D10.2, `RX_POLARITY_I=1`. Check with `serdes_link_check.py` (expect `DATA_OK 30/30`). |
 | `ber_gs_0g3_CFGRST.bit` + `ber_m2_0g3_CFGRST.bit` | gs + m2 | BER design, 0.3 Gb/s. Used by `verify_external_link.sh --load`. |
 | `ber_gs_1g25_CFGRST.bit` + `ber_m2_1g25_CFGRST.bit` | gs + m2 | BER design, 1.25 Gb/s (1·5·5). |
+| `ber_gs_2g5_p1_CFGRST.bit` + `ber_m2_2g5_p1_txneg_CFGRST.bit` | gs + m2 | BER design, 2.5 Gb/s, `PROFILE=1`. Works, not error-free. |
+| `ber_*_5g_p2_txneg_*` / `ber_*_5g_p3_txneg_*` | gs + m2 | BER design, 5 Gb/s, `PROFILE` 2 / 3. Reference for hardware changes; not usable. |
 
-All of them are rebuilt byte for byte from the sources here (`gateware/baseline/build.sh 1`,
+All of them are listed in `bitstreams/README.md` with their results. They are rebuilt byte for byte from the sources here (`gateware/baseline/build.sh 1`,
 `gateware/ber/build_ber.sh`; see `bitstreams/README.md`), with oss-cad-suite 2026-09-23.
 
 **Measure BER yourself** (BER design loaded, gs UART on the gs probe's interface 01):
@@ -133,10 +150,13 @@ pattern (gs must reject it) → **"pull the SerDes cable now"** (both sides must
 
 ## Next steps
 
-1. 2.5 Gb/s clean: `TX_NEG=1` on gs too (seed choice by a short BER run), then a ≥ 30 min run with `PROFILE=1`. See `docs/VERIFY_20260926_RATES.md` §7.
-2. Cable steps of `verify_external_link.sh` on the boards.
-3. Eye scan: `tools/eyescan.py` is ready, but the counters do not count — ask CologneChip how to start them.
-4. Trace the P/N swap in the schematics (GS → CM4 baseboard → PCIe slot → adapter → M2).
+1. 5 Gb/s: hardware first (E9 supply noise at C127/C128, then the channel and the refclk at M2). Judge each change
+   by the 3-load median of synced share and BER against PROFILE 2 and 3 (`tools/lab/ab_table.py --runs --rank`).
+2. 2.5 Gb/s error-free: the fabric↔SerDes ports need timing constraints in nextpnr. Until then, pick seeds by
+   several loads, not by one.
+3. Cable steps of `verify_external_link.sh` on the boards.
+4. Eye scan: `tools/eyescan.py` is ready, but the counters do not count — ask CologneChip how to start them.
+5. Trace the P/N swap in the schematics (GS → CM4 baseboard → PCIe slot → adapter → M2).
 
 ## Built on
 
