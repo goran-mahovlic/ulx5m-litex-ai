@@ -53,12 +53,25 @@ def point(runs):
         b = [run_ber(r, d) for r in runs]
         out[d] = statistics.median(b)
         out[d + '_max'] = max(b)
-        bits = sum(40 * r[d]['words'] for r in runs)
+        bits = sum(40 * r[d]['words'] for r in runs if not corrupted(r, d))
         out[d + '_ub95'] = 3.0 / bits if bits and not any(r[d]['errb'] for r in runs) else None
         out[d + '_bits'] = bits
         sync = [v for v in (run_sync(r, d) for r in runs) if v is not None]
         out[d + '_sync'] = statistics.median(sync) if sync else None
     return out
+
+
+def rank(points):
+    """Labels ordered by median synced share gs->m2 (desc; unknown last), then by median BER gs->m2 (asc) — TASK-5073:
+    at 5 G the BER is conditional on sync, so "how long the link stays up" ranks first (VERIFY §9.9)."""
+    return sorted(points, key=lambda k: (points[k]['gs_to_m2_sync'] is None, -(points[k]['gs_to_m2_sync'] or 0),
+                                         points[k]['gs_to_m2']))
+
+
+def run_rows(groups):
+    """One row per load: (label, k, BER gs->m2, sync gs->m2, BER m2->gs, sync m2->gs)."""
+    return [(lab, k, run_ber(r, 'gs_to_m2'), run_sync(r, 'gs_to_m2'), run_ber(r, 'm2_to_gs'), run_sync(r, 'm2_to_gs'))
+            for lab, runs in groups.items() for k, r in enumerate(runs, 1)]
 
 
 def fmt_ber(v, ub=None):
@@ -69,13 +82,22 @@ def fmt_sync(v):
     return '–' if v is None else '%.1e' % v
 
 
-def main(paths):
+def main(args):
+    """ab_table.py [--runs] [--rank] <run.json>... — --runs: one row per load too; --rank: points by synced share."""
+    paths = [a for a in args if not a.startswith('--')]
     groups = {}
-    for p in filter(is_run, paths):
+    for p in sorted(filter(is_run, paths), key=lambda p: (label_of(p), int(re.search(r'_r(\d+)\.json$', p).group(1)))):
         groups.setdefault(label_of(p), []).append(json.load(open(p)))
+    if '--runs' in args:
+        print('| Point | load | BER gs→m2 | synced gs→m2 | BER m2→gs | synced m2→gs |\n|---|---|---|---|---|---|')
+        for lab, k, bg, sg, bm, sm in run_rows(groups):
+            print('| %s | r%d | %.2e | %s | %.2e | %s |' % (lab, k, bg, fmt_sync(sg), bm, fmt_sync(sm)))
+        print()
+    points = {lab: point(runs) for lab, runs in groups.items()}
+    order = rank(points) if '--rank' in args else list(points)
     print('| Point | n | BER gs→m2 median (worst) | BER m2→gs median (worst) | bits per direction | synced share gs→m2 / m2→gs |\n|---|---|---|---|---|---|')
-    for lab, runs in groups.items():
-        m = point(runs)
+    for lab in order:
+        m = points[lab]
         print('| %s | %d | %s (%s) | %s (%s) | %.2e | %s / %s |' % (
             lab, m['n'], fmt_ber(m['gs_to_m2'], m['gs_to_m2_ub95']), fmt_ber(m['gs_to_m2_max']),
             fmt_ber(m['m2_to_gs'], m['m2_to_gs_ub95']), fmt_ber(m['m2_to_gs_max']), m['gs_to_m2_bits'],

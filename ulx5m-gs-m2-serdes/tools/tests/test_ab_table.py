@@ -65,6 +65,25 @@ class AB(unittest.TestCase):
         m = A.point([r, dict(r, gs_tx_rate_bps=5e9), bad])
         self.assertAlmostEqual(m['m2_to_gs_sync'], 0.25)                # median over known runs only
         self.assertAlmostEqual(m['gs_to_m2_sync'], 1.0)
+        # a corrupted counter is not pooled into the bit count either (TASK-5073 t73b r3: 6.2e14 bits in 60 s)
+        self.assertEqual(m['gs_to_m2_bits'], 2 * 40 * 60 * 62.5e6)
+
+    def test_rank_by_sync_then_ber(self):
+        # TASK-5073: points are ranked by median synced share gs->m2 (desc) first, BER gs->m2 (asc) second
+        def pt(sync, b):
+            return {'gs_to_m2_sync': sync, 'gs_to_m2': b}
+        pts = {'e': pt(1e-3, 1e-2), 'a': pt(0.4, 5e-2), 'b': pt(0.4, 1e-2), 'x': pt(None, 1e-3)}
+        self.assertEqual(A.rank(pts), ['b', 'a', 'e', 'x'])              # unknown sync goes last
+
+    def test_run_rows_per_load(self):
+        # one row per load (label, k, BER and synced share per direction) for the 5 points x 3 loads table
+        r = run(0.25 * 60 * 62.5e6, 0, 60 * 62.5e6, 4 * 40); r['gs_tx_rate_bps'] = 5e9
+        rows = A.run_rows({'p': [r]})
+        self.assertEqual(len(rows), 1)
+        lab, k, b_gm, s_gm, b_mg, s_mg = rows[0]
+        self.assertEqual((lab, k), ('p', 1))
+        self.assertAlmostEqual(s_mg, 0.25)
+        self.assertAlmostEqual(b_gm, 4 * 40 / (40.0 * 60 * 62.5e6))
 
 
 if __name__ == '__main__':

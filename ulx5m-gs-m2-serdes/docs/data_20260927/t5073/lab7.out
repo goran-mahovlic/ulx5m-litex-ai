@@ -1,0 +1,48 @@
+HEALTH board=m2 t73f_p3_300s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t73f_p3_300s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+== t73f_p3_300s r1: gs->m2 1.18e-01  m2->gs 2.01e-01
+ABRUN DONE 04:38:38
+HEALTH board=m2 t73f_p3_60s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t73f_p3_60s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+== t73f_p3_60s r1: gs->m2 2.48e-02  m2->gs 1.76e-01
+HEALTH board=m2 t73f_p3_60s r2 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t73f_p3_60s r2 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+== t73f_p3_60s r2: gs->m2 1.04e-01  m2->gs 4.02e-02
+HEALTH board=m2 t73f_p3_60s r3 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t73f_p3_60s r3 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+== t73f_p3_60s r3: gs->m2 1.10e-01  m2->gs 1.68e-01
+ABRUN DONE 04:42:52
+board=m2 PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: OTHER 17/200 PEER 182/200 SELF 1/200 distinct=200  expect=peer -> FAIL
+board=gs PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: OTHER 35/200 PEER 165/200 distinct=200  expect=peer -> FAIL
+| Point | load | BER gs→m2 | synced gs→m2 | BER m2→gs | synced m2→gs |
+|---|---|---|---|---|---|
+| t73a_p24 | r1 | 1.14e-01 | 1.4e-01 | 1.85e-01 | 3.0e-02 |
+| t73a_p24 | r2 | 1.08e-01 | 1.1e-02 | 1.80e-01 | 4.9e-02 |
+| t73a_p24 | r3 | 1.10e-01 | 9.0e-03 | 1.76e-01 | 1.5e-02 |
+| t73b_p24_post0 | r1 | 1.43e-01 | 6.4e-02 | 5.00e-01 | 0.0e+00 |
+| t73b_p24_post0 | r2 | 1.00e-01 | 1.9e-01 | 5.00e-01 | 4.1e-04 |
+| t73b_p24_post0 | r3 | 5.00e-01 | – | 5.00e-01 | 1.5e-05 |
+| t73c_p24_post6 | r1 | 1.49e-01 | 8.3e-02 | 2.81e-01 | 9.3e-02 |
+| t73c_p24_post6 | r2 | 1.57e-01 | 3.1e-02 | 2.70e-01 | 7.6e-02 |
+| t73c_p24_post6 | r3 | 1.23e-01 | 2.9e-02 | 7.59e-02 | 3.3e-01 |
+| t73d_p24_ckp1e_tt16 | r1 | 1.09e-01 | 2.9e-02 | 1.89e-01 | 1.6e-02 |
+| t73d_p24_ckp1e_tt16 | r2 | 1.11e-01 | 1.7e-01 | 9.68e-02 | 2.9e-01 |
+| t73d_p24_ckp1e_tt16 | r3 | 1.08e-01 | 3.6e-02 | 2.97e-02 | 7.1e-01 |
+| t73e_p2 | r1 | 5.53e-02 | 1.5e-03 | 1.77e-02 | 1.5e-03 |
+| t73e_p2 | r2 | 6.71e-02 | 1.8e-03 | 1.68e-02 | 1.4e-04 |
+| t73e_p2 | r3 | 7.40e-02 | 1.4e-02 | 2.12e-02 | 2.5e-04 |
+| t73f_p3_300s | r1 | 1.18e-01 | 5.0e-03 | 2.01e-01 | 1.7e-04 |
+| t73f_p3_60s | r1 | 2.48e-02 | 3.2e-01 | 1.76e-01 | 9.3e-03 |
+| t73f_p3_60s | r2 | 1.04e-01 | 3.2e-02 | 4.02e-02 | 1.4e-01 |
+| t73f_p3_60s | r3 | 1.10e-01 | 2.0e-02 | 1.68e-01 | 2.2e-03 |
+
+| Point | n | BER gs→m2 median (worst) | BER m2→gs median (worst) | bits per direction | synced share gs→m2 / m2→gs |
+|---|---|---|---|---|---|
+| t73b_p24_post0 | 3 | 1.43e-01 (5.00e-01) | 5.00e-01 (5.00e-01) | 6.16e+14 | 1.3e-01 / 1.5e-05 |
+| t73d_p24_ckp1e_tt16 | 3 | 1.09e-01 (1.11e-01) | 9.68e-02 (1.89e-01) | 3.62e+10 | 3.6e-02 / 2.9e-01 |
+| t73f_p3_60s | 3 | 1.04e-01 (1.10e-01) | 1.68e-01 (1.76e-01) | 6.76e+10 | 3.2e-02 / 9.3e-03 |
+| t73c_p24_post6 | 3 | 1.49e-01 (1.57e-01) | 2.70e-01 (2.81e-01) | 2.18e+10 | 3.1e-02 / 9.3e-02 |
+| t73a_p24 | 3 | 1.10e-01 (1.14e-01) | 1.80e-01 (1.85e-01) | 2.42e+10 | 1.1e-02 / 3.0e-02 |
+| t73f_p3_300s | 1 | 1.18e-01 (1.18e-01) | 2.01e-01 (2.01e-01) | 3.77e+09 | 5.0e-03 / 1.7e-04 |
+| t73e_p2 | 3 | 6.71e-02 (7.40e-02) | 1.77e-02 (2.12e-02) | 3.19e+09 | 1.8e-03 / 2.5e-04 |
+LAB7 DONE 04:44:34

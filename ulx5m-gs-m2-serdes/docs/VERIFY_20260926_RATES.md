@@ -416,3 +416,75 @@ Reading:
 (a) GAIN 0 PEAK 24, (b) PEAK 24 + SEL_POST 0, (c) PEAK 24 + SEL_POST 6, (d) PEAK 24 + TRANS_TH 16 CKP 0x1E, and (e) PROFILE 2 as the control.
 Rank the points by the median synced share gs→m2 first and by BER second (`ab_table.py` prints both). If (a)–(d)
 stay ≥ 10× above (e) in synced share, rebuild PROFILE 2 on PEAK 24 and repeat §9.7. Otherwise §9.8 stands as written.
+
+### 9.10 TASK-5073: re-test of the PEAK 24 points vs PROFILE 2 (3 loads × 60 s), and PROFILE 3 (27.09.2026)
+
+**Done by:** Jelena, gs lease `TASK-5073`, fpga-jtag, CFGRST bits. **Raw data:** `data_20260927/t5073/`
+(`lab6.sh`/`lab7.sh` exactly as run + `lab6.out`/`lab7.out`, one ber_mon JSON per load + health JSONs).
+**Procedure:** as §9.4/§9.5. (a)–(d) = E1 5 G PROFILE 1 bits (gs s7, m2 s1) + JTAG writes on both boards + `eyescan.py recal`;
+(e) = PROFILE 2 bits (§9.7), no writes. The 3 loads were **interleaved** (round k runs a, b, c, d, e once), so slow drift
+hits every point alike. TX FFE for (b)/(c) = the E3 set (31 post branches, DC 47, no pre-cursor) with SEL_POST 0 / 6.
+Table: `ab_table.py --runs --rank` (new: one row per load, and points ranked by median synced share gs→m2, then BER).
+
+Per load (BER while synced; synced share = words / word clock; "–" = corrupted counter):
+
+| Point | load | BER gs→m2 | synced gs→m2 | BER m2→gs* | synced m2→gs* |
+|---|---|---|---|---|---|
+| (a) GAIN 0 PEAK 24 | r1 / r2 / r3 | 1.14e-1 / 1.08e-1 / 1.10e-1 | 1.4e-1 / 1.1e-2 / 9.0e-3 | 1.85e-1 / 1.80e-1 / 1.76e-1 | 3.0e-2 / 4.9e-2 / 1.5e-2 |
+| (b) PEAK 24 + SEL_POST 0 | r1 / r2 / r3 | 1.43e-1 / 1.00e-1 / 0.5 (–) | 6.4e-2 / 1.9e-1 / – | 0.5 / 0.5 / 0.5 | 0 / 4.1e-4 / 1.5e-5 |
+| (c) PEAK 24 + SEL_POST 6 | r1 / r2 / r3 | 1.49e-1 / 1.57e-1 / 1.23e-1 | 8.3e-2 / 3.1e-2 / 2.9e-2 | 2.81e-1 / 2.70e-1 / 7.59e-2 | 9.3e-2 / 7.6e-2 / 3.3e-1 |
+| (d) PEAK 24 + CKP 0x1E TRANS_TH 16 | r1 / r2 / r3 | 1.09e-1 / 1.11e-1 / 1.08e-1 | 2.9e-2 / 1.7e-1 / 3.6e-2 | 1.89e-1 / 9.68e-2 / 2.97e-2 | 1.6e-2 / 2.9e-1 / 7.1e-1 |
+| (e) PROFILE 2 (control) | r1 / r2 / r3 | 5.53e-2 / 6.71e-2 / 7.40e-2 | 1.5e-3 / 1.8e-3 / 1.4e-2 | 1.77e-2 / 1.68e-2 / 2.12e-2 | 1.5e-3 / 1.4e-4 / 2.5e-4 |
+
+Medians, ranked by synced share gs→m2 (× = ratio to (e)):
+
+| Rank | Point | BER gs→m2 med (worst) | BER m2→gs* med (worst) | synced gs→m2 | synced m2→gs* |
+|---|---|---|---|---|---|
+| 1 | (b) PEAK 24 + SEL_POST 0 | 1.43e-1 (0.5) | 0.5 (0.5) | 1.3e-1 (71×; 2 valid loads) | 1.5e-5 (0.06×) |
+| 2 | **(d) PEAK 24 + CKP 0x1E TT 16** | 1.09e-1 (1.11e-1) | 9.68e-2 (1.89e-1) | **3.6e-2 (20×)** | **2.9e-1 (1160×)** |
+| 3 | (c) PEAK 24 + SEL_POST 6 | 1.49e-1 (1.57e-1) | 2.70e-1 (2.81e-1) | 3.1e-2 (17×) | 9.3e-2 (370×) |
+| 4 | (a) GAIN 0 PEAK 24 | 1.10e-1 (1.14e-1) | 1.80e-1 (1.85e-1) | 1.1e-2 (6.0×) | 3.0e-2 (120×) |
+| 5 | (e) PROFILE 2 | **6.71e-2** (7.40e-2) | **1.77e-2** (2.12e-2) | 1.8e-3 | 2.5e-4 |
+
+(* m2→gs is counted by the gs checker, rclk Fmax 41–47 MHz < 62.5 MHz: indicative only, §9 intro.)
+
+Reading:
+- **The §9.9 single-load 0.43 for PEAK 24 did not repeat.** (a) gives 9·10⁻³ … 0.14 (median 1.1·10⁻²). The load-to-load
+  spread (×15 within (a), ×10 within (e)) is as large as in E1, so single-load ranks in §9.4/§9.5 are not reliable.
+- **Every PEAK 24 point has a higher median synced share than PROFILE 2** (gs→m2). Per load: 9 of the 11 valid PEAK 24 loads
+  are above the best PROFILE 2 load (1.4·10⁻²); the two below are (a) r2/r3 (1.1·10⁻², 9·10⁻³). For 3 + 3 loads the smallest
+  two-sided Mann–Whitney p is 0.10 ((c) and (d) reach it: 3 of 3 above), so this design cannot give a 5 % test.
+- **But the BER while synced is ~2× worse at PEAK 24** (gs→m2 0.11 vs 0.067; m2→gs 0.10–0.27 vs 0.018). More peaking
+  (PEAK 12) gives fewer errors while locked, less peaking (PEAK 24) keeps the checker locked longer. Neither is near the target.
+- (b) SEL_POST 0 ranks first on gs→m2 only because the m2 TX without post-cursor kills m2→gs (synced 0 … 4·10⁻⁴, BER 0.5 in
+  3/3) and r3 had a corrupted counter. It is excluded. The ≥ 10× rule of §9.9 holds in **both** directions only for **(d)** and
+  (c). (a) misses it in gs→m2 (6.0×). So the rule "(a)–(d) all ≥ 10×" is **not** met literally. It is met by the best
+  point, and PEAK 24 is common to all four, so the rebuild was done on (d).
+
+**PROFILE 3 in the bitstream (instead of changing PROFILE 2).** PROFILE 3 = PROFILE 1 + CDR CKP 0x1E TRANS_TH 16 = point (d).
+PROFILE 1 already has AFE GAIN 0 PEAK 24 (0x18) and TX FFE pre/post 5 of 12, so (d) is PROFILE 1 + the E4 CDR values.
+A PEAK 24 + SEL_POST 12 variant ("PROFILE 2 on PEAK 24" literally) was never measured, and SEL_POST 12 came from the PEAK 12 base.
+PROFILE 2 stays unchanged so that §9.7 can be rebuilt from the source (`ber_top.v`, VER byte 0xB5 for PROFILE 3).
+Build: `FREQ=65 [LINK=ber_link_gs.v] build_ber.sh <b> p3_5g_txneg <seed> N1 1 N2 5 N3 5 OUTDIV 1 TX_NEG 1 PROFILE 3`;
+m2 s1 rclk 62.82 MHz (≥ 62.5), gs s7 rclk 44.71 MHz (seeds 1–6: 41.2–47.1 MHz, same band as §9). Bits:
+`bitstreams/ber_{gs,m2}_5g_p3_txneg_CFGRST.bit` (md5 16f5e73a…, 06b750b8…). No JTAG writes.
+
+| Run | BER gs→m2 | synced gs→m2 | BER m2→gs* | synced m2→gs* |
+|---|---|---|---|---|
+| `t73f_p3_300s` (1 load, 300 s) | 1.18e-1 | 5.0e-3 (PROFILE 2 300 s §9.7: 1.7e-3 → **3×**) | 2.01e-1 | 1.7e-4 (§9.7 300 s: 1.4e-5 → 12×) |
+| `t73f_p3_60s` 3 loads, median (worst) | 1.04e-1 (1.10e-1) | 3.2e-2 (18× (e)) | 1.68e-1 (1.76e-1) | 9.3e-3 (37× (e)) |
+
+Fabric-independent check (`ber_jtag_check.py --samples 200`, PROFILE 3): **m2 182/200 PEER (9 % bad), gs 165/200 (17.5 % bad)**,
+vs PROFILE 2 187/200 (6.5 %) and 195/200 (2.5 %) in §9.7. The raw PCS words are worse with PEAK 24, which matches the higher BER.
+
+**Conclusion TASK-5073.**
+1. The synced-share gain of PEAK 24 is real but smaller than §9.9 suggested: ×17–20 in gs→m2 at 60 s for (c)/(d)/PROFILE 3, ×3
+   at 300 s. It is paid for with ~2× the conditional BER and 1.4–7× more bad raw RX words. No point leaves 10⁻² … 10⁻¹.
+2. §9.8 item 1 stands: **5 Gb/s is not reachable by register tuning on this setup.** The trade-off
+   "locked longer ↔ fewer errors while locked" between PEAK 12 and PEAK 24 is consistent with an eye that is closed at both
+   settings, not with a better equaliser setting that we missed.
+3. For the next step (E9/H2 supply noise, H3 channel, H4 refclk; Goran, hardware) use **both** PROFILE 2 and PROFILE 3 as the
+   5 G reference, and judge a hardware change by the **3-load median of synced share AND BER** (`ab_table.py --runs --rank`).
+   A hardware fix should move both in the same direction. A register change so far only moves one against the other.
+4. `ab_table.py`: `--runs` (per-load rows), `--rank` (synced share gs→m2, then BER), and the pooled bit count no longer adds
+   corrupted counters (was 6.2·10¹⁴ bits for (b)). Tests: 60 pass (`python3 -m unittest discover -s tools/tests`).
