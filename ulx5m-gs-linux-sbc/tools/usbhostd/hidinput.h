@@ -8,12 +8,17 @@
 #define EV_SYN 0x00
 #define EV_KEY 0x01
 #define EV_REL 0x02
+#define EV_REP 0x14
 #define REL_X 0x00
 #define REL_Y 0x01
 #define REL_WHEEL 0x08
 #define BTN_LEFT 0x110
 #define BTN_RIGHT 0x111
 #define BTN_MIDDLE 0x112
+
+/* event types of the uinput device; EV_REP turns on the input core's soft repeat (250 ms, 33/s), without it a held
+ * key types once (measured on the board, TASK-5075) */
+static const uint16_t hid_ui_evbits[] = { EV_KEY, EV_REL, EV_REP };
 
 /* HID usage 0x00..0x65 -> Linux key code (0 = none) */
 static const uint8_t hid_to_key[0x66] = {

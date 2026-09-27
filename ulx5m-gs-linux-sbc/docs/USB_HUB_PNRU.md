@@ -487,6 +487,39 @@ Enter was lost and had to be resent).
 the console after typing `root⏎` then `ls⏎` on the wireless keyboard: `kbd #1` … `kbd #7` and the login on the
 DVI screen.
 
+### 7.3.1 Typing test on 6.12 (27.09.2026, TASK-5075)
+
+Goran typed `root⏎` on the wireless keyboard at the tty1 login prompt and reported that it did not work. Measured on
+the running system (same boot as TASK-5074, `pll60 s1` `9aeda4dc…`, no reflash):
+
+| Stage | Count |
+|---|---|
+| `usbhostd` log (`/var/log/usbhostd.log`) | 27 key-downs; the first five reports are `15 12 12 17 28` = `r o o t ⏎` |
+| evdev (`/tmp/evdev.bin` of `S92sbcdiag`, 16 B per event) | 2160 B = 135 events; the last 5 key-downs = 256 B = 16 events (8 key + 8 SYN) — exactly the reports |
+| tty1 (grabber :8090) | `.&baer` → `-sh: baer: not found`, `bvccd` — character for character the HID reports |
+| login | syslog `login[105]: root login on 'tty1'`, `getty` loop of `S90usbhostd` running, `/sys/class/tty/tty0/active` = `tty1` |
+
+So `root` did go through and logged in; nothing is lost between USB, the input layer and the console. What was
+missing is **autorepeat**: `/proc/bus/input/devices` showed `B: EV=7` (SYN, KEY, REL) — `usbhostd` never set
+`EV_REP`, so the input core did not arm its soft repeat and a held key types once (the comment "the kernel does the
+typematic repeat" was not true). Fix: `hid_ui_evbits[] = { EV_KEY, EV_REL, EV_REP }` in `hidinput.h`, used by
+`ui_open()`; `test_usbh` 21/21 (new check: EV_REP among the event types). On the board the new binary
+(sha256 `fd2357ec…`) replaced the running daemon: `B: EV=100007`, same device re-enumerated, 0 time-outs / 0 CRC.
+Note: Linux repeats only the last pressed key and stops on any release — an object that holds several keys
+(`b v c d`, then releases `d`) types nothing more even with EV_REP.
+
+Repeat shown on the board without the keyboard (`tools/usbhostd/reptest.c`, `make -C tools/doom_linux reptest`):
+`EVIOCGREP` on `usbhostd`'s `/dev/input/event0` = **delay 250 ms, period 33 ms** (soft repeat armed), and a second
+uinput device with the same event types holding `KEY_A` for 2169 ms put **≈ 38 `a`** on tty1 (grabber snapshot;
+≈ 50 ms per repeat instead of 33 — this CPU, not a lost event). With the real keyboard after the fix the receiver
+sent **0 reports** from 11:14 to 11:43 (177474 transactions, all NAK after enumeration, 0 time-outs / 0 CRC): the
+object had held the same keys since before the daemon restart, and the wireless keyboard only reports changes — a
+fresh press is needed to see it repeat.
+
+`/srv/tftp/rootfs612.cpio` got the new binary with `tools/linux/cpio_append.py` (a second newc archive in the
+zero padding, uid 0, size unchanged; unpacking as non-root would lose `/dev/console`); the old file is
+`rootfs612.cpio.pre5075`. A Buildroot rebuild picks the fix up from `tools/usbhostd` anyway.
+
 ### 7.4 Remaining order
 
 Order (FPGA rules: do not power-cycle the board, only `openFPGALoader -r`; every bitstream is packed with

@@ -29,6 +29,9 @@ usbhostd: ../usbhostd/usbhostd.c ../usbhostd/usbh.c ../usbhostd/usbh.h sys_linux
 usbdiag: ../usbhostd/usbdiag.c sys_linux.c ../usbhostd/usbh.h
 	$(CC) $(CFLAGS) $(LDFLAGS) -I../usbhostd -o $@ ../usbhostd/usbdiag.c sys_linux.c -lc -lgcc
 
+reptest: ../usbhostd/reptest.c sys_linux.c ../usbhostd/hidinput.h
+	$(CC) $(CFLAGS) $(LDFLAGS) -I../usbhostd -o $@ ../usbhostd/reptest.c sys_linux.c -lc -lgcc
+
 clean:
-	rm -f doom csrpeek usbhidd usbhostd usbdiag
+	rm -f doom csrpeek usbhidd usbhostd usbdiag reptest
 .PHONY: clean

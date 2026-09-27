@@ -78,8 +78,8 @@ static int ui_open(void)
 	int ui = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
 	if (ui < 0)
 		return -1;
-	sys6(SYS_ioctl, ui, UI_SET_EVBIT, EV_KEY, 0, 0, 0);
-	sys6(SYS_ioctl, ui, UI_SET_EVBIT, EV_REL, 0, 0, 0);
+	for (unsigned i = 0; i < sizeof hid_ui_evbits / sizeof hid_ui_evbits[0]; i++)
+		sys6(SYS_ioctl, ui, UI_SET_EVBIT, hid_ui_evbits[i], 0, 0, 0);
 	for (int k = 1; k < 0x80; k++)
 		sys6(SYS_ioctl, ui, UI_SET_KEYBIT, k, 0, 0, 0);
 	for (int k = 0; k < 8; k++)

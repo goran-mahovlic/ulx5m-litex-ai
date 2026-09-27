@@ -409,6 +409,10 @@ int main(int argc, char **argv)
 		n = hid_mouse_events(&btn, m, 4, ev);
 		CHECK(n == 4 && ev[0].code == BTN_LEFT && ev[1].code == REL_X && ev[1].value == -2 && ev[2].value == 3,
 		      "uinput: mouse left + dx -2 dy 3 (%d events)", n);
+		int rep = 0;                          /* a held key must repeat (kernel soft repeat needs EV_REP) */
+		for (unsigned i = 0; i < sizeof hid_ui_evbits / sizeof hid_ui_evbits[0]; i++)
+			rep |= hid_ui_evbits[i] == EV_REP;
+		CHECK(rep, "uinput: EV_REP among the event types (kernel autorepeat of a held key)");
 	}
 
 	printf("%s: %d failure(s), %u transactions\n", fails ? "FAIL" : "OK", fails, (unsigned)h.n_txn);
