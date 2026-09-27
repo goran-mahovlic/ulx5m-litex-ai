@@ -18,7 +18,9 @@ module ber_top #(
     parameter PROFILE = 0,                 // analog/CDR set: 0 = serdes_lb.v (0.3-1.25 Gb/s proven), 1 = pu-cc 5G (ab7ce94), 2 = TASK-5066 5G, 3 = TASK-5073 5G
     parameter TX_DET_RX = 0,               // TX_DETECT_RX_I: 0 = upstream since pu-cc dda07f7 (TASK-5066 E1); bits before 5066 had 1
     parameter TX_CALIB = 1,                // TX_CALIB_EN in every profile (TASK-5066 E1); bits before 5066: PROFILE 0 had 0
-    parameter PLL_RTERM = 1                // PLL_REF_RTERM (refclk LVDS termination; E6: 0 on gs, TUNING_5G.md §2.4)
+    parameter PLL_RTERM = 1,               // PLL_REF_RTERM (refclk LVDS termination; E6: 0 on gs, TUNING_5G.md §2.4)
+    parameter [7:0] CDR_CKI = 8'h00      // RX_CDR_CKI (CDR frequency integrator, DS1001 t. 2.48; 0 = off). 0 with the shared
+                                           // refclk; != 0 for a local X2 on M2 (own refclk per board = ppm offset, TASK-5087)
 ) (
     input  wire clk_i,          // IO_SB_A8 (GS: 25 MHz)
     output wire uart_tx,
@@ -222,18 +224,18 @@ endmodule
 
 module top_gs #(parameter N1 = 1, N2 = 2, N3 = 3, OUTDIV = 4, parameter [5:0] FCNTRL = 6'h3A,
                 parameter RX_POL = 1'b1, parameter [2:0] LOOPBACK_SEL = 3'b000, parameter CLK_DIRECT = 0, parameter TX_NEG = 0, parameter RX_NEG = 0, parameter PROFILE = 0, parameter EYE_EN = 0,
-                parameter TX_DET_RX = 0, parameter TX_CALIB = 1, parameter PLL_RTERM = 1)
+                parameter TX_DET_RX = 0, parameter TX_CALIB = 1, parameter PLL_RTERM = 1, parameter [7:0] CDR_CKI = 8'h00)
                (input wire clk_i, output wire uart_tx, input wire uart_rx);
     ber_top #(.ROLE(0), .N1(N1), .N2(N2), .N3(N3), .OUTDIV(OUTDIV), .FCNTRL(FCNTRL), .RX_POL(RX_POL),
               .LOOPBACK_SEL(LOOPBACK_SEL), .CLK_DIRECT(CLK_DIRECT), .TX_NEG(TX_NEG), .RX_NEG(RX_NEG), .PROFILE(PROFILE), .EYE_EN(EYE_EN),
-              .TX_DET_RX(TX_DET_RX), .TX_CALIB(TX_CALIB), .PLL_RTERM(PLL_RTERM)) u (.clk_i(clk_i), .uart_tx(uart_tx), .uart_rx(uart_rx));
+              .TX_DET_RX(TX_DET_RX), .TX_CALIB(TX_CALIB), .PLL_RTERM(PLL_RTERM), .CDR_CKI(CDR_CKI)) u (.clk_i(clk_i), .uart_tx(uart_tx), .uart_rx(uart_rx));
 endmodule
 
 module top_m2 #(parameter N1 = 1, N2 = 2, N3 = 3, OUTDIV = 4, parameter [5:0] FCNTRL = 6'h3A,
                 parameter RX_POL = 1'b1, parameter [2:0] LOOPBACK_SEL = 3'b000, parameter CLK_DIRECT = 0, parameter TX_NEG = 0, parameter RX_NEG = 0, parameter PROFILE = 0, parameter EYE_EN = 0,
-                parameter TX_DET_RX = 0, parameter TX_CALIB = 1, parameter PLL_RTERM = 1)
+                parameter TX_DET_RX = 0, parameter TX_CALIB = 1, parameter PLL_RTERM = 1, parameter [7:0] CDR_CKI = 8'h00)
                (input wire clk_i);
     ber_top #(.ROLE(1), .N1(N1), .N2(N2), .N3(N3), .OUTDIV(OUTDIV), .FCNTRL(FCNTRL), .RX_POL(RX_POL),
               .LOOPBACK_SEL(LOOPBACK_SEL), .CLK_DIRECT(CLK_DIRECT), .TX_NEG(TX_NEG), .RX_NEG(RX_NEG), .PROFILE(PROFILE), .EYE_EN(EYE_EN),
-              .TX_DET_RX(TX_DET_RX), .TX_CALIB(TX_CALIB), .PLL_RTERM(PLL_RTERM)) u (.clk_i(clk_i), .uart_tx(), .uart_rx(1'b1));
+              .TX_DET_RX(TX_DET_RX), .TX_CALIB(TX_CALIB), .PLL_RTERM(PLL_RTERM), .CDR_CKI(CDR_CKI)) u (.clk_i(clk_i), .uart_tx(), .uart_rx(1'b1));
 endmodule

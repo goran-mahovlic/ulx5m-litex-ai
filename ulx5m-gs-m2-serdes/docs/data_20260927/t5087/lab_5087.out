@@ -1,0 +1,160 @@
+36f09752d8b85ebdf51b6fe8e34d9a646aa9e768a17ec86ced53dee63335e344  gs_cki0_2g5p1_txneg_s7.bit
+12a338c92b9410679b28aecfe9867ce5cc539c0120c0ea72ffe14d6fff800187  gs_cki1_2g5p1_txneg_s7.bit
+dd382c83bb4b957bdd3ba3af2ca2e6434ddd58bb7096d649903624d5a3b6ff9f  gs_cki2_2g5p1_txneg_s7.bit
+ccf02ee7b7e5c7628c4a97ffa60ac08c9b7daac1f650d69790170e2c81a65217  gs_cki4_2g5p1_txneg_s7.bit
+b1b98a5d946169d1be8b465503c6bee94fb72f44380a20b69bce8bfb6285af4e  m2_cki0_2g5p1_txneg_s2.bit
+d872b4a95479285f8a37db8a33ae048fb620c3c8c56617db406df3fba92d5fdb  m2_cki1_2g5p1_txneg_s2.bit
+ac96c6fefa9fbebb94942fc45895d5c84e93043d80fa0889f60007eb5b7654bc  m2_cki2_2g5p1_txneg_s2.bit
+6bbab3aac8ee29fe31aa0e61adea00ece241d6ba1cba540a97f71476a21aeb08  m2_cki4_2g5p1_txneg_s2.bit
+== A cki0 round 1 23:02:44
+HEALTH board=m2 a_cki0 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs a_cki0 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== a_cki0 r1: gs->m2 3.47e-09  m2->gs 5.83e-08
+ABRUN DONE 23:04:04
+== A cki1 round 1 23:04:04
+HEALTH board=m2 a_cki1 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[-2, 5, -4] span=9
+HEALTH board=gs a_cki1 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[3, -7, -23] span=26
+== a_cki1 r1: gs->m2 5.40e-10  m2->gs 1.45e-10
+ABRUN DONE 23:05:26
+== A cki2 round 1 23:05:26
+HEALTH board=m2 a_cki2 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 6, -10] span=16
+HEALTH board=gs a_cki2 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[-16, -28, -70] span=54
+== a_cki2 r1: gs->m2 1.27e-07  m2->gs 1.69e-06
+ABRUN DONE 23:06:46
+== A cki4 round 1 23:06:46
+HEALTH board=m2 a_cki4 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[16371, 16375, 16375] span=4
+HEALTH board=gs a_cki4 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[-28, 136, 100] span=164
+== a_cki4 r1: gs->m2 3.23e-05  m2->gs 5.72e-06
+ABRUN DONE 23:08:06
+== A cki0 round 2 23:08:06
+HEALTH board=m2 a_cki0 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs a_cki0 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== a_cki0 r1: gs->m2 1.17e-09  m2->gs 5.28e-11
+ABRUN DONE 23:09:26
+== A cki1 round 2 23:09:26
+HEALTH board=m2 a_cki1 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[-7, -4, 2] span=9
+HEALTH board=gs a_cki1 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[9, 10, 6] span=4
+== a_cki1 r1: gs->m2 3.08e-08  m2->gs 1.69e-08
+ABRUN DONE 23:10:46
+== A cki2 round 2 23:10:46
+HEALTH board=m2 a_cki2 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[-18, -6, 16] span=34
+HEALTH board=gs a_cki2 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[34, 28, 2] span=32
+== a_cki2 r1: gs->m2 1.56e-08  m2->gs 3.86e-07
+ABRUN DONE 23:12:05
+== A cki4 round 2 23:12:06
+HEALTH board=m2 a_cki4 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[16383, 16379, 16379] span=4
+HEALTH board=gs a_cki4 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[156, 8, -72] span=228
+== a_cki4 r1: gs->m2 8.89e-05  m2->gs 1.13e-05
+ABRUN DONE 23:13:27
+== B inj p16 (FREQ_ACC=16) 23:13:27
+board=m2 set RX_CDR_FREQ_ACC=0 RX_CDR_SET_ACC_CONFIG=2
+board=m2 recal RX_EN_EQA=1 RX_EQA_LOCKED=0 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=3.11
+board=gs recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.13
+HEALTH board=m2 b_inj_p16 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_EQA_LOCKED=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs b_inj_p16 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== b_inj_p16 r1: gs->m2 1.17e-09  m2->gs 1.91e-08
+ABRUN DONE 23:14:43
+== B inj n16 (FREQ_ACC=32752) 23:14:43
+board=m2 set RX_CDR_FREQ_ACC=0 RX_CDR_SET_ACC_CONFIG=2
+board=m2 recal RX_EN_EQA=1 RX_EQA_LOCKED=0 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=3.13
+board=gs recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.13
+HEALTH board=m2 b_inj_n16 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_EQA_LOCKED=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs b_inj_n16 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== b_inj_n16 r1: gs->m2 0.00e+00  m2->gs 9.45e-10
+ABRUN DONE 23:15:53
+== B inj p128 (FREQ_ACC=128) 23:15:53
+board=m2 set RX_CDR_FREQ_ACC=0 RX_CDR_SET_ACC_CONFIG=2
+board=m2 recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.13
+board=gs recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.14
+HEALTH board=m2 b_inj_p128 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs b_inj_p128 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== b_inj_p128 r1: gs->m2 1.05e-10  m2->gs 2.17e-07
+ABRUN DONE 23:17:05
+== B inj n128 (FREQ_ACC=32640) 23:17:05
+board=m2 set RX_CDR_FREQ_ACC=0 RX_CDR_SET_ACC_CONFIG=2
+board=m2 recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.13
+board=gs recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.13
+HEALTH board=m2 b_inj_n128 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs b_inj_n128 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== b_inj_n128 r1: gs->m2 1.73e-08  m2->gs 2.08e-08
+ABRUN DONE 23:18:14
+== B inj p1024 (FREQ_ACC=1024) 23:18:14
+board=m2 set RX_CDR_FREQ_ACC=0 RX_CDR_SET_ACC_CONFIG=2
+board=m2 recal RX_EN_EQA=1 RX_EQA_LOCKED=0 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=3.11
+board=gs recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.13
+HEALTH board=m2 b_inj_p1024 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_EQA_LOCKED=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs b_inj_p1024 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== b_inj_p1024 r1: gs->m2 0.00e+00  m2->gs 2.71e-06
+ABRUN DONE 23:19:29
+== B inj n1024 (FREQ_ACC=31744) 23:19:29
+board=m2 set RX_CDR_FREQ_ACC=0 RX_CDR_SET_ACC_CONFIG=2
+board=m2 recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.13
+board=gs recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.21
+HEALTH board=m2 b_inj_n1024 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs b_inj_n1024 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== b_inj_n1024 r1: gs->m2 2.82e-09  m2->gs 1.19e-06
+ABRUN DONE 23:20:39
+== B inj p8192 (FREQ_ACC=8192) 23:20:39
+board=m2 set RX_CDR_FREQ_ACC=0 RX_CDR_SET_ACC_CONFIG=2
+board=m2 recal RX_EN_EQA=1 RX_EQA_LOCKED=0 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=3.09
+board=gs recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.13
+HEALTH board=m2 b_inj_p8192 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_EQA_LOCKED=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs b_inj_p8192 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== b_inj_p8192 r1: gs->m2 1.13e-09  m2->gs 1.28e-08
+ABRUN DONE 23:21:50
+== B inj n8192 (FREQ_ACC=24576) 23:21:50
+board=m2 set RX_CDR_FREQ_ACC=0 RX_CDR_SET_ACC_CONFIG=2
+board=m2 recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.14
+board=gs recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.17
+HEALTH board=m2 b_inj_n8192 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs b_inj_n8192 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== b_inj_n8192 r1: gs->m2 3.67e-10  m2->gs 1.47e-06
+ABRUN DONE 23:22:59
+== C convergence 23:22:59
+Done
+Done
+INFO:  Found 1 device in JTAG chain.
+board=m2 RX_CDR_CKI=2 RX_CDR_CKP=62 RX_CDR_LOCKED=0 RX_CDR_FREQ_ACC_VAL=16383
+  PLL_LOCKED=1 PLL_CAP_FT_OF=0 PLL_CAP_FT_UF=0 PLL_CAP_FT=505 PLL_CAP_STATE=2 PLL_BISC_TIMER_DONE=0 PLL_BISC_CP_VALID=0 PLL_BISC_CP=24 PLL_BISC_OPT_DET=0 PLL_BISC_CO=65522 RX_CALIB_DONE=1 RX_CALIB_CAL=9 TX_CALIB_DONE=1 TX_CALIB_CAL=7 RX_EN_EQA=1 RX_EQA_LOCK_CFG=12 RX_EQA_LOCKED=1 RX_EQA_TAPW=0 RX_TH_MON=15 RX_OFFSET=7 RX_CDR_LOCK_CFG=213 RX_CDR_TRANS_TH=8 RX_CDR_LOCKED=0 RX_PRESENT=0 RX_DETECT_DONE=1 RX_BUF_ERR=0 RX_AFE_PEAK=24 RX_AFE_GAIN=0 RX_AFE_VCMSEL=3 RX_RTERM_VCMSEL=3 RX_CDR_CKP=62 TX_AMP=31 TX_SEL_PRE=5 TX_SEL_POST=5 PLL_REF_RTERM=1
+INFO:  Found 1 device in JTAG chain.
+board=m2 set RX_CDR_FREQ_ACC=0 RX_CDR_SET_ACC_CONFIG=2
+  PLL_LOCKED=1 PLL_CAP_FT_OF=0 PLL_CAP_FT_UF=0 PLL_CAP_FT=506 PLL_CAP_STATE=2 PLL_BISC_TIMER_DONE=0 PLL_BISC_CP_VALID=0 PLL_BISC_CP=24 PLL_BISC_OPT_DET=0 PLL_BISC_CO=65437 RX_CALIB_DONE=1 RX_CALIB_CAL=9 TX_CALIB_DONE=1 TX_CALIB_CAL=7 RX_EN_EQA=1 RX_EQA_LOCK_CFG=12 RX_EQA_LOCKED=1 RX_EQA_TAPW=0 RX_TH_MON=15 RX_OFFSET=7 RX_CDR_LOCK_CFG=213 RX_CDR_TRANS_TH=8 RX_CDR_LOCKED=1 RX_PRESENT=0 RX_DETECT_DONE=1 RX_BUF_ERR=0 RX_AFE_PEAK=24 RX_AFE_GAIN=0 RX_AFE_VCMSEL=3 RX_RTERM_VCMSEL=3 RX_CDR_CKP=62 TX_AMP=31 TX_SEL_PRE=5 TX_SEL_POST=5 PLL_REF_RTERM=1
+INFO:  Found 1 device in JTAG chain.
+board=m2 set RX_CDR_SET_ACC_CONFIG=0
+  PLL_LOCKED=1 PLL_CAP_FT_OF=0 PLL_CAP_FT_UF=0 PLL_CAP_FT=506 PLL_CAP_STATE=2 PLL_BISC_TIMER_DONE=0 PLL_BISC_CP_VALID=0 PLL_BISC_CP=24 PLL_BISC_OPT_DET=0 PLL_BISC_CO=65513 RX_CALIB_DONE=1 RX_CALIB_CAL=9 TX_CALIB_DONE=1 TX_CALIB_CAL=7 RX_EN_EQA=1 RX_EQA_LOCK_CFG=12 RX_EQA_LOCKED=1 RX_EQA_TAPW=0 RX_TH_MON=15 RX_OFFSET=7 RX_CDR_LOCK_CFG=213 RX_CDR_TRANS_TH=8 RX_CDR_LOCKED=1 RX_PRESENT=0 RX_DETECT_DONE=1 RX_BUF_ERR=0 RX_AFE_PEAK=24 RX_AFE_GAIN=0 RX_AFE_VCMSEL=3 RX_RTERM_VCMSEL=3 RX_CDR_CKP=62 TX_AMP=31 TX_SEL_PRE=5 TX_SEL_POST=5 PLL_REF_RTERM=1
+jtag_check cki2 m2: board=m2 PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 100/100 distinct=100  expect=peer -> PASS
+jtag_check cki2 gs: board=gs PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 100/100 distinct=100  expect=peer -> PASS
+| Point | load | BER gs→m2 | synced gs→m2 | BER m2→gs | synced m2→gs |
+|---|---|---|---|---|---|
+| a_cki0 | r1 | 3.47e-09 | 8.9e-01 | 5.83e-08 | 8.9e-01 |
+| a_cki0 | r2 | 1.17e-09 | 9.2e-01 | 5.28e-11 | 9.2e-01 |
+| a_cki1 | r1 | 5.40e-10 | 8.9e-01 | 1.45e-10 | 8.9e-01 |
+| a_cki1 | r2 | 3.08e-08 | 9.1e-01 | 1.69e-08 | 9.1e-01 |
+| a_cki2 | r1 | 1.27e-07 | 9.0e-01 | 1.69e-06 | 9.0e-01 |
+| a_cki2 | r2 | 1.56e-08 | 9.2e-01 | 3.86e-07 | 9.2e-01 |
+| a_cki4 | r1 | 3.23e-05 | 1.8e-03 | 5.72e-06 | 9.2e-01 |
+| a_cki4 | r2 | 8.89e-05 | 1.9e-03 | 1.13e-05 | 9.1e-01 |
+| b_inj_n1024 | r1 | 2.82e-09 | 1.0e+00 | 1.19e-06 | 1.0e+00 |
+| b_inj_n128 | r1 | 1.73e-08 | 1.0e+00 | 2.08e-08 | 1.0e+00 |
+| b_inj_n16 | r1 | 0.00e+00 | 1.0e+00 | 9.45e-10 | 1.0e+00 |
+| b_inj_n8192 | r1 | 3.67e-10 | 1.0e+00 | 1.47e-06 | 1.0e+00 |
+| b_inj_p1024 | r1 | 0.00e+00 | 9.0e-01 | 2.71e-06 | 9.0e-01 |
+| b_inj_p128 | r1 | 1.05e-10 | 9.8e-01 | 2.17e-07 | 9.8e-01 |
+| b_inj_p16 | r1 | 1.17e-09 | 9.3e-01 | 1.91e-08 | 9.3e-01 |
+| b_inj_p8192 | r1 | 1.13e-09 | 1.0e+00 | 1.28e-08 | 1.0e+00 |
+
+| Point | n | BER gs→m2 median (worst) | BER m2→gs median (worst) | bits per direction | synced share gs→m2 / m2→gs |
+|---|---|---|---|---|---|
+| b_inj_n16 | 1 | 0 (<7.9e-11) (0.00e+00) | 9.45e-10 (9.45e-10) | 3.81e+10 | 1.0e+00 / 1.0e+00 |
+| b_inj_n8192 | 1 | 3.67e-10 (3.67e-10) | 1.47e-06 (1.47e-06) | 3.81e+10 | 1.0e+00 / 1.0e+00 |
+| b_inj_p8192 | 1 | 1.13e-09 (1.13e-09) | 1.28e-08 (1.28e-08) | 4.00e+10 | 1.0e+00 / 1.0e+00 |
+| b_inj_n1024 | 1 | 2.82e-09 (2.82e-09) | 1.19e-06 (1.19e-06) | 4.01e+10 | 1.0e+00 / 1.0e+00 |
+| b_inj_n128 | 1 | 1.73e-08 (1.73e-08) | 2.08e-08 (2.08e-08) | 3.84e+10 | 1.0e+00 / 1.0e+00 |
+| b_inj_p128 | 1 | 1.05e-10 (1.05e-10) | 2.17e-07 (2.17e-07) | 3.81e+10 | 9.8e-01 / 9.8e-01 |
+| b_inj_p16 | 1 | 1.17e-09 (1.17e-09) | 1.91e-08 (1.91e-08) | 3.85e+10 | 9.3e-01 / 9.3e-01 |
+| a_cki2 | 2 | 7.13e-08 (1.27e-07) | 1.04e-06 (1.69e-06) | 1.51e+11 | 9.1e-01 / 9.1e-01 |
+| b_inj_p1024 | 1 | 0 (<7.8e-11) (0.00e+00) | 2.71e-06 (2.71e-06) | 3.85e+10 | 9.0e-01 / 9.0e-01 |
+| a_cki0 | 2 | 2.32e-09 (3.47e-09) | 2.92e-08 (5.83e-08) | 1.51e+11 | 9.0e-01 / 9.0e-01 |
+| a_cki1 | 2 | 1.57e-08 (3.08e-08) | 8.55e-09 (1.69e-08) | 1.52e+11 | 9.0e-01 / 9.0e-01 |
+| a_cki4 | 2 | 6.06e-05 (8.89e-05) | 8.52e-06 (1.13e-05) | 3.11e+08 | 1.9e-03 / 9.1e-01 |
+LAB5087 DONE 23:24:35

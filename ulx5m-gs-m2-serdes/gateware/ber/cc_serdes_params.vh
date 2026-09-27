@@ -28,7 +28,7 @@
     .RX_AFE_GAIN(A_AFE_GAIN),
     .RX_AFE_VCMSEL(A_AFE_VCMSEL),
     .RX_CDR_CKP(A_CDR_CKP),
-    .RX_CDR_CKI(8'h00),
+    .RX_CDR_CKI(CDR_CKI),            // 0 unless a board has its own refclk (TASK-5087)
     .RX_CDR_TRANS_TH(A_CDR_TRANS_TH), // 7-bit field; PROFILE 0 keeps the old 9'h80 from serdes_lb.v
     .RX_CDR_LOCK_CFG(A_CDR_LOCK_CFG),
     .RX_CDR_FREQ_ACC(15'h0),
