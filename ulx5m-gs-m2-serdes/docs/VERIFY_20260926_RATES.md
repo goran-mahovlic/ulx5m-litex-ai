@@ -167,3 +167,190 @@ Tests: `python3 -m unittest discover -s tools/tests` (39 pass; `ber_parse` now s
 | `t5063_profile1_300s` | 2500.02 | PROFILE 1 bits, no JTAG writes, 300 s | 9.39e+09 / 25 / 42 | 6.7e-11 | 9.39e+09 / 435 / 382 | 1.2e-09 |
 | `t5063_5g_profile1_pk15` | 5000.04 | PROFILE 1 5G bits, both TX_NEG, JTAG AFE PEAK 15 | 1.93e+06 / 4795495 / 467073 | 6.2e-02 | 4.72e+06 / 9818639 / 1785938 | 5.2e-02 |
 | `t5063_5g_profile1_pk24` | 5000.04 | same, PEAK 24 | 1.78e+07 / 86704746 / 7132712 | 1.2e-01 | 1.20e+07 / 33738985 / 5297676 | 7.1e-02 |
+
+## 9. TASK-5066: 5 Gb/s experiments E0–E8 (TUNING_5G.md §3), 26./27.09.2026
+
+**Order:** Goran 26.09. 21:44 (driver strength, equalizer …), new order TUNING_5G.md `6747484`/`09df250`, instructions #94–#101
+(J3 = 1.1 V on both boards, so the supply is not a gate; #98 side comparison; #99 no per-board loopback).
+**Done by:** Jelena. Lab rules: FPGA_LAB_ARHITEKTURA.md (fpga-jtag, every bit CFGRST, gs lease `TASK-5066`).
+**Raw data:** `data_20260926/t5066/` (one ber_mon JSON per load `<point>_r<k>.json` + E0/health JSONs + the lab scripts
+`lab1.sh`–`lab4.sh` exactly as run + their console output `lab*.out`).
+**Tools:** `tools/lab/abrun.sh` (every point = fresh load m2 then gs, JTAG writes, sweep procedure `eyescan.py recal`,
+health of both receivers, BER run with cleared counters), `tools/lab/ab_table.py` (median per point),
+`tools/eyescan.py health|recal`.
+
+**How to read the 5 Gb/s numbers.** The m2 checker runs at 73 MHz (word clock 62.5 MHz), so gs→m2 is measured on
+m2 — but its counters reach gs over the m2→gs link, which itself has errors: single status lines carry corrupted
+counters (seen: BER 1.92, 1.3·10¹¹ words in 60 s). `ab_table.py` caps BER at 0.5 and treats a word count above
+(secs + 10 s) × word rate as corrupted (0.5). The gs checker still has rclk Fmax 45–50 MHz < 62.5 MHz
+(pipelined `ber_link.v` still does not route on gs: 8 more seeds, 4 × "Failed to route", 4 × nextpnr
+`std::out_of_range`), so **m2→gs at 5 G is indicative only**. Everything at 5 G is in the 10⁻² … 10⁻¹ band, where
+this does not change any conclusion. "bits" = checked bits while synced; at 5 G the checkers are synced only
+~1–10 % of the time (loss of sync every few seconds).
+
+### 9.1 E0 — health snapshot, read-only (PROFILE 1, no JTAG writes; FREQ/PHASE_ACC: 10 reads 1 s apart)
+
+| Field | gs 2.5 G | m2 2.5 G | gs 5 G | m2 5 G |
+|---|---|---|---|---|
+| PLL lock (`PLL_LOCKED`) | 1 | 1 | 1 | 1 |
+| **FT_OF / FT_UF** (`PLL_CAP_FT_OF/UF`) | 0 / 0 | 0 / 0 | **0 / 0** | **0 / 0** |
+| CAP_FT (`PLL_CAP_FT`) | 437 | 509 | 439 | 517 |
+| BISC timer done / CP valid | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 |
+| BISC CP / CO | 24 / 65360 | 24 / 63701 | 24 / 65298 | 24 / 63422 |
+| RX cal done / cal (`RX_CALIB_DONE/CAL`) | 1 / 0 | 1 / 0 | 1 / 0 | 1 / 0 |
+| TX cal done / cal (`TX_CALIB_DONE/CAL`) | 1 / 0 | 1 / 0 | 1 / 0 | 1 / 0 |
+| EQA lock (`RX_EQA_LOCKED`) | 1 | 1 | 1 | 1 |
+| DFE tap (`RX_EQA_TAPW`) | 0 | 0 | 5 | 4 |
+| `RX_TH_MON` | 15 (rail) | 15 (rail) | 15 (rail) | 15 (rail) |
+| `RX_OFFSET` | 2 | 7 | −3 | 0 |
+| **CDR lock in every sample** | 1 | 1 | **0** | **0** |
+| `RX_PRESENT` / `RX_DETECT_DONE` / `RX_BUF_ERR` (0x2A[12..14]) | 0 / 1 / 0 | 0 / 1 / 0 | 0 / 1 / 0 | 0 / 1 / 0 |
+| `RX_CDR_FREQ_ACC_VAL` ×10 | 0 | 0 | 0 | 0 |
+| `RX_CDR_PHASE_ACC_VAL` ×10 | 16058…17453 | 12212…12491 | 8804…10664 | 5037…9346 |
+
+Reading:
+- **The PLL is healthy at 5 G**: locked, no FT overflow/underflow, and CAP_FT equals the 2.5 G value (same 2.5 GHz DCO,
+  only OUTDIV differs). TUNING_5G.md E0 question "does 5 G fail in the PLL/CDR or in the data eye?" → **not in the PLL**;
+  the CDR does not hold lock (0 in most samples at 5 G; the recal step sees it locked for a moment), and on m2 the
+  phase accumulator spans 4309 codes over 10 s vs 279 at 2.5 G (gs: 1860 vs 1395).
+- FREQ_ACC = 0 everywhere: `RX_CDR_CKI = 0` in all profiles → the frequency integrator is off (expected; both boards
+  share the refclk).
+- BISC TIMER_DONE / CP_VALID = 0 at both rates on both boards, with PLL lock → the same state where 2.5 G works;
+  not a 5 G marker. `RX/TX_CALIB_CAL = 0` and `RX_TH_MON = 15` (the top of the signed 5-bit range) on both boards at both
+  rates — UNVERIFIED whether that is "calibrated to code 0" / "threshold monitor at the rail"; worth one question to
+  CologneChip.
+- `RX_PRESENT = 0` with `TX_DETECT_RX_I = 1` (these bits) — the receiver detection did not report the far end.
+
+### 9.2 E1 — `TX_DETECT_RX_I` 1 → 0 (and `TX_CALIB_EN = 1` in every profile)
+
+`ber_top.v` parameters `TX_DET_RX` (default now 0 = upstream pu-cc `dda07f7`), `TX_CALIB` (default 1), `PLL_RTERM`.
+With `TX_DET_RX 1` the old 2.5 G PROFILE 1 pair and the 5 G PROFILE 1 pair **rebuild byte for byte**
+(`ber_gs_2g5_p1_CFGRST.bit` sha256 5dfba1ec…); the `TX_DET_RX 0` bits differ from them in **3 bytes** (the
+config bit + CRC) — same placement, a pure A/B. Loads interleaved for r4–r6.
+
+| Point | loads × s | BER gs→m2 median (worst) | BER m2→gs median (worst) |
+|---|---|---|---|
+| 2.5 G `TX_DETECT_RX_I=1` (old) | 6 × 60 | 4.7·10⁻⁹ (1.5·10⁻⁷) | 5.7·10⁻¹⁰ (4.8·10⁻⁹) |
+| 2.5 G `TX_DETECT_RX_I=0` | 6 × 60 | 2.0·10⁻⁸ (4.3·10⁻⁷) | 1.1·10⁻⁸ (7.1·10⁻⁸) |
+| 5 G `TX_DETECT_RX_I=1` | 3 × 60 | 7.9·10⁻² | 1.0·10⁻¹ |
+| 5 G `TX_DETECT_RX_I=0` | 3 × 60 | 7.8·10⁻² | 9.8·10⁻² |
+
+**Result: no improvement** (TUNING_5G.md E1 pass criterion "≥ 3× better" not met). At 2.5 G the medians are even a
+little worse with 0, but the ranges of the two sets overlap (single loads of either bit span 5·10⁻¹⁰ … 4·10⁻⁷).
+At 5 G no difference. `TX_DET_RX = 0` stays the default (= upstream, as TUNING_5G.md asks for "no change").
+
+### 9.3 Side comparison (instruction #98): which side is weaker, 2.5 Gb/s PROFILE 1, `TX_DETECT_RX_I=0`, 300 s each
+
+| Direction → | TX board (bit, seed) | RX board (bit, seed) | TX_NEG on TX | BER gs→m2 | BER m2→gs |
+|---|---|---|---|---|---|
+| `sd_gs7_m21` | gs s7 / m2 s1 | m2 s1 / gs s7 | gs 1, m2 1 | 2.4·10⁻⁹ | 1.2·10⁻⁸ |
+| `sd_gs2_m21` | gs **s2** / m2 s1 | | gs 1, m2 1 | 3.4·10⁻⁹ | 1.9·10⁻⁸ |
+| `sd_gs3_m21` | gs **s3** / m2 s1 | | gs 1, m2 1 | 9.5·10⁻⁹ | 1.6·10⁻⁸ |
+| `sd_gs7_m22` | gs s7 / m2 **s2** | | gs 1, m2 1 | **4.7·10⁻¹⁰** | **1.6·10⁻¹¹** |
+| `sd_gs7_m23` | gs s7 / m2 **s3** | | gs 1, m2 1 | 7.5·10⁻¹⁰ | 6.9·10⁻⁸ |
+| `sd_gs7nt_m21` | gs s7 **without TX_NEG** / m2 s1 | | gs **0**, m2 1 | 1.5·10⁻⁷ | 1.1·10⁻¹⁰ |
+
+Conclusion (each row one 300 s load; the same bit loaded again spreads ×10–100, so single factors below ~10× are not
+significant):
+- **gs→m2 (gs TX, m2 RX): the gs TX fabric timing.** `TX_NEG=1` on gs: 2.4·10⁻⁹ vs 1.5·10⁻⁷ without (≈ 60×). The gs seed
+  moves it only ×1.4–4; the m2 build (m2 RX placement) ×3–5.
+- **m2→gs (m2 TX, gs RX): the m2 build.** With the same gs bit, m2 seed 2 / 1 / 3 gives 1.6·10⁻¹¹ / 1.2·10⁻⁸ / 6.9·10⁻⁸
+  (×4000). Three gs seeds with the same m2 bit stay at 1.2–1.9·10⁻⁸.
+- So today's asymmetry at 2.5 G (m2→gs better than gs→m2 before `e3a6375`) was **fabric timing of the TX path**
+  (nextpnr does not time the SerDes ports, §2 cause 2), not one board being worse. Near-end loopback per board was
+  dropped on Goran's instruction #99.
+- Best pair: **gs `TX_NEG=1` s7 + m2 s2**: 4.7·10⁻¹⁰ / 1.6·10⁻¹¹ (re-measured in §9.7).
+
+### 9.4 E2 — 5 G RX AFE (DFE on, `EQA_LOCK_CFG 0xC`, VCM 3), both boards, 1 load × 60 s per point
+
+| GAIN \ PEAK | 24 | 16 | 12 | 8 | 4 | 0 (= most peaking) |
+|---|---|---|---|---|---|---|
+| 0 | 4.8e-2 / 9.5e-3 | 1.1e-1 / 1.7e-1 | **4.3e-2 / 2.4e-2** | 8.4e-2 / 5.0e-2 | 9.9e-2 / 6.1e-2 | 1.1e-1 / 6.4e-2 |
+| 1 | 1.0e-1 / no sync | 1.1e-1 / no sync | 7.7e-2 / 6.6e-2 | corrupt / 3.5e-2 | 1.3e-1 / 7.1e-2 | 1.1e-1 / 2.7e-1 |
+| 2 | 1.0e-1 / no sync | 1.1e-1 / no sync | 3.7e-2 / 9.2e-2 | 1.2e-1 / 6.0e-2 | corrupt / 1.0e-1 | corrupt / no sync |
+| 3 | 1.2e-1 / no sync | 1.4e-1 / no sync | 1.1e-1 / 6.9e-2 | 8.3e-2 / 7.7e-2 | 1.1e-1 / 6.1e-2 | 1.2e-1 / no sync |
+
+(gs→m2 / m2→gs; "no sync" = gs checker never synced, "corrupt" = impossible m2 counters.) **No AFE point below ~10⁻²**
+(pass criterion < 10⁻⁶ not reached). GAIN ≥ 1 with little peaking loses the gs receiver completely; GAIN 0 stays best
+as at 2.5 G. The first E2 attempt had a point-generator bug (every point followed by an empty duplicate that
+overwrote its JSON) and was stopped and repeated; only the repeat is in the data.
+
+### 9.5 5 G: seeds, CLK_DIRECT, E4 CDR, E3 TX FFE, E5 VCM, E6 refclk (AFE GAIN 0 PEAK 12 on both, 1 × 60 s)
+
+| Point | BER gs→m2 | BER m2→gs |
+|---|---|---|
+| seeds: m2 s2 / s3 / s4 / s5 (gs s7) | 1.0e-1 / 4.0e-2 / 1.3e-1 / 1.5e-1 | 1.9e-1 / 2.6e-2 / 2.0e-1 / 2.0e-1 |
+| seeds: gs s2 / s3 / s4 (m2 s1) | 1.1e-1 / 1.2e-1 / 1.2e-1 | 2.0e-1 / 1.9e-1 / 4.0e-2 |
+| `CLK_DIRECT=1` both | 1.2e-1 | 2.2e-1 |
+| E4 CKP 0xF8: TRANS_TH 8 / 16 / 32 | 4.6e-2 / 5.6e-2 / 5.1e-2 | 1.9e-2 / 2.6e-2 / 2.7e-2 |
+| E4 CKP 0x7E: 8 / 16 / 32 | 4.0e-2 / 6.5e-2 / 5.1e-2 | 2.9e-2 / 5.4e-2 / 3.6e-2 |
+| E4 CKP 0x3E: 8 / 16 / 32 | 5.6e-2 / 8.3e-2 / 5.3e-2 | 3.3e-2 / 3.6e-2 / 3.4e-2 |
+| E4 CKP 0x1E: 8 / 16 / 32 | 5.5e-2 / **2.5e-2** / 4.7e-2 | 3.3e-2 / **2.7e-2** / 3.3e-2 |
+| E3 BR_PRE 0, BR_POST 31, DC 47, SEL_POST 0 / 6 / 12 / 17 / 20 | 4.4e-2 / 7.7e-2 / 5.4e-2 / 9.7e-2 / 1.1e-1 | 4.2e-2 / 2.3e-2 / **1.6e-2** / 4.6e-2 / 5.6e-2 |
+| E3 BR_PRE 12, DC 53, SEL_POST 12, SEL_PRE 2 / 5 | 6.3e-2 / 7.4e-2 | 2.3e-2 / 2.6e-2 |
+| E3 TX_AMP 20 / 24 / 28 (on PROFILE 1 FFE) | 5.6e-2 / 5.3e-2 / 4.5e-2 | 3.9e-2 / 5.9e-2 / 3.1e-2 |
+| E5 RX/RTERM VCM 2 / 4 / 5 | 5.7e-2 / 4.8e-2 / 4.2e-2 | 4.4e-2 / 2.5e-2 / 2.9e-2 |
+| E6 gs `PLL_REF_RTERM=0` (3 loads, median) vs 1 (3 loads) | 5.2e-2 vs 4.8e-2 | 2.7e-2 vs 3.1e-2 |
+
+E3 was run on both boards at the same time: each direction depends only on its own TX, so the gs→m2 column is the gs TX
+sweep and the m2→gs column the m2 TX sweep. `RX_NEG=1` at 5 G was built but not loaded: it drops rclk Fmax to
+35–42 MHz (< 62.5). E6 needed a rebuild of gs only (`PLL_RTERM 0`, 3-byte difference to the E1 bit).
+
+**Nothing moves 5 G out of the 10⁻² … 10⁻¹ band.** The spread between points (×2–5) is the size of the load-to-load
+spread seen at 2.5 G, so none of the "best" entries above is a proven improvement.
+
+### 9.6 E7 — on-chip eye scan with the TUNING_5G.md §5.1 fixes
+
+`tools/eyescan.py scan` now (a) writes the TH_MON2 value to 0x05[10:6] and its override to **0x06[11]** (vendor map;
+0x05[11] is unused), (b) turns on `RX_EN_EQA` and `EQA_LOCK_CFG` bit1 for the scan and restores 0x04/0x05/0x06, and
+(c) treats 0x14[0] as **EYE_MEAS_DONE** on read (DS1001 Table 2.59: "RX_EYE_MEAS_EN / EYE_MEAS_DONE", w/c). The old
+loop waited for the bit to go to 0 and timed out at the first point (seen in `lab4.out`).
+
+Scan 16 phases × 11 thresholds, window 512, on both receivers, with the link running and locked
+(`RX_EQA_LOCKED=1`, `RX_CDR_LOCKED=1`, `ber_jtag_check` PEER 200/200 at 2.5 G):
+
+| Link | m2: sum of the 8 counters over 176 points | gs: same |
+|---|---|---|
+| 2.5 G (gs `TX_NEG` s7 + m2 s2, PROFILE 1) | 0 | 0 |
+| 5 G PROFILE 2 | 0 | 0 |
+
+**The counters still never count.** All three suspected causes from §5.1 are ruled out for our use of the registers.
+Per TUNING_5G.md E7 the next step is a question to CologneChip / Patrick Urban (upstream `tc_eyemeas` is a stub):
+which other condition starts the eye counters (a TESTMODE bit, a monitor enable, `RX_EQA_CONFIG`?).
+
+### 9.7 E8 — PROFILE=2 in the bitstream, 5 Gb/s; and the 2.5 G best pair again
+
+PROFILE 2 = PROFILE 1 + the "best" sweep point (AFE PEAK 12, CDR CKP 0x1E TRANS_TH 16, TX post-cursor only:
+31 branches, DC 47, SEL_POST 12). Rebuilt twice → byte-identical (gs s7, m2 s1). Bits:
+`bitstreams/ber_{gs,m2}_5g_p2_txneg_CFGRST.bit`. No JTAG writes.
+
+| Run | words gs→m2 / bit err / code err / loss | BER gs→m2 | words m2→gs / bit err / code err / loss | BER m2→gs |
+|---|---|---|---|---|
+| `e8_p2_300s` (308 s) | 3.32·10⁷ / 8.4·10⁷ / 1.55·10⁷ / 0 | **6.3·10⁻²** | 2.65·10⁵ / 2.1·10⁵ / 4.6·10⁴ / 2 | **2.0·10⁻²** |
+| `e8_p2_60s` 3 loads, median (worst) | | 7.3·10⁻² (9.9·10⁻²) | | 1.8·10⁻² (2.9·10⁻²) |
+
+Fabric-independent check (JTAG, 200 RX words per board through the regfile, header = K28.5 + peer id):
+**m2 187/200 PEER (6.5 % bad), gs 195/200 (2.5 % bad)** at 5 G PROFILE 2; **200/200 on both** at 2.5 G. So the 5 G
+errors are already in the SerDes PCS output. They are not only an artefact of the gs checker being too slow.
+
+5 G target (BER < 10⁻¹⁰ in 300 s → soak) is **not reached**; the soak (§5.3) was not started.
+
+The 2.5 G "best pair" of §9.3 loaded again for 300 s (`best_2g5_gs7_m22`): gs→m2 1.2·10⁻⁸, m2→gs 4.5·10⁻⁸ — vs
+4.7·10⁻¹⁰ / 1.6·10⁻¹¹ the first time. Same bits, ×25 / ×2900 apart: the load-to-load lottery (untimed SerDes ports)
+is at least as large as the seed effect, so a seed must be chosen by **several** loads, not by one.
+
+### 9.8 Conclusion TASK-5066 and what is left
+
+1. **5 Gb/s is not reachable by register tuning on this setup.** E1–E6 plus seeds and CLK_DIRECT (≈ 60 points) all stay
+   at 10⁻² … 10⁻¹, and so does PROFILE 2 in the bitstream. The PLL is clean (E0), so is the DC supply (J3 = 1.1 V, Goran).
+   The CDR does not hold lock. The regfile RX words show 2.5–6.5 % bad headers without the fabric.
+2. The remaining suspects are **outside the register set**, in TUNING_5G.md order: supply **noise** (E9 = H2: ferrite or
+   extra µF at C127/C128 on GS — needs Goran), the channel (H3: FFC/adapter chain, reflections), and refclk quality at
+   M2 (H4: scope at C129/C130). E6 (single termination on the shared refclk) did not change anything.
+3. **2.5 Gb/s**: `TX_NEG=1` on gs matters (≈ 60× for gs→m2); m2→gs follows the m2 build. The load-to-load spread
+   (×10–1000 with identical bits) is the biggest effect left → the SerDes port timing (§2 cause 2) is still the main
+   2.5 G problem. Constraining those ports in nextpnr is the real fix.
+4. `TX_DETECT_RX_I=0` (upstream): no measurable effect at either rate; kept as the default.
+5. Eye counters: still 0 with the register-map fixes → question to CologneChip (E7).
+6. Tools: `abrun.sh`/`ab_table.py` (point = fresh load, medians, corrupted-counter guard), `eyescan.py health/recal`,
+   E7 fixes; tests 57 pass (`python3 -m unittest discover -s tools/tests`).

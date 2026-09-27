@@ -1,0 +1,49 @@
+== E8 PROFILE 2 5G 03:08:04
+HEALTH board=m2 e8_p2_300s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs e8_p2_300s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+== e8_p2_300s r1: gs->m2 6.34e-02  m2->gs 1.96e-02
+ABRUN DONE 03:13:31
+HEALTH board=m2 e8_p2_60s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs e8_p2_60s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+== e8_p2_60s r1: gs->m2 6.16e-02  m2->gs 1.67e-02
+HEALTH board=m2 e8_p2_60s r2 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs e8_p2_60s r2 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+== e8_p2_60s r2: gs->m2 9.85e-02  m2->gs 2.86e-02
+HEALTH board=m2 e8_p2_60s r3 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs e8_p2_60s r3 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== e8_p2_60s r3: gs->m2 7.30e-02  m2->gs 1.83e-02
+ABRUN DONE 03:17:50
+board=m2 PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: OTHER 2/20 PEER 18/20 distinct=20  expect=peer -> FAIL
+board=gs PLL_LOCKED=1 CDR=0  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 20/20 distinct=20  expect=peer -> PASS
+== 2.5G best pair 03:18:15
+HEALTH board=m2 best_2g5_gs7_m22 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs best_2g5_gs7_m22 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== best_2g5_gs7_m22 r1: gs->m2 1.21e-08  m2->gs 4.54e-08
+ABRUN DONE 03:23:39
+== E7 eye scan on the running 2.5G link 03:23:39
+Traceback (most recent call last):
+  File "/home/pi/ulx5m-serdes/tools/eyescan.py", line 347, in <module>
+    sys.exit(main())
+  File "/home/pi/ulx5m-serdes/tools/eyescan.py", line 343, in main
+    return fn(a)
+  File "/home/pi/ulx5m-serdes/tools/eyescan.py", line 173, in cmd_scan
+    c = measure(s, ph, th, a.window)
+  File "/home/pi/ulx5m-serdes/tools/eyescan.py", line 149, in measure
+    raise TimeoutError('RX_EYE_MEAS_EN did not clear (ph %d th %d)' % (ph, th))
+TimeoutError: RX_EYE_MEAS_EN did not clear (ph -32 th -15)
+board=m2 RX_EN_EQA=1 RX_EQA_LOCK_CFG=12 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1
+Traceback (most recent call last):
+  File "/home/pi/ulx5m-serdes/tools/eyescan.py", line 347, in <module>
+    sys.exit(main())
+  File "/home/pi/ulx5m-serdes/tools/eyescan.py", line 343, in main
+    return fn(a)
+  File "/home/pi/ulx5m-serdes/tools/eyescan.py", line 173, in cmd_scan
+    c = measure(s, ph, th, a.window)
+  File "/home/pi/ulx5m-serdes/tools/eyescan.py", line 149, in measure
+    raise TimeoutError('RX_EYE_MEAS_EN did not clear (ph %d th %d)' % (ph, th))
+TimeoutError: RX_EYE_MEAS_EN did not clear (ph -32 th -15)
+board=gs RX_EN_EQA=1 RX_EQA_LOCK_CFG=12 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1
+Traceback (most recent call last):
+  File "<stdin>", line 3, in <module>
+FileNotFoundError: [Errno 2] No such file or directory: 'log/e7_eye_m2.json'
+LAB4 DONE 03:24:20

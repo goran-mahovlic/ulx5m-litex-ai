@@ -14,7 +14,8 @@ received signal at phase RX_MON_PH_OFFSET (0x15[5:0], signed, 64 codes = 1 UI as
 RX_TH_MON2 (0x05[10:6], signed). Its override enable is 0x06[11] (vendor map, serdestool 56aa48b: RX_TH_MON2_OVR +
 RX_AFE_OFFSET_OVR; 0x05[11] is unused - TUNING_5G.md §5.1). The monitor only runs with RX_EN_EQA=1 and
 RX_EQA_LOCK_CFG bit1 (select monitor output for capturing); scan sets both and restores them. Writing RX_EYE_MEAS_EN=1 with
-the window count in RX_EYE_MEAS_CFG (0x14[15:4]) starts a measurement; the bit clears when it is done. The
+the window count in RX_EYE_MEAS_CFG (0x14[15:4]) starts a measurement; 0x14[0] reads back as EYE_MEAS_DONE
+(DS1001 Table 2.59), so a read of 1 means done (until TASK-5066 this loop waited for 0 and timed out). The
 counters 0x16-0x1D hold correct/wrong decisions of the monitor for the bit classes X11, X00, 001, 110 (the data
 sampler's decision is the reference). BER of a point = wrong / (correct + wrong) over all classes.
 Needs SERDES_TESTMODE=1 (the BER bitstreams have it). The data path is not touched: run ber_mon.py alongside to
@@ -144,9 +145,9 @@ def measure(s, ph, th, window, timeout=2.0):
     s.wr_regfile(*th2_write(th))
     s.wr_regfile(*start_write(window))
     t = time.time()
-    while int(s.rd_regfile(0x14)) & 1:
+    while not int(s.rd_regfile(0x14)) & 1:          # 0x14[0] reads back as EYE_MEAS_DONE (DS1001 Table 2.59)
         if time.time() - t > timeout:
-            raise TimeoutError('RX_EYE_MEAS_EN did not clear (ph %d th %d)' % (ph, th))
+            raise TimeoutError('EYE_MEAS_DONE not set (ph %d th %d)' % (ph, th))
     return counts([int(s.rd_regfile(REG_CNT + i)) for i in range(8)])
 
 

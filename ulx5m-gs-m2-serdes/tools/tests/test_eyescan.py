@@ -69,6 +69,37 @@ class Health(unittest.TestCase):
         self.assertEqual(E.health_verdict(self.GOOD, [0x7FFF, 1])['freq_acc_span'], 2)
 
 
+class FakeRegfile:
+    # 0x14[0] reads back as EYE_MEAS_DONE (DS1001 Table 2.59: "RX_EYE_MEAS_EN / EYE_MEAS_DONE", w/c)
+    def __init__(self, done_after):
+        self.reads14, self.done_after, self.writes = 0, done_after, []
+
+    def wr_regfile(self, addr, data, mask):
+        self.writes.append((addr, data, mask))
+
+    def rd_regfile(self, addr):
+        if addr == 0x14:
+            self.reads14 += 1
+            return 1 if self.reads14 > self.done_after else 0
+        return addr - 0x16 + 1          # counters 0x16..0x1D -> 1..8
+
+
+class Measure(unittest.TestCase):
+    def test_waits_for_done_then_reads_counters(self):
+        f = FakeRegfile(done_after=3)
+        c = E.measure(f, 0, 0, 512)
+        self.assertEqual(f.reads14, 4)
+        self.assertEqual(c['11S'], (1, 2)); self.assertEqual(c['110S'], (7, 8))
+
+    def test_done_at_once_is_not_a_timeout(self):
+        # TASK-5066 E7: the bit read 1 at once, the old loop waited for 0 and timed out on every point
+        self.assertEqual(E.measure(FakeRegfile(done_after=0), 0, 0, 512)['00S'], (3, 4))
+
+    def test_timeout_if_never_done(self):
+        with self.assertRaises(TimeoutError):
+            E.measure(FakeRegfile(done_after=10 ** 9), 0, 0, 512, timeout=0.05)
+
+
 class Margin(unittest.TestCase):
     def grid(self, open_ph, open_th):
         # open eye: zero errors inside the box, 50 % errors outside

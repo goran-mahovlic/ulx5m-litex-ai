@@ -1,0 +1,59 @@
+== E7 2g5 03:25:13
+Done
+Done
+th -15  ################
+th -12  ################
+th  -9  ################
+th  -6  ################
+th  -3  ################
+th  +0  ################
+th  +3  ################
+th  +6  ################
+th  +9  ################
+th +12  ################
+th +15  ################
+EYE board=m2 E7 2g5 m2 width=0 codes (0.00 UI) height=0 codes centre_ph=None @BER<0.001  81s
+th -15  ################
+th -12  ################
+th  -9  ################
+th  -6  ################
+th  -3  ################
+th  +0  ################
+th  +3  ################
+th  +6  ################
+th  +9  ################
+th +12  ################
+th +15  ################
+EYE board=gs E7 2g5 gs width=0 codes (0.00 UI) height=0 codes centre_ph=None @BER<0.001  90s
+board=m2 PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 200/200 distinct=200  expect=peer -> PASS
+board=gs PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 200/200 distinct=200  expect=peer -> PASS
+== E7 5g 03:30:10
+Done
+Done
+th -15  ################
+th -12  ################
+th  -9  ################
+th  -6  ################
+th  -3  ################
+th  +0  ################
+th  +3  ################
+th  +6  ################
+th  +9  ################
+th +12  ################
+th +15  ################
+EYE board=m2 E7 5g m2 width=0 codes (0.00 UI) height=0 codes centre_ph=None @BER<0.001  85s
+th -15  ################
+th -12  ################
+th  -9  ################
+th  -6  ################
+th  -3  ################
+th  +0  ################
+th  +3  ################
+th  +6  ################
+th  +9  ################
+th +12  ################
+th +15  ################
+EYE board=gs E7 5g gs width=0 codes (0.00 UI) height=0 codes centre_ph=None @BER<0.001  86s
+board=m2 PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: OTHER 13/200 PEER 187/200 distinct=200  expect=peer -> FAIL
+board=gs PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: OTHER 5/200 PEER 195/200 distinct=200  expect=peer -> FAIL
+LAB5 DONE 03:35:03
