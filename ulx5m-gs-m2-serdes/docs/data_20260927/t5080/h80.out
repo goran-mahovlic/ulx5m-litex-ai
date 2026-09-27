@@ -1,0 +1,19 @@
+== 0g3 19:04:02
+Done
+JTAG init failed with: TDO is stuck at 0
+0g3 m2: board=m2 PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: ZERO 200/200 distinct=1  expect=peer -> FAIL
+0g3 gs: board=gs PLL_LOCKED=0 CDR=0  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x0000 0x40=0x0000)  rx: ZERO 200/200 distinct=1  expect=peer -> FAIL
+== 2g5 19:05:27
+Done
+JTAG init failed with: TDO is stuck at 0
+HEALTH board=m2 h80 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs h80 problems=PLL_LOCKED=0,PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CALIB_DONE=0,TX_CALIB_DONE=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+2g5 m2: board=m2 PLL_LOCKED=1 CDR=0  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: ZERO 200/200 distinct=1  expect=peer -> FAIL
+2g5 gs: board=gs PLL_LOCKED=0 CDR=0  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x0000 0x40=0x0000)  rx: ZERO 200/200 distinct=1  expect=peer -> FAIL
+Traceback (most recent call last):
+  File "ber_mon.py", line 172, in <module>
+    sys.exit(main())
+  File "ber_mon.py", line 149, in main
+    r = summary(L[0], L[-1], L)
+IndexError: list index out of range
+H80 DONE 19:07:56

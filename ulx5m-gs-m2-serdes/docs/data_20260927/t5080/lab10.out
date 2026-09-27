@@ -1,0 +1,78 @@
+36f09752d8b85ebdf51b6fe8e34d9a646aa9e768a17ec86ced53dee63335e344  gs_sd_2g5p1_txneg_s7.bit
+b1b98a5d946169d1be8b465503c6bee94fb72f44380a20b69bce8bfb6285af4e  m2_e1_2g5p1_txneg_s2.bit
+bec33f074c13cb27d6dd3d4b083251ae76587336e1cfab6eed1346670f9b1b87  gs_p2_5g_txneg_s7.bit
+ac8132bdfc3a995a7d144a029d86469eb756d6af43817e316fc2991143a9670e  m2_p2_5g_txneg_s1.bit
+074d2d54716841094ead3302e150190aaa7bb14eee7e43d9f146ec4dda1302bb  gs_p3_5g_txneg_s7.bit
+0f6385650a8519a7ceb60f566a316739d8f4c7ee4b0dd6676b1c10c229bfe8ec  m2_p3_5g_txneg_s1.bit
+== 2.5G 19:42:27
+HEALTH board=m2 t80_2g5_gs7_m22 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t80_2g5_gs7_m22 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== t80_2g5_gs7_m22 r1: gs->m2 7.45e-10  m2->gs 1.38e-09
+HEALTH board=m2 t80_2g5_gs7_m22 r2 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t80_2g5_gs7_m22 r2 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== t80_2g5_gs7_m22 r2: gs->m2 9.49e-09  m2->gs 1.71e-08
+HEALTH board=m2 t80_2g5_gs7_m22 r3 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t80_2g5_gs7_m22 r3 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== t80_2g5_gs7_m22 r3: gs->m2 2.31e-08  m2->gs 9.42e-08
+ABRUN DONE 19:58:37
+== 5G round 1 19:58:37
+HEALTH board=m2 t80_p2_60s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t80_p2_60s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== t80_p2_60s r1: gs->m2 5.04e-02  m2->gs 2.37e-02
+ABRUN DONE 19:59:57
+HEALTH board=m2 t80_p3_60s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t80_p3_60s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+== t80_p3_60s r1: gs->m2 6.59e-02  m2->gs 7.30e-02
+ABRUN DONE 20:01:19
+== 5G round 2 20:01:19
+HEALTH board=m2 t80_p2_60s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t80_p2_60s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== t80_p2_60s r1: gs->m2 4.11e-02  m2->gs 1.99e-02
+ABRUN DONE 20:02:42
+HEALTH board=m2 t80_p3_60s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t80_p3_60s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== t80_p3_60s r1: gs->m2 6.59e-02  m2->gs 6.94e-02
+ABRUN DONE 20:04:03
+== 5G round 3 20:04:03
+HEALTH board=m2 t80_p2_60s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t80_p2_60s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+== t80_p2_60s r1: gs->m2 5.20e-02  m2->gs 2.71e-02
+ABRUN DONE 20:05:26
+HEALTH board=m2 t80_p3_60s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t80_p3_60s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+== t80_p3_60s r1: gs->m2 6.44e-02  m2->gs 7.33e-02
+ABRUN DONE 20:06:47
+HEALTH board=m2 t80_p2_300s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t80_p2_300s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+== t80_p2_300s r1: gs->m2 5.22e-02  m2->gs 1.40e-02
+ABRUN DONE 20:12:11
+jtag_check P2 m2: board=m2 PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: OTHER 15/200 PEER 185/200 distinct=200  expect=peer -> FAIL
+jtag_check P2 gs: board=gs PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: OTHER 8/200 PEER 192/200 distinct=200  expect=peer -> FAIL
+HEALTH board=m2 t80_p3_300s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t80_p3_300s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+== t80_p3_300s r1: gs->m2 7.70e-02  m2->gs 9.88e-02
+ABRUN DONE 20:18:47
+jtag_check P3 m2: board=m2 PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: OTHER 15/200 PEER 185/200 distinct=200  expect=peer -> FAIL
+jtag_check P3 gs: board=gs PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: OTHER 23/200 PEER 177/200 distinct=200  expect=peer -> FAIL
+| Point | load | BER gs→m2 | synced gs→m2 | BER m2→gs | synced m2→gs |
+|---|---|---|---|---|---|
+| t80_2g5_gs7_m22 | r1 | 7.45e-10 | 1.0e+00 | 1.38e-09 | 1.0e+00 |
+| t80_2g5_gs7_m22 | r2 | 9.49e-09 | 9.7e-01 | 1.71e-08 | 9.7e-01 |
+| t80_2g5_gs7_m22 | r3 | 2.31e-08 | 9.7e-01 | 9.42e-08 | 9.7e-01 |
+| t80_p2_300s | r1 | 5.22e-02 | 1.2e-05 | 1.40e-02 | 3.2e-05 |
+| t80_p2_60s | r1 | 5.04e-02 | 2.3e-03 | 2.37e-02 | 2.4e-03 |
+| t80_p2_60s | r2 | 4.11e-02 | 1.3e-04 | 1.99e-02 | 1.8e-03 |
+| t80_p2_60s | r3 | 5.20e-02 | 5.6e-05 | 2.71e-02 | 1.7e-02 |
+| t80_p3_300s | r1 | 7.70e-02 | 2.7e-04 | 9.88e-02 | 3.3e-03 |
+| t80_p3_60s | r1 | 6.59e-02 | 8.8e-04 | 7.30e-02 | 8.1e-04 |
+| t80_p3_60s | r2 | 6.59e-02 | 1.3e-03 | 6.94e-02 | 2.8e-02 |
+| t80_p3_60s | r3 | 6.44e-02 | 6.3e-04 | 7.33e-02 | 2.3e-04 |
+
+| Point | n | BER gs→m2 median (worst) | BER m2→gs median (worst) | bits per direction | synced share gs→m2 / m2→gs |
+|---|---|---|---|---|---|
+| t80_2g5_gs7_m22 | 3 | 9.49e-09 (2.31e-08) | 1.71e-08 (9.42e-08) | 1.13e+12 | 9.7e-01 / 9.7e-01 |
+| t80_p3_60s | 3 | 6.59e-02 (6.59e-02) | 7.30e-02 (7.33e-02) | 4.86e+08 | 8.8e-04 / 8.1e-04 |
+| t80_p3_300s | 1 | 7.70e-02 (7.70e-02) | 9.88e-02 (9.88e-02) | 2.04e+08 | 2.7e-04 / 3.3e-03 |
+| t80_p2_60s | 3 | 5.04e-02 (5.20e-02) | 2.37e-02 (2.71e-02) | 4.20e+08 | 1.3e-04 / 2.4e-03 |
+| t80_p2_300s | 1 | 5.22e-02 (5.22e-02) | 1.40e-02 (1.40e-02) | 9.65e+06 | 1.2e-05 / 3.2e-05 |
+LAB10 DONE 20:20:07

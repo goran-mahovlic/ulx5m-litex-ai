@@ -652,3 +652,72 @@ Reading (E9/H2 criterion: ≥ 3× lower BER and/or a smaller spread between load
 | 5 G P2 / P3 BER (60 s median) | 7.3·10⁻² / 1.04·10⁻¹ (gs→m2) | 4.9·10⁻² / 6.2·10⁻² | **same (< 3×)** |
 | DVI image under SDRAM load | not seen (grabber) | stable, BIOS 33/33 and Linux 86/86 | **OK** |
 | fabric PLL drops, BIOS 2 × mem_test | +8930 / +43 333 | +0 / +0 | **better** (§10.2 confirmed) |
+
+### 10.5 TASK-5080/5082/5084: 2.2 µF added on M2 C127/C128 (Goran 27.09. ~19:00) — lab10 = `lab9.sh` again
+
+**Done by:** Jelena, gs lease `TASK-5080`, same six bits as §10.4 (sha256 in `lab10.out`), CFGRST, SRAM `-r`, no power-cycle.
+**Raw data:** `data_20260927/t5080/` (`h80.sh`/`h80.out` first health check, `h81.out` second one, `lab10.sh` = `lab9.sh` with only
+lease/log/labels renamed, `lab10.out`, `log5080/*.json`). lab10 ran 19:42:27–20:20:07 and removed `gs.owner` itself.
+
+**Timeline, because it matters for the reading.** 19:04 first health check (`h80.out`): gs did not answer on JTAG
+("TDO is stuck at 0"), m2 RX ZERO 200/200. Goran fixed the gs side, and the second check at 19:38 (`h81.out`) was clean again:
+`ber_jtag_check` PEER 200/200 on both boards at 0.3 G and 2.5 G, m2 − gs 0.0 ppm, 30 s at 2.5 G gs→m2 4.1·10⁻⁹ / m2→gs 1.4·10⁻¹⁰.
+lab10 started 4 min later. So r1 ran about 5–10 min after gs came back; in §10.4 r1 started 13 min after the health check.
+
+**Three columns** (2.5 G: best pair gs `TX_NEG` s7 + m2 s2, 300 s per load; 5 G: 60 s median of 3 loads, worst in brackets):
+
+| Point | no caps (§10.4 "before") | GS 1 µF only (§10.4, t79) | **GS 1 µF + M2 2.2 µF (t80)** |
+|---|---|---|---|
+| 2.5 G gs→m2, typical / worst | 2.4·10⁻⁹ / 1.2·10⁻⁸ | 6.0·10⁻¹⁰ / 6.9·10⁻¹⁰ | **9.5·10⁻⁹ / 2.3·10⁻⁸** |
+| 2.5 G m2→gs*, typical / worst | 8.5·10⁻¹⁰ / 4.5·10⁻⁸ | 1.3·10⁻¹¹ / 2.6·10⁻¹⁰ | **1.7·10⁻⁸ / 9.4·10⁻⁸** |
+| 2.5 G per load r1 / r2 / r3, gs→m2 | 4.7·10⁻¹⁰ ; 1.2·10⁻⁸ (2 loads) | 6.9 / 4.3 / 6.0 ·10⁻¹⁰ | **7.5·10⁻¹⁰ / 9.5·10⁻⁹ / 2.3·10⁻⁸** |
+| 2.5 G per load r1 / r2 / r3, m2→gs* | 1.6·10⁻¹¹ ; 4.5·10⁻⁸ (2 loads) | 2.6·10⁻¹⁰ / 8.0·10⁻¹² / 1.3·10⁻¹¹ | **1.4·10⁻⁹ / 1.7·10⁻⁸ / 9.4·10⁻⁸** |
+| 2.5 G spread between loads gs→m2 / m2→gs | ×26 / ×2900 | ×1.6 / ×32 | **×31 / ×68** |
+| 2.5 G synced share | 1.00 ; 0.97 | 1.00 / 0.96 / 0.96 | 1.00 / 0.97 / 0.97 |
+| 5 G P2 gs→m2 / m2→gs* | 7.3·10⁻² / 1.8·10⁻² | 4.9·10⁻² / 2.0·10⁻² | **5.0·10⁻² (5.2·10⁻²) / 2.4·10⁻² (2.7·10⁻²)** |
+| 5 G P3 gs→m2 / m2→gs* | 1.04·10⁻¹ / 1.68·10⁻¹ | 6.2·10⁻² / 1.01·10⁻¹ | **6.6·10⁻² (6.6·10⁻²) / 7.3·10⁻² (7.3·10⁻²)** |
+| 5 G 300 s P2 / P3, gs→m2 | 6.3·10⁻² / 1.18·10⁻¹ | 5.9·10⁻² / 6.4·10⁻² | 5.2·10⁻² / 7.7·10⁻² |
+| 5 G synced share P2 / P3 (gs→m2 ; m2→gs*) | 1.3·10⁻³ ; 3.8·10⁻⁴ / 3.2·10⁻² ; 9.3·10⁻³ | 8.1·10⁻⁴ ; 3.4·10⁻⁴ / 8.1·10⁻³ ; 3.1·10⁻⁴ | 1.3·10⁻⁴ ; 2.4·10⁻³ / 8.8·10⁻⁴ ; 8.1·10⁻⁴ |
+| `ber_jtag_check` 200 m2 / gs, P2 ; P3 | 187 / 195 ; 182 / 165 | 181 / 192 ; 183 / 182 | 185 / 192 ; 185 / 177 |
+
+(* m2→gs is counted by the gs checker, rclk below 62.5 MHz: indicative only, §9 intro.)
+
+**Why r1 → r3 grows (2.5 G) — what the data shows and what it rules out:**
+
+| Candidate | Evidence (file) | Verdict |
+|---|---|---|
+| refclk / rate offset (ppm) | TX word rate 2 500 019 200 b/s on **both** boards in all 3 loads, m2 − gs **0.0 ppm** (`t80_2g5_*_r?.json`); §10.4: 2 500 019 440–520, also 0.0 | **ruled out** |
+| `PLL_CAP_FT` drift / PLL lock | `health_table.py`: gs 436 / 433 / 434, m2 509 / 509 / 506, FT_OF/UF 0/3, PLL lock 3/3 on both. §10.4: gs 436–437, m2 506–509. The ±3 codes do not follow the BER. | **ruled out** |
+| RX CDR / EQA | CDR lock 3/3 and EQA lock 3/3 on both boards; CDR phase-accumulator span gs 558 / 775 / 139, m2 108 / 108 / 248 (no trend; §10.4: 357–542 / 171–248) | **ruled out** as a register-visible cause |
+| Pi supply dips | `Under-voltage` in dmesg at 19:47:53–19:48:08, 19:53:16–19:53:33, 19:58:40 = while the **next bitstream was loading**, not during a BER count; same pattern as in §10.4 | **not the cause** of the BER count |
+| link loss / resync | `loss 0` in every load; synced share 1.00 / 0.97 / 0.97 (§10.4: 1.00 / 0.96 / 0.96) | **ruled out** |
+| error shape | errored words gs→m2 101 → 1611 → 3159 (2.8 / 2.2 / 2.7 bits per word); m2→gs 326 → 3407 → 946 (1.6 / 1.9 / **37** bits per word). In §10.4 both directions had 3–81 errored words per load. | more **random single-bit errors in both directions at once** (r2), plus a burst component in m2→gs r3 |
+| temperature | no temperature sensor in the data; no FPGA die temperature is read | **cannot be checked** from this data |
+
+What that leaves: the growth is **in both directions at the same time**, while every PLL/CDR/refclk register stays where it was.
+That points to amplitude noise/jitter on a supply both directions share, not to a frequency or lock problem. The M2 SerDes
+supply is shared by M2's TX (m2→gs) and M2's RX (gs→m2), and M2 C127/C128 is the only hardware change since §10.4, so a
+problem at the new joints is **consistent** with the data. It is not proven: the r1 value (7.5·10⁻¹⁰ / 1.4·10⁻⁹) is close to
+the GS-only result, and this is one session of three loads, directly after a gs repair. A slow warm-up after that repair would
+produce the same monotonic trend, and we have no temperature to tell the two apart.
+
+**5 G is unchanged** by the M2 caps: all points are within 1.0–1.4× of the GS-only column, and there is no trend from round 1 to
+3 (P2 gs→m2 5.0 / 4.1 / 5.2·10⁻²). That is expected: at 10⁻² … 10⁻¹ the 5 G link is limited by something else (§10.4), and a
+supply-noise increase that moves 2.5 G from 10⁻¹⁰ to 10⁻⁸ is invisible there.
+
+**Verdict:**
+
+| Item | GS 1 µF only (§10.4) | + M2 2.2 µF (§10.5) | Verdict |
+|---|---|---|---|
+| 2.5 G BER typical gs→m2 / m2→gs | 6.0·10⁻¹⁰ / 1.3·10⁻¹¹ | 9.5·10⁻⁹ / 1.7·10⁻⁸ | **worse** (×16 / ×1300), and worse than no caps (×4 / ×20) |
+| 2.5 G spread between loads | ×1.6 / ×32 | ×31 / ×68, monotonic r1 < r2 < r3 | **worse**, and it is a trend, not a lottery |
+| 5 G P2 / P3 | 4.9·10⁻² / 6.2·10⁻² (gs→m2) | 5.0·10⁻² / 6.6·10⁻² | **same** |
+| registers, ppm, CAP_FT, CDR, loss | clean | clean | **same** — the cause is not register-visible |
+
+**One check for Goran (multimeter, no scope needed):** with the 2.5 G bit loaded on M2, measure DC on M2 **TP10 (`VDD_SER`)**,
+**TP8 (`VDD_SER_PLL`)** and `VDD_CORE` (any core decoupling cap), then again after 10 min. Expected with R105/R106 = 1 Ω:
+TP10/TP8 ≈ 30–50 mV below VDD_CORE (≈ 1.05 V at J3 = 2-3), stable. TP ≈ VDD_CORE means R105/R106 are 0 Ω (Goran's suspicion).
+TP more than ~100 mV below VDD_CORE, or drifting down while the board warms, means leakage or a partial short at the new
+C127/C128 joints → reflow or remove the 2.2 µF and rerun `lab10.sh` (38 min). If the DC readings are normal, the next step is to
+rerun `lab10.sh` unchanged after the boards have been powered for ≥ 30 min, to separate "worse with the M2 caps" from
+"warm-up after the gs repair".
