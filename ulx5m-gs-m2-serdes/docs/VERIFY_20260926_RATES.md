@@ -721,3 +721,69 @@ TP more than ~100 mV below VDD_CORE, or drifting down while the board warms, mea
 C127/C128 joints → reflow or remove the 2.2 µF and rerun `lab10.sh` (38 min). If the DC readings are normal, the next step is to
 rerun `lab10.sh` unchanged after the boards have been powered for ≥ 30 min, to separate "worse with the M2 caps" from
 "warm-up after the gs repair".
+
+### 10.6 TASK-5085: rerun after Goran's change at 20:38 (GND wire?) — lab10 again, unchanged
+
+**What changed:** Goran 27.09. 20:38 "neka testira ponovno", after REGOČ's proposal at 20:28 (a short, thick GND wire directly
+GS↔M2, because the FFC carries only 4 GND pins, M2 is probably powered through the FFC 5 V, and the DirtyJTAG USB cables are a
+second ground path/loop). The exact change was not stated; it is recorded here as **"Goran's change 20:38 (GND wire?)"**.
+The M2 2.2 µF (C127/C128) and GS 1 µF from §10.4/§10.5 stay on.
+
+**Done by:** Jelena, gs lease `TASK-5085`, same six bits (sha256 in `lab10_5085.out`, identical to §10.5), CFGRST, SRAM `-r`,
+no power-cycle. **Raw data:** `data_20260927/t5085/` (`h85.sh`/`h85.out` health, `lab10_5085.sh` = `lab10.sh` with only
+lease/log dir/labels renamed `t80`→`t85`, `lab10_5085.out`, `log5085/*.json`). Health 20:40–20:43, lab 20:44:07–21:21:36,
+`gs.owner` removed by the script.
+
+**Health (h85):** `ber_jtag_check` PEER 200/200 on both boards at 0.3 G and 2.5 G; 2.5 G TX word rate 2 500 019 360 b/s on both,
+m2 − gs **0.0 ppm**; `PLL_CAP_FT` m2 508 / gs 433, FT_OF/UF 0; 30 s `ber_mon` gs→m2 8.2·10⁻⁹, m2→gs 0 (< 6.9·10⁻¹¹).
+
+**Four columns** (2.5 G: best pair gs `TX_NEG` s7 + m2 s2, 300 s per load; 5 G: 60 s median of 3 loads, worst in brackets):
+
+| Point | no caps (§10.4 "before") | GS 1 µF (§10.4, t79) | + M2 2.2 µF (§10.5, t80) | **+ Goran's change 20:38 (t85)** |
+|---|---|---|---|---|
+| 2.5 G gs→m2, typical / worst | 2.4·10⁻⁹ / 1.2·10⁻⁸ | 6.0·10⁻¹⁰ / 6.9·10⁻¹⁰ | 9.5·10⁻⁹ / 2.3·10⁻⁸ | **5.5·10⁻⁹ / 9.5·10⁻⁹** |
+| 2.5 G m2→gs*, typical / worst | 8.5·10⁻¹⁰ / 4.5·10⁻⁸ | 1.3·10⁻¹¹ / 2.6·10⁻¹⁰ | 1.7·10⁻⁸ / 9.4·10⁻⁸ | **2.5·10⁻¹⁰ / 4.5·10⁻⁸** |
+| 2.5 G r1 / r2 / r3, gs→m2 | 4.7·10⁻¹⁰ ; 1.2·10⁻⁸ (2 loads) | 6.9 / 4.3 / 6.0 ·10⁻¹⁰ | 7.5·10⁻¹⁰ / 9.5·10⁻⁹ / 2.3·10⁻⁸ | **5.5·10⁻⁹ / 9.5·10⁻⁹ / 2.2·10⁻⁹** |
+| 2.5 G r1 / r2 / r3, m2→gs* | 1.6·10⁻¹¹ ; 4.5·10⁻⁸ (2 loads) | 2.6·10⁻¹⁰ / 8.0·10⁻¹² / 1.3·10⁻¹¹ | 1.4·10⁻⁹ / 1.7·10⁻⁸ / 9.4·10⁻⁸ | **4.5·10⁻⁸ / 2.5·10⁻¹⁰ / 4.5·10⁻¹¹** |
+| 2.5 G spread between loads gs→m2 / m2→gs | ×26 / ×2900 | ×1.6 / ×32 | ×31 / ×68 | **×4.4 / ×1000** |
+| 2.5 G errored words r1/r2/r3 gs→m2 ; m2→gs | – | 3–81 per load | 101/1611/3159 ; 326/3407/946 | 895/1173/384 ; 6430/54/14 |
+| 2.5 G bits per errored word, m2→gs | – | – | 1.6 / 1.9 / **37** | 2.7 / 1.8 / 1.2 |
+| 2.5 G synced share | 1.00 ; 0.97 | 1.00 / 0.96 / 0.96 | 1.00 / 0.97 / 0.97 | 1.00 / 0.98 / 0.98 |
+| 5 G P2 gs→m2 / m2→gs* | 7.3·10⁻² / 1.8·10⁻² | 4.9·10⁻² / 2.0·10⁻² | 5.0·10⁻² / 2.4·10⁻² | **4.7·10⁻² (4.9·10⁻²) / 2.4·10⁻² (2.5·10⁻²)** |
+| 5 G P3 gs→m2 / m2→gs* | 1.04·10⁻¹ / 1.68·10⁻¹ | 6.2·10⁻² / 1.01·10⁻¹ | 6.6·10⁻² / 7.3·10⁻² | **5.8·10⁻² (7.2·10⁻²) / 1.03·10⁻¹ (1.18·10⁻¹)** |
+| 5 G 300 s P2 / P3, gs→m2 | 6.3·10⁻² / 1.18·10⁻¹ | 5.9·10⁻² / 6.4·10⁻² | 5.2·10⁻² / 7.7·10⁻² | 2.9·10⁻² / 0.5† (robust 8.1·10⁻²) |
+| `ber_jtag_check` 200 m2 / gs, P2 ; P3 | 187 / 195 ; 182 / 165 | 181 / 192 ; 183 / 182 | 185 / 192 ; 185 / 177 | 191 / 199 ; 179 / 181 |
+
+(* m2→gs is counted by the gs checker, rclk below 62.5 MHz: indicative only, §9 intro. † `ab_table.py` caps a corrupted m2
+counter at 0.5 (errb > 40·words, `loss 28`); `ber_mon` `ber_robust` over 136 s gives 8.1·10⁻², in line with the 60 s loads.)
+
+**Registers (`health_table.py`), unchanged:** 2.5 G PLL lock 3/3, FT_OF/UF 0/3, CDR 3/3, EQA 3/3 on both boards; CAP_FT gs
+433–436, m2 506–509 (§10.5: 433–436 / 506–509); rate m2 − gs 0.0 ppm in all three loads. 5 G: ppm P2 −0.6…−1.2, P3 −6.1…−10.2
+(§10.5: −0.6…−1.8 / −4.6…−6.8, so P3's m2 PLL offset is a known property of that profile, not new). Pi `Under-voltage` again only
+at bitstream loads (20:49:48, 20:55:05, 21:00:14…, 21:14:23–21:14:58, 21:21:32), not during a 2.5 G count.
+
+**Trend r1 → r3 (warm-up vs ground):**
+- §10.5 grew monotonically in **both** directions (×31 / ×68). Here it does **not**: m2→gs **falls** ×1000 (4.5·10⁻⁸ → 2.5·10⁻¹⁰ →
+  4.5·10⁻¹¹), gs→m2 goes 5.5 → 9.5 → 2.2·10⁻⁹ with no direction. The growth of §10.5 is therefore **not reproduced**.
+- Warm-up does not explain both sessions: this run started with boards already powered for over an hour (health 20:40, gs back
+  since 19:38; Goran's change may have needed a power-down — not reported), and its worst load is the **first** one. A pure
+  thermal drift would give the same sign in both sessions. The pattern is the load-to-load spread already seen in the "no caps"
+  column (×2900), i.e. per-load adaptation/lottery, not a slow drift.
+- The m2→gs burst component of §10.5 r3 (37 bits per errored word) is gone: all loads are 1.2–2.7 bits per word, random errors.
+- Ground (GND wire?) is **consistent** with the m2→gs improvement (typical ×68 better than §10.5, r3 back at the GS-only level
+  4.5·10⁻¹¹), but gs→m2 (= M2 RX) stays ×9 worse than GS-only (5.5·10⁻⁹ vs 6.0·10⁻¹⁰) in all three loads. One session of three
+  loads per column cannot separate "ground helped" from "this session's loads were luckier"; the exact change is also unknown.
+
+**Verdict:**
+
+| Item | + M2 2.2 µF (§10.5) | + Goran's change 20:38 (§10.6) | Verdict |
+|---|---|---|---|
+| 2.5 G gs→m2 typical / worst | 9.5·10⁻⁹ / 2.3·10⁻⁸ | 5.5·10⁻⁹ / 9.5·10⁻⁹ | slightly **better** (×1.7 / ×2.4), still ×9 worse than GS 1 µF only |
+| 2.5 G m2→gs typical / worst | 1.7·10⁻⁸ / 9.4·10⁻⁸ | 2.5·10⁻¹⁰ / 4.5·10⁻⁸ | **better** typical (×68), worst unchanged (r1) |
+| 2.5 G trend r1 → r3 | monotonic growth both ways | no growth; m2→gs falls | §10.5 growth **not reproduced** — not a warm-up drift |
+| 5 G P2 / P3 | 5.0·10⁻² / 6.6·10⁻² | 4.7·10⁻² / 5.8·10⁻² | **same** (5 G is limited elsewhere, §10.4) |
+| registers, ppm, CAP_FT, CDR, loss | clean | clean | **same** |
+
+**Next:** the cleanest separation is an A/B on the one variable: rerun `lab10_5085.sh` unchanged with the GND wire removed
+(or, if the change was something else, with it undone), same session, no power-cycle. If gs→m2 should return to the 6·10⁻¹⁰ of
+§10.4, the M2 2.2 µF on C127/C128 (and the TP10/TP8 vs VDD_CORE check proposed in §10.5) remain the prime suspect for the M2 RX.
