@@ -1,0 +1,519 @@
+{
+    "csr_bases": {
+        "ctrl": 4026531840,
+        "ethmac": 4026533888,
+        "uart": 4026535936,
+        "timer0": 4026537984,
+        "identifier_mem": 4026540032,
+        "main": 4026542080,
+        "sdram": 4026544128,
+        "usb_pnru": 4026546176,
+        "video_fb2x": 4026548224,
+        "video_vtg": 4026550272
+    },
+    "csr_registers": {
+        "ctrl_reset": {
+            "addr": 4026531840,
+            "size": 1,
+            "type": "rw"
+        },
+        "ctrl_scratch": {
+            "addr": 4026531844,
+            "size": 1,
+            "type": "rw"
+        },
+        "ctrl_bus_errors": {
+            "addr": 4026531848,
+            "size": 1,
+            "type": "ro"
+        },
+        "ethmac_sram_writer_slot": {
+            "addr": 4026533888,
+            "size": 1,
+            "type": "ro"
+        },
+        "ethmac_sram_writer_length": {
+            "addr": 4026533892,
+            "size": 1,
+            "type": "ro"
+        },
+        "ethmac_sram_writer_errors": {
+            "addr": 4026533896,
+            "size": 1,
+            "type": "ro"
+        },
+        "ethmac_sram_writer_ev_status": {
+            "addr": 4026533900,
+            "size": 1,
+            "type": "ro"
+        },
+        "ethmac_sram_writer_ev_pending": {
+            "addr": 4026533904,
+            "size": 1,
+            "type": "rw"
+        },
+        "ethmac_sram_writer_ev_enable": {
+            "addr": 4026533908,
+            "size": 1,
+            "type": "rw"
+        },
+        "ethmac_sram_reader_start": {
+            "addr": 4026533912,
+            "size": 1,
+            "type": "rw"
+        },
+        "ethmac_sram_reader_ready": {
+            "addr": 4026533916,
+            "size": 1,
+            "type": "ro"
+        },
+        "ethmac_sram_reader_level": {
+            "addr": 4026533920,
+            "size": 1,
+            "type": "ro"
+        },
+        "ethmac_sram_reader_slot": {
+            "addr": 4026533924,
+            "size": 1,
+            "type": "rw"
+        },
+        "ethmac_sram_reader_length": {
+            "addr": 4026533928,
+            "size": 1,
+            "type": "rw"
+        },
+        "ethmac_sram_reader_ev_status": {
+            "addr": 4026533932,
+            "size": 1,
+            "type": "ro"
+        },
+        "ethmac_sram_reader_ev_pending": {
+            "addr": 4026533936,
+            "size": 1,
+            "type": "rw"
+        },
+        "ethmac_sram_reader_ev_enable": {
+            "addr": 4026533940,
+            "size": 1,
+            "type": "rw"
+        },
+        "ethmac_preamble_crc": {
+            "addr": 4026533944,
+            "size": 1,
+            "type": "ro"
+        },
+        "ethmac_rx_datapath_preamble_errors": {
+            "addr": 4026533948,
+            "size": 1,
+            "type": "ro"
+        },
+        "ethmac_rx_datapath_crc_errors": {
+            "addr": 4026533952,
+            "size": 1,
+            "type": "ro"
+        },
+        "uart_rxtx": {
+            "addr": 4026535936,
+            "size": 1,
+            "type": "rw"
+        },
+        "uart_txfull": {
+            "addr": 4026535940,
+            "size": 1,
+            "type": "ro"
+        },
+        "uart_rxempty": {
+            "addr": 4026535944,
+            "size": 1,
+            "type": "ro"
+        },
+        "uart_ev_status": {
+            "addr": 4026535948,
+            "size": 1,
+            "type": "ro"
+        },
+        "uart_ev_pending": {
+            "addr": 4026535952,
+            "size": 1,
+            "type": "rw"
+        },
+        "uart_ev_enable": {
+            "addr": 4026535956,
+            "size": 1,
+            "type": "rw"
+        },
+        "uart_txempty": {
+            "addr": 4026535960,
+            "size": 1,
+            "type": "ro"
+        },
+        "uart_rxfull": {
+            "addr": 4026535964,
+            "size": 1,
+            "type": "ro"
+        },
+        "timer0_load": {
+            "addr": 4026537984,
+            "size": 1,
+            "type": "rw"
+        },
+        "timer0_reload": {
+            "addr": 4026537988,
+            "size": 1,
+            "type": "rw"
+        },
+        "timer0_en": {
+            "addr": 4026537992,
+            "size": 1,
+            "type": "rw"
+        },
+        "timer0_update_value": {
+            "addr": 4026537996,
+            "size": 1,
+            "type": "rw"
+        },
+        "timer0_value": {
+            "addr": 4026538000,
+            "size": 1,
+            "type": "ro"
+        },
+        "timer0_ev_status": {
+            "addr": 4026538004,
+            "size": 1,
+            "type": "ro"
+        },
+        "timer0_ev_pending": {
+            "addr": 4026538008,
+            "size": 1,
+            "type": "rw"
+        },
+        "timer0_ev_enable": {
+            "addr": 4026538012,
+            "size": 1,
+            "type": "rw"
+        },
+        "main_video_recoveries": {
+            "addr": 4026542080,
+            "size": 1,
+            "type": "ro"
+        },
+        "main_phy_status0": {
+            "addr": 4026542084,
+            "size": 1,
+            "type": "ro"
+        },
+        "main_phy_status1": {
+            "addr": 4026542088,
+            "size": 1,
+            "type": "ro"
+        },
+        "main_pll_sys_unlocks": {
+            "addr": 4026542092,
+            "size": 1,
+            "type": "ro"
+        },
+        "main_pll_tx_unlocks": {
+            "addr": 4026542096,
+            "size": 1,
+            "type": "ro"
+        },
+        "main_pll_stdy": {
+            "addr": 4026542100,
+            "size": 1,
+            "type": "ro"
+        },
+        "main_pll_stdy_rst": {
+            "addr": 4026542104,
+            "size": 1,
+            "type": "rw"
+        },
+        "sdram_dfii_control": {
+            "addr": 4026544128,
+            "size": 1,
+            "type": "rw"
+        },
+        "sdram_dfii_pi0_command": {
+            "addr": 4026544132,
+            "size": 1,
+            "type": "rw"
+        },
+        "sdram_dfii_pi0_command_issue": {
+            "addr": 4026544136,
+            "size": 1,
+            "type": "rw"
+        },
+        "sdram_dfii_pi0_address": {
+            "addr": 4026544140,
+            "size": 1,
+            "type": "rw"
+        },
+        "sdram_dfii_pi0_baddress": {
+            "addr": 4026544144,
+            "size": 1,
+            "type": "rw"
+        },
+        "sdram_dfii_pi0_wrdata": {
+            "addr": 4026544148,
+            "size": 1,
+            "type": "rw"
+        },
+        "sdram_dfii_pi0_rddata": {
+            "addr": 4026544152,
+            "size": 1,
+            "type": "ro"
+        },
+        "usb_pnru_ctrl": {
+            "addr": 4026546176,
+            "size": 1,
+            "type": "rw"
+        },
+        "usb_pnru_stat": {
+            "addr": 4026546180,
+            "size": 1,
+            "type": "ro"
+        },
+        "usb_pnru_frame": {
+            "addr": 4026546184,
+            "size": 1,
+            "type": "ro"
+        },
+        "usb_pnru_tx_len": {
+            "addr": 4026546188,
+            "size": 1,
+            "type": "rw"
+        },
+        "usb_pnru_token": {
+            "addr": 4026546192,
+            "size": 1,
+            "type": "rw"
+        },
+        "usb_pnru_rx_stat": {
+            "addr": 4026546196,
+            "size": 1,
+            "type": "ro"
+        },
+        "usb_pnru_tx_data": {
+            "addr": 4026546200,
+            "size": 1,
+            "type": "rw"
+        },
+        "usb_pnru_rx_data": {
+            "addr": 4026546204,
+            "size": 1,
+            "type": "ro"
+        },
+        "video_fb2x_dma_base": {
+            "addr": 4026548224,
+            "size": 1,
+            "type": "rw"
+        },
+        "video_fb2x_dma_length": {
+            "addr": 4026548228,
+            "size": 1,
+            "type": "rw"
+        },
+        "video_fb2x_dma_enable": {
+            "addr": 4026548232,
+            "size": 1,
+            "type": "rw"
+        },
+        "video_fb2x_dma_done": {
+            "addr": 4026548236,
+            "size": 1,
+            "type": "ro"
+        },
+        "video_fb2x_dma_loop": {
+            "addr": 4026548240,
+            "size": 1,
+            "type": "rw"
+        },
+        "video_fb2x_dma_offset": {
+            "addr": 4026548244,
+            "size": 1,
+            "type": "ro"
+        },
+        "video_fb2x_frames": {
+            "addr": 4026548248,
+            "size": 1,
+            "type": "ro"
+        },
+        "video_fb2x_underflow": {
+            "addr": 4026548252,
+            "size": 1,
+            "type": "ro"
+        },
+        "video_fb2x_resyncs": {
+            "addr": 4026548256,
+            "size": 1,
+            "type": "ro"
+        },
+        "video_vtg_enable": {
+            "addr": 4026550272,
+            "size": 1,
+            "type": "rw"
+        },
+        "video_vtg_hres": {
+            "addr": 4026550276,
+            "size": 1,
+            "type": "rw"
+        },
+        "video_vtg_hsync_start": {
+            "addr": 4026550280,
+            "size": 1,
+            "type": "rw"
+        },
+        "video_vtg_hsync_end": {
+            "addr": 4026550284,
+            "size": 1,
+            "type": "rw"
+        },
+        "video_vtg_hscan": {
+            "addr": 4026550288,
+            "size": 1,
+            "type": "rw"
+        },
+        "video_vtg_vres": {
+            "addr": 4026550292,
+            "size": 1,
+            "type": "rw"
+        },
+        "video_vtg_vsync_start": {
+            "addr": 4026550296,
+            "size": 1,
+            "type": "rw"
+        },
+        "video_vtg_vsync_end": {
+            "addr": 4026550300,
+            "size": 1,
+            "type": "rw"
+        },
+        "video_vtg_vscan": {
+            "addr": 4026550304,
+            "size": 1,
+            "type": "rw"
+        }
+    },
+    "constants": {
+        "config_platform_name": "intergalaktik_ulx5m_gs",
+        "config_clock_frequency": 20000000,
+        "config_cpu_has_interrupt": null,
+        "config_cpu_reset_addr": 0,
+        "config_cpu_count": 1,
+        "config_cpu_isa": "rv32i2p0_ma",
+        "config_cpu_mmu": "sv32",
+        "config_cpu_dcache_size": 4096,
+        "config_cpu_dcache_ways": 1,
+        "config_cpu_dcache_block_size": 64,
+        "config_cpu_icache_size": 4096,
+        "config_cpu_icache_ways": 1,
+        "config_cpu_icache_block_size": 64,
+        "config_cpu_dtlb_size": 4,
+        "config_cpu_dtlb_ways": 4,
+        "config_cpu_itlb_size": 4,
+        "config_cpu_itlb_ways": 4,
+        "config_cpu_type_vexriscv_smp": null,
+        "config_cpu_variant_linux": null,
+        "config_cpu_family": "riscv",
+        "config_cpu_name": "vexriscv",
+        "config_cpu_human_name": "VexRiscv SMP-LINUX",
+        "config_cpu_nop": "nop",
+        "config_identifier": "ULX5M-GS SoC | CPU/TFTP 192.168.10.213 (10:e2:d5:00:00:01) 2026-09-26 16:32:25",
+        "video_fb_base": 1139802112,
+        "video_fb_width": 320,
+        "video_fb_height": 240,
+        "eth_phy_no_reset": null,
+        "localip1": 192,
+        "localip2": 168,
+        "localip3": 10,
+        "localip4": 213,
+        "remoteip1": 192,
+        "remoteip2": 168,
+        "remoteip3": 10,
+        "remoteip4": 14,
+        "macaddr1": 16,
+        "macaddr2": 226,
+        "macaddr3": 213,
+        "macaddr4": 0,
+        "macaddr5": 0,
+        "macaddr6": 1,
+        "sdcard_boot_disable": null,
+        "net_boot_priority": -1,
+        "config_csr_data_width": 32,
+        "config_csr_alignment": 32,
+        "config_csr_ordering_big": null,
+        "config_bus_standard": "wishbone",
+        "config_bus_data_width": 32,
+        "config_bus_address_width": 32,
+        "config_bus_bursting": 0,
+        "ethmac_rx_slots": 2,
+        "ethmac_tx_slots": 2,
+        "ethmac_slot_size": 2048,
+        "config_cpu_interrupts": 4,
+        "ethmac_interrupt": 3,
+        "timer0_interrupt": 2,
+        "uart_interrupt": 1
+    },
+    "memories": {
+        "opensbi": {
+            "base": 1089470464,
+            "size": 524288,
+            "type": "cached+linker"
+        },
+        "plic": {
+            "base": 4039114752,
+            "size": 4194304,
+            "type": "io"
+        },
+        "clint": {
+            "base": 4026597376,
+            "size": 65536,
+            "type": "io"
+        },
+        "rom": {
+            "base": 0,
+            "size": 65536,
+            "type": "cached"
+        },
+        "sram": {
+            "base": 268435456,
+            "size": 8192,
+            "type": "cached"
+        },
+        "main_ram": {
+            "base": 1073741824,
+            "size": 67108864,
+            "type": "cached"
+        },
+        "ethmac": {
+            "base": 2147483648,
+            "size": 8192,
+            "type": "io+linker"
+        },
+        "ethmac_rx": {
+            "base": 2147483648,
+            "size": 4096,
+            "type": "io"
+        },
+        "ethmac_tx": {
+            "base": 2147487744,
+            "size": 4096,
+            "type": "io"
+        },
+        "csr": {
+            "base": 4026531840,
+            "size": 65536,
+            "type": "io"
+        }
+    },
+    "cores": {
+        "ctrl": "SoCController",
+        "ethmac": "LiteEthMAC",
+        "uart": "UART",
+        "timer0": "Timer",
+        "main": "LiteXModule",
+        "sdram": "LiteDRAMCore",
+        "usb_pnru": "USBHostPNRU",
+        "video_fb2x": "FrameBuffer2x",
+        "video_vtg": "VideoTimingGenerator"
+    }
+}

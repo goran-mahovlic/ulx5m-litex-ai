@@ -1,8 +1,9 @@
 # LiteX build output (tools/soc_build.sh <name> -> build/s_<name>/). Only csr.json/csr.csv of the
-# two builds behind bitstreams/ are committed (tools/linux/mkdts.py reads them).
+# builds behind bitstreams/ are committed (tools/linux/mkdts.py reads them).
 build/*
 !build/s_grec_3/
 !build/s_ghrec_1/
+!build/s_usb5_pll60_s1/
 build/s_*/*
 !build/s_*/csr.json
 !build/s_*/csr.csv
@@ -19,3 +20,6 @@ __pycache__/
 # cocotb runs of sim/tb_usb_pnru.py (also holds the fetched PNRU reference Verilog, not redistributed here)
 sim/usb_pnru/build/
 sim/usb_pnru/results.xml
+
+# Board test helper (make -C tools/doom_linux reptest), built on demand
+tools/doom_linux/reptest
