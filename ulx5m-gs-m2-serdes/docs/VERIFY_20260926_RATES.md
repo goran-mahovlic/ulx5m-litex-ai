@@ -859,6 +859,23 @@ time (one load had the M2 CDR unlocked in the health snapshot). With it on, the 
 but still ×25 (gs→m2) and ×3600 (m2→gs) worse than the shared clock. The m2→gs direction (M2 TX, clocked by the M2 refclk) degrades
 most, which again points at the M2 refclk itself.
 
+### 11.4 GS: 1 Ω → 5.1 Ω in the VDD_SER and VDD_SER_PLL feeds (R106/R105; Goran, on Patrick Urban's advice), quick check 15:40–15:55
+
+Separate clocks as in §11.2 (X2 on M2), internal termination on, same bits; short runs only (`log/q*`).
+
+| | 2.5 G gs→m2 | 2.5 G m2→gs* | 2.5 G M2 synced | 5 G P2 gs→m2 / m2→gs* | 5 G synced gs→m2 | raw words PEER m2 / gs (5 G) |
+|---|---|---|---|---|---|---|
+| before (1 Ω; §11.3 on, 3 × 300 s) | 1.5·10⁻⁸ | 4.7·10⁻⁸ | 0.96 | 4.7·10⁻² / 2.4·10⁻² (§10.6, shared clock) | ~8·10⁻⁴ | 191 / 199 |
+| **after (5.1 Ω)**, 3 × 90 s median (range) | 2.4·10⁻⁸ (1.0–5.4·10⁻⁸) | 2.4·10⁻⁸ (1.6–6.5·10⁻⁸) | 1.0 | 1.1–3.5·10⁻² / 1.2·10⁻² (2 × 60 s) | 6·10⁻⁷ … 2.4·10⁻⁴ | 193 / 197 |
+
+- gs SerDes PLL `PLL_CAP_FT` moved from 434–437 to **446–449** (same bits): the DCO needs a different setting, consistent with a
+  lower VDD_SER_PLL. Offset m2 − gs +1.8 ppm (was +2.6).
+- **2.5 G: no significant change** (within the load-to-load spread); M2 stays synced all the time. **5 G: still unusable**; BER while
+  synced 2–4× lower, but the link is synced even less of the time. Not a result that 5.1 Ω helps or hurts.
+- **Check the voltage:** the SerDes draws 40–51 mA at 5 G (DS1001 Table 4.4). 5.1 Ω drops 0.20–0.26 V, so VDD_SER ≈ 0.84–0.90 V
+  from VDD_CORE 1.1 V, **below the DS1001 minimum of 1.00 V** (p.155). Measure VDD_SER / VDD_SER_PLL at the SerDes side of
+  R106/R105 (TP10/TP8) under load before further tests.
+
 **Next (hardware, Goran):** terminate or remove the stub (100 Ω P–N on the SER_CLK pads of C136/C137 plus `PLL_RTERM 0` on M2, or cut the
 line right after C129/C130), add 100 nF from X2 pin 6 to pin 3, then run `lab11.sh` unchanged. If the shared-clock numbers do not come
 back, the separate-clock penalty is the CDR tracking, and the shared refclk stays the better design for this link.
