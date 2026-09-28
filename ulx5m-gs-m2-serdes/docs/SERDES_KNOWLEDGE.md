@@ -227,7 +227,12 @@ FFC→M.2 adapter and FFC crosstalk, M2-side supply noise. Not the stackup (§1)
 
 ---
 
-## 6. Local refclk on M2 (prepared, not fitted) — TASK-5087, `LOCAL_REFCLK_M2.md`
+## 6. Local refclk on M2 — TASK-5087 (`LOCAL_REFCLK_M2.md`), fitted and measured in TASK-5089 (VERIFY_RATES §11)
+
+**Measured 28.09.2026 (§11):** X2 on M2 works (PLL lock at 0.3/1.25/2.5 G, CAP_FT 108/492/501–508, +2.6 ppm vs GS). 2.5 G with separate
+clocks: gs→m2 2.7·10⁻⁸, m2→gs 5.6·10⁻⁸ (CKI 0; CKI 1 not better) vs 6.0·10⁻¹⁰ / 1.3·10⁻¹¹ shared — worse, the M2 RX loses sync part of
+the time. At +2.6 ppm CKI 0 is enough. Open suspects: ~52 mm open stub on SER_CLK to the removed C136/C137, no VDD_CLK decoupling at X2.
+
 
 - One driver per net: M2 SER_CLK is driven **either** by the cable (C136/C137) **or** by a local X2. Fit X2 → remove C136/C137.
   C129/C130 stay. GS untouched.

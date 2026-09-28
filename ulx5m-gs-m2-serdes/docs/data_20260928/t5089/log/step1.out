@@ -1,0 +1,58 @@
+12:00:04
+Done
+Done
+== pre m2
+HEALTH board=m2  problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[16380, 16381, 16383] span=3
+== pre gs
+HEALTH board=gs  problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[-1, -5, -3] span=4
+== post m2
+HEALTH board=m2  problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[1, 26, 30, 8, -4] span=34
+PLL_LOCKED=1 PLL_CAP_FT_OF=0 PLL_CAP_FT_UF=0 PLL_CAP_FT=507 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 
+jtag m2: board=m2 PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: PEER 50/50 distinct=50  expect=peer -> PASS
+== post gs
+HEALTH board=gs  problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[-20, 3, 28, 35, -8] span=55
+PLL_LOCKED=1 PLL_CAP_FT_OF=0 PLL_CAP_FT_UF=0 PLL_CAP_FT=434 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 
+jtag gs: board=gs PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x080C 0x40=0x1018)  rx: PEER 50/50 distinct=50  expect=peer -> PASS
+{
+ "secs": 61.0,
+ "gs_tx_rate_bps": 2500018480.0,
+ "m2_tx_rate_bps": 2500024640.0,
+ "loopback_sel_gs_design": 0,
+ "rx_pol": 1,
+ "outdiv": 2,
+ "m2_to_gs": {
+  "synced": 1,
+  "self_seen": 0,
+  "loss": 0,
+  "words": 2025642133,
+  "errw": 2735,
+  "errb": 11253,
+  "code_err": 5975,
+  "new_words": 1906268797,
+  "new_errb": 10915,
+  "ber": 1.3888188610263273e-07,
+  "ber_95_upper": null,
+  "ber_robust": 1.4314612945951714e-07,
+  "robust_secs": 61
+ },
+ "gs_to_m2": {
+  "synced": 1,
+  "self_seen": 0,
+  "loss": 0,
+  "words": 1531186992,
+  "errw": 1392,
+  "errb": 16265,
+  "code_err": 3184,
+  "new_words": 1411814124,
+  "new_errb": 15272,
+  "fresh": true,
+  "loopback_sel_m2_design": 0,
+  "ber": 2.6556194777286873e-07,
+  "ber_95_upper": null,
+  "ber_robust": 2.563047691911994e-07,
+  "robust_secs": 60
+ },
+ "gs_inj": 0,
+ "m2_inj": 0,
+ "lines": 62
+}

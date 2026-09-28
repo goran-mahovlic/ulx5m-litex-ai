@@ -787,3 +787,61 @@ at bitstream loads (20:49:48, 20:55:05, 21:00:14…, 21:14:23–21:14:58, 21:21:
 **Next:** the cleanest separation is an A/B on the one variable: rerun `lab10_5085.sh` unchanged with the GND wire removed
 (or, if the change was something else, with it undone), same session, no power-cycle. If gs→m2 should return to the 6·10⁻¹⁰ of
 §10.4, the M2 2.2 µF on C127/C128 (and the TP10/TP8 vs VDD_CORE check proposed in §10.5) remain the prime suspect for the M2 RX.
+
+## 11. TASK-5089: separate refclks: local X2 on M2, C136/C137 removed (Goran 28.09.2026 ~11:00)
+
+**Change:** on M2 a local 100 MHz LVDS oscillator X2 was fitted and C136/C137 (refclk from GS over the cable) were removed;
+C129/C130 stay. GS unchanged (1 µF on C127/C128/C42 since §10.4). Every board now runs from its own oscillator.
+Which X2 variant was fitted (1.8 V `511J…` or the 2.5 V `511F…` of the schematic, `LOCAL_REFCLK_M2.md` §3) is not recorded.
+**Done by:** REGOČ (daemon autonomy was down because the usage meter failed, so the run was done directly), gs lease `TASK-5089`, fpga-jtag, CFGRST bits, SRAM `-r`,
+no power-cycle. **Raw data:** `data_20260928/t5089/` (`log/step1.out` + `step1_cki1_60s.json` = oscillator check; `lab11.sh`/`lab11.out`
+= A/B as run, one ber_mon JSON + two health JSONs per load).
+
+### 11.1 Step 1: is X2 on M2 working?
+
+| Check (m2 alone, then both) | Result |
+|---|---|
+| m2 SerDes PLL, 0.3 G / 1.25 G / 2.5 G bits | `PLL_LOCKED=1`, FT_OF/UF 0/0 at all three; `PLL_CAP_FT` 108 / 492 / 501–508 (2.5 G with the shared clock: 506–517) |
+| TX word rate, m2 vs gs at 2.5 G (fabric counters, 7 runs 12:00–12:38) | m2 2 500 024 640 … 2 500 026 160 b/s, gs 2 500 018 480 … 2 500 019 600 b/s → **m2 − gs = +2.5 … +2.7 ppm**, stable (both parts ±30 ppm) |
+| cki1 pair right after load, before the SET_ACC pulse | m2 `FREQ_ACC_VAL` 16380–16383 (**rail**), m2 CDR 0 — the start-up trap of `LOCAL_REFCLK_M2.md` §4C |
+| after `RX_CDR_SET_ACC_CONFIG` 2 → 0 on both | CDR 1 on both, `FREQ_ACC_VAL` m2 −4…+30, gs −20…+35; `ber_jtag_check` PEER 50/50 on both |
+
+**Verdict: X2 works.** The PLL locks at every rate with CAP_FT close to the shared-clock value, and the offset to GS is +2.6 ppm.
+
+### 11.2 Step 2: 2.5 Gb/s with separate refclks (3 loads × 300 s, interleaved)
+
+`cki1` = best pair + `CDR_CKI=1` (`bitstreams/ber_*_2g5_p1_txneg_cki1_*`); `cki0` = the best pair itself (same bits as the §10.4
+reference). After every load the SET_ACC pulse on both boards (harmless with CKI 0).
+
+| Load | cki1 gs→m2 | cki1 m2→gs* | cki0 gs→m2 | cki0 m2→gs* |
+|---|---|---|---|---|
+| r1 | 1.27·10⁻⁷ (synced 0.38) | 8.2·10⁻⁸ (0.97) | 5.8·10⁻⁹ (0.17) | 5.6·10⁻⁸ (0.98) |
+| r2 | 1.18·10⁻⁷ (0.33) | 3.7·10⁻⁸ (0.97) | 6.4·10⁻⁸ (0.98) | 6.1·10⁻⁸ (0.98) |
+| r3 | 1.00·10⁻⁷ (0.16) | 1.9·10⁻⁷ (0.98) | 2.7·10⁻⁸ (0.81) | 4.7·10⁻⁸ (0.98) |
+
+| | gs→m2 median (worst) | m2→gs* median (worst) | synced gs→m2 / m2→gs | 
+|---|---|---|---|
+| **shared clock**, GS 1 µF (§10.4, t79) | **6.0·10⁻¹⁰** (6.9·10⁻¹⁰) | **1.3·10⁻¹¹** (2.6·10⁻¹⁰) | 0.96–1.00 / 0.96–1.00 |
+| separate clocks, cki0 | 2.7·10⁻⁸ (6.4·10⁻⁸) | 5.6·10⁻⁸ (6.1·10⁻⁸) | 0.81 / 0.98 |
+| separate clocks, cki1 | 1.2·10⁻⁷ (1.3·10⁻⁷) | 8.2·10⁻⁸ (1.9·10⁻⁷) | 0.33 / 0.97 |
+
+(* counted by the gs checker; valid at 2.5 G.) Health: PLL lock, CDR lock and EQA lock 3/3 on both boards in every load, FT_OF/UF 0,
+CAP_FT gs 434–437 / m2 505–508.
+
+Reading:
+- **2.5 G works with separate clocks, but it is worse than with the shared clock**: gs→m2 ×45 (cki0) … ×200 (cki1), m2→gs ×4000–6000,
+  and the M2 checker loses sync (gs→m2 synced share 0.16–0.98 instead of ~1.0). The GS receiver stays synced (0.97–0.98).
+- **CKI 0 is not worse than CKI 1 at +2.6 ppm**: the proportional-only CDR follows this small offset. CKI 1 gives ×4 higher gs→m2 BER
+  and a lower synced share on M2. So at this offset the integrator is not needed, and it adds its own wander (FREQ_ACC ±30).
+- What is new in this setup and could explain the M2-RX-side loss is the **refclk at M2 itself**, not the frequency offset:
+  (a) SER_CLK_P/N on M2 still run ~52 mm (2.7 mm F.Cu + ~49 mm B.Cu, 2 vias per line) to the now open pads of C136/C137 at J10:
+  an open stub on the X2 output (round trip ≈ 0.6 ns), and with `PLL_REF_RTERM=1` the only termination is at the FPGA;
+  (b) VDD_CLK has no decoupling at X2 (nearest C47 100 nF on B.Cu 8.4 mm, C131 2.2 µF 8.9 mm); (c) the X2 supply variant is unknown.
+  Both boards' SerDes PLLs lock with normal CAP_FT, so the PLL is not the problem; refclk **jitter** (DS1001: ≤ 1 ps) is the suspect.
+  Not measured: no scope on SER_CLK.
+- Traps seen: without the SET_ACC pulse the cki1 m2 CDR sits at the FREQ_ACC rail and does not lock (as §4C of `LOCAL_REFCLK_M2.md`).
+  The gs DirtyJTAG re-enumerated at 12:38 (Pi `Under-voltage`), so the last gs `ber_jtag_check` failed on the probe, not on the link.
+
+**Next (hardware, Goran):** terminate or remove the stub (100 Ω P–N on the SER_CLK pads of C136/C137 plus `PLL_RTERM 0` on M2, or cut the
+line right after C129/C130), add 100 nF from X2 pin 6 to pin 3, then run `lab11.sh` unchanged. If the shared-clock numbers do not come
+back, the separate-clock penalty is the CDR tracking, and the shared refclk stays the better design for this link.

@@ -69,10 +69,14 @@ in one place: setup, settings per rate, results, traps, how to reproduce, open i
   (M2 88 Ω). The whole chain loses 3.0 dB (nominal) to 4.8 dB (worst) at 2.5 GHz, and a linear model with a 3-tap DFE keeps a
   5 Gb/s eye of 0.59–0.70. 5 Gb/s is also the silicon maximum (DS1001). Left for 5 G: the refclk at M2, the unidentified
   FFC→M.2 adapter, FFC crosstalk. Details and next-revision changes: `docs/SI_SERDES_GS_v004.md`.
-- **A local oscillator on M2 is prepared, not fitted** (TASK-5087, `docs/LOCAL_REFCLK_M2.md`). Only one driver per net: fit X2
+- **A local oscillator on M2** (TASK-5087, `docs/LOCAL_REFCLK_M2.md`; fitted 28.09., result above). Only one driver per net: fit X2
   on M2 and remove C136/C137. With two oscillators the CDR frequency integrator must be on (`CDR_CKI=1` on both; 2 is worse,
   4 is unstable). DS1001 gives no ppm tolerance for the CDR, so that has to be measured once X2 is on. The X2 in the
   schematics is a 2.5 V part on a 1.8 V rail: order the 1.8 V variant (`511J…`). Bits: `ber_*_2g5_p1_txneg_cki1_*`.
+- **Separate refclks work, but 2.5 Gb/s is worse** (28.09.2026, TASK-5089). X2 fitted on M2, C136/C137 removed: the M2 PLL locks at every
+  rate, the offset to GS is +2.6 ppm. 3 loads × 300 s: gs→m2 2.7·10⁻⁸, m2→gs 5.6·10⁻⁸ with `CDR_CKI=0` (`CDR_CKI=1` is not better),
+  versus 6.0·10⁻¹⁰ / 1.3·10⁻¹¹ with the shared clock; the M2 receiver loses sync part of the time. Suspects: the ~52 mm open stub
+  left on SER_CLK towards the removed C136/C137, and no decoupling on VDD_CLK at X2. Details: `docs/VERIFY_20260926_RATES.md` §11.
 - The on-chip eye counters (regfile 0x14–0x1D) never count; the upstream `tc_eyemeas` is an empty stub.
 - **The 1·2·3 recipe is only clean at 0.3 Gb/s.** Its DCO runs at 600 MHz, below the 1250–2500 MHz in DS1001.
   At 0.6 Gb/s one direction has errors, and at 1.2 Gb/s both do. Use 1·5·5.
