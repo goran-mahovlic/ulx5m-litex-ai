@@ -842,6 +842,23 @@ Reading:
 - Traps seen: without the SET_ACC pulse the cki1 m2 CDR sits at the FREQ_ACC rail and does not lock (as §4C of `LOCAL_REFCLK_M2.md`).
   The gs DirtyJTAG re-enumerated at 12:38 (Pi `Under-voltage`), so the last gs `ber_jtag_check` failed on the probe, not on the link.
 
+### 11.3 M2 refclk internal termination on/off (Goran 12:45: "try the internal termination; an external one is not an option")
+
+`PLL_REF_RTERM` (0x50[11]) was **1 in every earlier run**, including §11.2. The only internal choice is on/off. `lab12.sh`: best pair, CKI 0,
+rterm0 = `PLL_REF_RTERM=0` written on m2 over JTAG right after the load (PLL stays locked, CAP_FT 505–508, readback 0), rterm1 = as loaded;
+3 rounds interleaved × 300 s, 12:47–13:21.
+
+| M2 internal refclk termination | gs→m2 median (worst) | m2→gs* median (worst) | synced gs→m2 / m2→gs |
+|---|---|---|---|
+| **on** (`PLL_REF_RTERM=1`, lab12) | **1.5·10⁻⁸** (9.6·10⁻⁸) | **4.7·10⁻⁸** (4.8·10⁻⁸) | 0.96 / 0.96 |
+| on (§11.2 cki0, same bits) | 2.7·10⁻⁸ (6.4·10⁻⁸) | 5.6·10⁻⁸ (6.1·10⁻⁸) | 0.81 / 0.98 |
+| off (`PLL_REF_RTERM=0`) | 3.7·10⁻⁷ (7.9·10⁻⁷) | 1.4·10⁻⁶ (3.7·10⁻⁶) | **0.006** / 1.0 |
+
+**Internal termination must stay on.** Off is ×25 (gs→m2) and ×30 (m2→gs) worse, and the M2 receiver is synced only 0.6 % of the
+time (one load had the M2 CDR unlocked in the health snapshot). With it on, the separate-clock result is repeatable (two sessions agree),
+but still ×25 (gs→m2) and ×3600 (m2→gs) worse than the shared clock. The m2→gs direction (M2 TX, clocked by the M2 refclk) degrades
+most, which again points at the M2 refclk itself.
+
 **Next (hardware, Goran):** terminate or remove the stub (100 Ω P–N on the SER_CLK pads of C136/C137 plus `PLL_RTERM 0` on M2, or cut the
 line right after C129/C130), add 100 nF from X2 pin 6 to pin 3, then run `lab11.sh` unchanged. If the shared-clock numbers do not come
 back, the separate-clock penalty is the CDR tracking, and the shared refclk stays the better design for this link.

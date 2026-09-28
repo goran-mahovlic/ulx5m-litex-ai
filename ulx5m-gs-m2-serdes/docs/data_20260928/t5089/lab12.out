@@ -1,0 +1,69 @@
+== round 1 12:47:18
+board=m2 set PLL_REF_RTERM=0
+board=m2 PLL_REF_RTERM=0
+HEALTH board=m2 t89_rterm0 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t89_rterm0 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== t89_rterm0 r1 12:52:52: gs->m2 3.67e-07  m2->gs 1.20e-06
+board=m2 PLL_REF_RTERM=1
+HEALTH board=m2 t89_rterm1 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t89_rterm1 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== t89_rterm1 r1 12:58:19: gs->m2 1.50e-08  m2->gs 4.68e-08
+== round 2 12:58:19
+board=m2 set PLL_REF_RTERM=0
+board=m2 PLL_REF_RTERM=0
+HEALTH board=m2 t89_rterm0 r2 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t89_rterm0 r2 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== t89_rterm0 r2 13:03:56: gs->m2 2.40e-07  m2->gs 1.41e-06
+board=m2 PLL_REF_RTERM=1
+HEALTH board=m2 t89_rterm1 r2 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t89_rterm1 r2 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== t89_rterm1 r2 13:09:29: gs->m2 9.55e-08  m2->gs 3.39e-08
+== round 3 13:09:30
+board=m2 set PLL_REF_RTERM=0
+board=m2 PLL_REF_RTERM=0
+HEALTH board=m2 t89_rterm0 r3 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t89_rterm0 r3 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== t89_rterm0 r3 13:15:08: gs->m2 7.94e-07  m2->gs 3.73e-06
+board=m2 PLL_REF_RTERM=1
+HEALTH board=m2 t89_rterm1 r3 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t89_rterm1 r3 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== t89_rterm1 r3 13:20:37: gs->m2 9.78e-09  m2->gs 4.80e-08
+| Point | load | BER gs→m2 | synced gs→m2 | BER m2→gs | synced m2→gs |
+|---|---|---|---|---|---|
+| t89_cki0 | r1 | 5.84e-09 | 1.7e-01 | 5.58e-08 | 9.8e-01 |
+| t89_cki0 | r2 | 6.36e-08 | 9.8e-01 | 6.11e-08 | 9.8e-01 |
+| t89_cki0 | r3 | 2.73e-08 | 8.1e-01 | 4.74e-08 | 9.8e-01 |
+| t89_rterm0 | r1 | 3.67e-07 | 6.7e-04 | 1.20e-06 | 9.7e-01 |
+| t89_rterm0 | r2 | 2.40e-07 | 3.4e-02 | 1.41e-06 | 1.0e+00 |
+| t89_rterm0 | r3 | 7.94e-07 | 5.6e-03 | 3.73e-06 | 1.0e+00 |
+| t89_rterm1 | r1 | 1.50e-08 | 9.6e-01 | 4.68e-08 | 9.6e-01 |
+| t89_rterm1 | r2 | 9.55e-08 | 1.0e+00 | 3.39e-08 | 1.0e+00 |
+| t89_rterm1 | r3 | 9.78e-09 | 9.5e-01 | 4.80e-08 | 9.5e-01 |
+
+| Point | n | BER gs→m2 median (worst) | BER m2→gs median (worst) | bits per direction | synced share gs→m2 / m2→gs |
+|---|---|---|---|---|---|
+| t89_rterm1 | 3 | 1.50e-08 (9.55e-08) | 4.68e-08 (4.80e-08) | 1.13e+12 | 9.6e-01 / 9.6e-01 |
+| t89_cki0 | 3 | 2.73e-08 (6.36e-08) | 5.58e-08 (6.11e-08) | 7.51e+11 | 8.1e-01 / 9.8e-01 |
+| t89_rterm0 | 3 | 3.67e-07 (7.94e-07) | 1.41e-06 (3.73e-06) | 1.52e+10 | 5.6e-03 / 1.0e+00 |
+| Point | load | board | PLL lock | FT_OF / FT_UF | CAP_FT | CDR lock | EQA lock | phase span |
+|---|---|---|---|---|---|---|---|---|
+| t89_rterm0 | r1 | gs | 1 | 0 / 0 | 436 | 1 | 1 | 17601 |
+| t89_rterm0 | r1 | m2 | 1 | 0 / 0 | 508 | 1 | 1 | 41707 |
+| t89_rterm0 | r2 | gs | 1 | 0 / 0 | 436 | 1 | 1 | 32010 |
+| t89_rterm0 | r2 | m2 | 1 | 0 / 0 | 506 | 0 | 1 | 28144 |
+| t89_rterm0 | r3 | gs | 1 | 0 / 0 | 437 | 1 | 1 | 30740 |
+| t89_rterm0 | r3 | m2 | 1 | 0 / 0 | 505 | 1 | 1 | 9539 |
+| t89_rterm1 | r1 | gs | 1 | 0 / 0 | 436 | 1 | 1 | 59966 |
+| t89_rterm1 | r1 | m2 | 1 | 0 / 0 | 505 | 1 | 1 | 43694 |
+| t89_rterm1 | r2 | gs | 1 | 0 / 0 | 434 | 1 | 1 | 22147 |
+| t89_rterm1 | r2 | m2 | 1 | 0 / 0 | 508 | 1 | 1 | 35918 |
+| t89_rterm1 | r3 | gs | 1 | 0 / 0 | 433 | 1 | 1 | 54655 |
+| t89_rterm1 | r3 | m2 | 1 | 0 / 0 | 508 | 1 | 1 | 9399 |
+
+| Point | board | loads | PLL lock | FT_OF | FT_UF | CDR lock | EQA lock | CAP_FT range |
+|---|---|---|---|---|---|---|---|---|
+| t89_rterm0 | gs | 3 | 3/3 | 0/3 | 0/3 | 3/3 | 3/3 | 436–437 |
+| t89_rterm0 | m2 | 3 | 3/3 | 0/3 | 0/3 | 2/3 | 3/3 | 505–508 |
+| t89_rterm1 | gs | 3 | 3/3 | 0/3 | 0/3 | 3/3 | 3/3 | 433–436 |
+| t89_rterm1 | m2 | 3 | 3/3 | 0/3 | 0/3 | 3/3 | 3/3 | 505–508 |
+LAB12 DONE 13:20:37
