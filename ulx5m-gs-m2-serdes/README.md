@@ -7,6 +7,9 @@ Two GateMate CCGM1A1 boards talk to each other over their SerDes lane:
 The only connection between the two FPGAs is this SerDes lane (TX and RX pairs). Both boards use the same
 100 MHz LVDS reference clock. It comes from the oscillator on the GS board; the oscillator on the M2 was removed.
 
+**Continuing this work (person or AI)?** Start with [`docs/SERDES_KNOWLEDGE.md`](docs/SERDES_KNOWLEDGE.md): everything we know
+in one place: setup, settings per rate, results, traps, how to reproduce, open items.
+
 ## What works
 
 - **8b10b link in both directions, bit-exact, at 0.3 Gb/s.** The same bitstream runs on both boards
@@ -32,7 +35,7 @@ The only connection between the two FPGAs is this SerDes lane (TX and RX pairs).
 |---|---|
 | 0.3 Gb/s | 0 errors (BER < 6.7·10⁻¹¹) |
 | 1.25 Gb/s | 0 errors (BER < 4·10⁻¹¹) |
-| 2.5 Gb/s | Works, but not error-free: BER about 10⁻⁹ … 10⁻¹¹, and it changes from one load to the next |
+| 2.5 Gb/s | Works, but not error-free. With 1 µF on GS C127/C128/C42: gs→m2 6·10⁻¹⁰, m2→gs 1·10⁻¹¹ (median of 3 loads × 300 s), much less spread between loads than before |
 | 5 Gb/s | Does not work: BER 10⁻² … 10⁻¹ |
 
 ## What does not work yet / not proven
@@ -44,16 +47,32 @@ The only connection between the two FPGAs is this SerDes lane (TX and RX pairs).
   bitstreams loaded again were 25 to 3000 times worse. The cause is that nextpnr does not time the fabric↔SerDes ports (`delay.cc`: SERDES =
   `TMG_IGNORE`), so the TX/RX paths change with every placement. `TX_NEG=1` on gs improves gs→m2 about 60 times.
   RX AFE `GAIN 0` is needed (the as-built GAIN 8 gave 10⁻⁴). Details: `docs/VERIFY_20260926_RATES.md` §9.3, §9.7.
+- **1 µF on the GS SerDes supplies makes 2.5 Gb/s better and repeatable** (27.09.2026, TASK-5078/5079). 1 µF in parallel to
+  C128 (VDD_SER), C127 (VDD_SER_PLL) and C42 (VDD_PLL) on **GS**. Same bitstreams before and after (the best pair
+  `ber_gs_2g5_p1_txneg_s7` + `ber_m2_2g5_p1_txneg_s2`), 3 loads × 300 s:
+
+  | | gs→m2 typical / worst | m2→gs typical / worst | spread between loads |
+  |---|---|---|---|
+  | before | 2.4·10⁻⁹ / 1.2·10⁻⁸ | 8.5·10⁻¹⁰ / 4.5·10⁻⁸ | ×26 / ×2900 |
+  | **after** | **6.0·10⁻¹⁰ / 6.9·10⁻¹⁰** | **1.3·10⁻¹¹ / 2.6·10⁻¹⁰** | **×1.6 / ×32** |
+
+  At 5 Gb/s the change is 1.5–2×, which is within the noise (PROFILE 2: gs→m2 7.3·10⁻² → 4.9·10⁻²). The same capacitor on
+  C42 (VDD_PLL) also removed the fabric PLL lock drops under SDRAM load (DVI). Repeat with `docs/data_20260927/t5079/lab9.sh`.
+  Details: `docs/VERIFY_20260926_RATES.md` §10.1–§10.4.
 - **5 Gb/s does not work.** The PLL locks (measured 5000.04 Mb/s), but the CDR does not hold lock and the fabric BER
   stays at 10⁻² … 10⁻¹. About 60 register settings were tried (RX AFE and DFE, CDR, TX FFE, VCM, refclk
   termination, seeds, `PROFILE` 2 and 3 in the bitstream). None left that range. The RX words read over JTAG,
-  without the fabric, already have 2.5–17.5 % bad headers. The next suspects are in hardware: supply noise at the
-  SerDes (E9: ferrite or extra µF at C127/C128 on GS), the channel, and the refclk at M2.
+  without the fabric, already have 2.5–17.5 % bad headers. Extra decoupling on the GS SerDes supplies did not change 5 G
+  either (above). The next suspects are in hardware: the refclk at M2, the FFC→M.2 adapter chain, and crosstalk.
   Details: `docs/VERIFY_20260926_RATES.md` §9.8–§9.10, `docs/TUNING_5G.md`.
 - **The PCB channel is not what limits 5 Gb/s** (SI analysis, TASK-5086). GS v005 on JLC's default 6-layer stack is 97–103 Ω
   (M2 88 Ω). The whole chain loses 3.0 dB (nominal) to 4.8 dB (worst) at 2.5 GHz, and a linear model with a 3-tap DFE keeps a
   5 Gb/s eye of 0.59–0.70. 5 Gb/s is also the silicon maximum (DS1001). Left for 5 G: the refclk at M2, the unidentified
   FFC→M.2 adapter, FFC crosstalk. Details and next-revision changes: `docs/SI_SERDES_GS_v004.md`.
+- **A local oscillator on M2 is prepared, not fitted** (TASK-5087, `docs/LOCAL_REFCLK_M2.md`). Only one driver per net: fit X2
+  on M2 and remove C136/C137. With two oscillators the CDR frequency integrator must be on (`CDR_CKI=1` on both; 2 is worse,
+  4 is unstable). DS1001 gives no ppm tolerance for the CDR, so that has to be measured once X2 is on. The X2 in the
+  schematics is a 2.5 V part on a 1.8 V rail: order the 1.8 V variant (`511J…`). Bits: `ber_*_2g5_p1_txneg_cki1_*`.
 - The on-chip eye counters (regfile 0x14–0x1D) never count; the upstream `tc_eyemeas` is an empty stub.
 - **The 1·2·3 recipe is only clean at 0.3 Gb/s.** Its DCO runs at 600 MHz, below the 1250–2500 MHz in DS1001.
   At 0.6 Gb/s one direction has errors, and at 1.2 Gb/s both do. Use 1·5·5.
@@ -80,7 +99,7 @@ The only connection between the two FPGAs is this SerDes lane (TX and RX pairs).
 | `gateware/upstream/` | Unchanged CologneChip `serdes_lb.v`, for reference |
 | `bitstreams/` | Bitstreams tested on the boards (all with CFGRST) + `SHA256SUMS` |
 | `tools/` | JTAG and UART tools, `verify_external_link.sh`, `si/` (PCB SI extraction, 2-D field solver, channel cascade), unit tests |
-| `docs/` | `REVIEW_20260926.md` (review and measurements), `SOURCES_20260926.md` (datasheet and reference designs), `VERIFY_20260926.md` (verification report), `VERIFY_20260926_RATES.md` (2.5 / 5 Gb/s, TASK-5063/5066/5073), `TUNING_5G.md` (what to tune for 5 Gb/s), `SI_SERDES_GS_v004.md` (PCB SI of GS v005 / M2, max rate, next-revision changes, TASK-5086) |
+| `docs/` | `REVIEW_20260926.md` (review and measurements), `SOURCES_20260926.md` (datasheet and reference designs), `VERIFY_20260926.md` (verification report), `VERIFY_20260926_RATES.md` (2.5 / 5 Gb/s, TASK-5063/5066/5073), `TUNING_5G.md` (what to tune for 5 Gb/s), `SI_SERDES_GS_v004.md` (PCB SI of GS v005 / M2, max rate, next-revision changes, TASK-5086), `LOCAL_REFCLK_M2.md` (local oscillator on M2, TASK-5087), `NEXTPNR_SETUPHOLD_PATCH.md`, **`SERDES_KNOWLEDGE.md` (handover: everything in one place)** |
 
 ## Bitstreams
 
@@ -89,7 +108,9 @@ The only connection between the two FPGAs is this SerDes lane (TX and RX pairs).
 | `serdes_p1_rxpol1_CFGRST.bit` | **both** gs and m2 | 0.3 Gb/s, 8b10b, K28.5 + 7 × D10.2, `RX_POLARITY_I=1`. Check with `serdes_link_check.py` (expect `DATA_OK 30/30`). |
 | `ber_gs_0g3_CFGRST.bit` + `ber_m2_0g3_CFGRST.bit` | gs + m2 | BER design, 0.3 Gb/s. Used by `verify_external_link.sh --load`. |
 | `ber_gs_1g25_CFGRST.bit` + `ber_m2_1g25_CFGRST.bit` | gs + m2 | BER design, 1.25 Gb/s (1·5·5). |
-| `ber_gs_2g5_p1_CFGRST.bit` + `ber_m2_2g5_p1_txneg_CFGRST.bit` | gs + m2 | BER design, 2.5 Gb/s, `PROFILE=1`. Works, not error-free. |
+| `ber_gs_2g5_p1_CFGRST.bit` + `ber_m2_2g5_p1_txneg_CFGRST.bit` | gs + m2 | BER design, 2.5 Gb/s, `PROFILE=1`, `TX_NEG` on m2 only. Works, not error-free. |
+| **`ber_gs_2g5_p1_txneg_s7_CFGRST.bit` + `ber_m2_2g5_p1_txneg_s2_CFGRST.bit`** | gs + m2 | **Best 2.5 Gb/s pair**: `PROFILE=1`, `TX_NEG` on both. Used for every hardware A/B (1 µF on GS: 6·10⁻¹⁰ / 1·10⁻¹¹). |
+| `ber_gs_2g5_p1_txneg_cki1_CFGRST.bit` + `ber_m2_2g5_p1_txneg_cki1_CFGRST.bit` | gs + m2 | the best pair + `CDR_CKI=1`, for a local oscillator on M2 |
 | `ber_*_5g_p2_txneg_*` / `ber_*_5g_p3_txneg_*` | gs + m2 | BER design, 5 Gb/s, `PROFILE` 2 / 3. Reference for hardware changes; not usable. |
 
 All of them are listed in `bitstreams/README.md` with their results. They are rebuilt byte for byte from the sources here (`gateware/baseline/build.sh 1`,
@@ -154,7 +175,7 @@ pattern (gs must reject it) → **"pull the SerDes cable now"** (both sides must
 
 ## Next steps
 
-1. 5 Gb/s: hardware first (E9 supply noise at C127/C128, then the channel and the refclk at M2). Judge each change
+1. 5 Gb/s: hardware first. The GS supply decoupling is done (no effect at 5 G). Next: the refclk at M2 (scope, or the local X2), then the channel. Judge each change
    by the 3-load median of synced share and BER against PROFILE 2 and 3 (`tools/lab/ab_table.py --runs --rank`).
 2. 2.5 Gb/s error-free: the fabric↔SerDes ports need timing constraints in nextpnr. Until then, pick seeds by
    several loads, not by one.
