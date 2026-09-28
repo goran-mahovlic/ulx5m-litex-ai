@@ -125,6 +125,10 @@ This gives `Image612`, `opensbi612.bin`, `rootfs612.cpio` and `rv32_k612.dtb`.
 
     { "Image612": "0x40000000", "rv32_k612.dtb": "0x40ef0000", "rootfs612.cpio": "0x41000000", "opensbi612.bin": "0x40f00000" }
 
+`ulx5m-gs-linux-sbc/tools/linux/netboot_app.sh linux` writes exactly this file (the default since 28.09.2026;
+`linux514` selects the old 5.14 images). If the DVI screen shows only coloured noise, the board is still in the
+BIOS: Linux was not loaded (usually `boot.json` points to other files). The console appears about 12 s into the kernel.
+
 **4. Load the FPGA and wait.**
 
     openFPGALoader -c dirtyJtag ulx5m-gs-linux-sbc/bitstreams/ETH_GateMateA1_2609_1646_Linux_GbE_DVI_USBPNRU_pll60s1.bit -r
