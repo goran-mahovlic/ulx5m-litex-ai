@@ -876,6 +876,31 @@ Separate clocks as in §11.2 (X2 on M2), internal termination on, same bits; sho
   from VDD_CORE 1.1 V, **below the DS1001 minimum of 1.00 V** (p.155). Measure VDD_SER / VDD_SER_PLL at the SerDes side of
   R106/R105 (TP10/TP8) under load before further tests.
 
+### 11.5 Shared refclk restored, with 5.1 Ω (GS) / 4.7 Ω (M2) in the SerDes supply feeds — lab13 (28.09. 16:23–16:49)
+
+**State:** M2 X2 removed, C136/C137 100 nF 0402 back (= the shared-clock setup of §10.4). GS R106/R105 = 5.1 Ω, M2 R105/R106 = 4.7 Ω
+(Goran, Patrick Urban's advice), GS 1 µF on C127/C128/C42 unchanged. VDD_SER not measured yet. `lab13.sh` = the `lab9.sh` protocol
+unchanged (same six bits). Raw data `data_20260928/t5089/lab13.*`, `log13/`. Health: m2 − gs 0.0 ppm (2500.02 / 2500.02 Mb/s),
+all PLLs locked, FT_OF/UF 0; CAP_FT gs 442–450 (was 433–440 with 1 Ω), m2 504–515.
+
+| Point | §10.4: 1 Ω, shared clock (t79) | **lab13: 5.1/4.7 Ω, shared clock** |
+|---|---|---|
+| 2.5 G gs→m2 r1 / r2 / r3 | 6.9 / 4.3 / 6.0 ·10⁻¹⁰ | **1.1·10⁻¹¹** / 1.0·10⁻⁹ / 2.0·10⁻⁹ |
+| 2.5 G m2→gs* r1 / r2 / r3 | 2.6·10⁻¹⁰ / 8.0·10⁻¹² / 1.3·10⁻¹¹ | **0 / 0** / 2.2·10⁻⁹ (0 errors in 300 s = BER < 1.0·10⁻¹¹) |
+| 2.5 G median (worst) gs→m2 ; m2→gs | 6.0·10⁻¹⁰ (6.9·10⁻¹⁰) ; 1.3·10⁻¹¹ (2.6·10⁻¹⁰) | 1.0·10⁻⁹ (2.0·10⁻⁹) ; 0 (2.2·10⁻⁹) |
+| 2.5 G synced share | 0.96–1.00 | 0.97 |
+| 5 G P2 60 s median gs→m2 / m2→gs* | 4.9·10⁻² / 2.0·10⁻² | 3.0·10⁻² / 1.1·10⁻² |
+| 5 G P3 60 s median gs→m2 / m2→gs* | 6.2·10⁻² / 1.0·10⁻¹ | 3.2·10⁻² / 6.1·10⁻² |
+| 5 G synced share P2 / P3 (gs→m2) | 8·10⁻⁴ / 8·10⁻³ | 1.9·10⁻⁴ / 3.1·10⁻⁴ |
+| `ber_jtag_check` 200 P3 m2 / gs | 183 / 182 | **197 / 191** |
+
+Reading:
+- **2.5 G: the best single loads so far** (gs→m2 1.1·10⁻¹¹; m2→gs 0 errors in 2 of 3 loads × 300 s), but the load-to-load spread is
+  back (×190 in gs→m2), and the median is not better than §10.4. With 3 loads per column the two settings cannot be ranked.
+- **5 G: 1.5–2× lower BER while synced and fewer bad raw words, but the link is synced even less of the time. Still unusable.**
+- Separate clocks (§11.2–§11.4) vs this: shared clock is 20–1000× better at 2.5 G. Keep the shared refclk.
+- Open: VDD_SER / VDD_SER_PLL on both boards (5.1 Ω / 4.7 Ω × 40–51 mA may put them below the 1.00 V of DS1001), measured under a 5 G load.
+
 **Next (hardware, Goran):** terminate or remove the stub (100 Ω P–N on the SER_CLK pads of C136/C137 plus `PLL_RTERM 0` on M2, or cut the
 line right after C129/C130), add 100 nF from X2 pin 6 to pin 3, then run `lab11.sh` unchanged. If the shared-clock numbers do not come
 back, the separate-clock penalty is the CDR tracking, and the shared refclk stays the better design for this link.

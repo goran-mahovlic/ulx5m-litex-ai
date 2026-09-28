@@ -1,0 +1,93 @@
+36f09752d8b85ebdf51b6fe8e34d9a646aa9e768a17ec86ced53dee63335e344  gs_sd_2g5p1_txneg_s7.bit
+b1b98a5d946169d1be8b465503c6bee94fb72f44380a20b69bce8bfb6285af4e  m2_e1_2g5p1_txneg_s2.bit
+bec33f074c13cb27d6dd3d4b083251ae76587336e1cfab6eed1346670f9b1b87  gs_p2_5g_txneg_s7.bit
+ac8132bdfc3a995a7d144a029d86469eb756d6af43817e316fc2991143a9670e  m2_p2_5g_txneg_s1.bit
+074d2d54716841094ead3302e150190aaa7bb14eee7e43d9f146ec4dda1302bb  gs_p3_5g_txneg_s7.bit
+0f6385650a8519a7ceb60f566a316739d8f4c7ee4b0dd6676b1c10c229bfe8ec  m2_p3_5g_txneg_s1.bit
+== 2.5G 16:23:35
+HEALTH board=m2 t13_2g5 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t13_2g5 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== t13_2g5 r1: gs->m2 1.06e-11  m2->gs 0.00e+00
+HEALTH board=m2 t13_2g5 r2 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t13_2g5 r2 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== t13_2g5 r2: gs->m2 1.00e-09  m2->gs 0.00e+00
+HEALTH board=m2 t13_2g5 r3 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t13_2g5 r3 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== t13_2g5 r3: gs->m2 2.01e-09  m2->gs 2.16e-09
+ABRUN DONE 16:39:45
+== 5G round 1 16:39:45
+HEALTH board=m2 t13_p2_60s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t13_p2_60s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+== t13_p2_60s r1: gs->m2 2.25e-02  m2->gs 1.12e-02
+ABRUN DONE 16:41:05
+HEALTH board=m2 t13_p3_60s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t13_p3_60s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== t13_p3_60s r1: gs->m2 3.15e-02  m2->gs 3.27e-02
+ABRUN DONE 16:42:27
+== 5G round 2 16:42:27
+HEALTH board=m2 t13_p2_60s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t13_p2_60s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+== t13_p2_60s r1: gs->m2 2.99e-02  m2->gs 9.34e-03
+ABRUN DONE 16:43:52
+HEALTH board=m2 t13_p3_60s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t13_p3_60s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== t13_p3_60s r1: gs->m2 3.99e-02  m2->gs 7.42e-02
+ABRUN DONE 16:45:14
+== 5G round 3 16:45:14
+HEALTH board=m2 t13_p2_60s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t13_p2_60s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== t13_p2_60s r1: gs->m2 3.84e-02  m2->gs 1.16e-02
+ABRUN DONE 16:46:35
+HEALTH board=m2 t13_p3_60s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs t13_p3_60s r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+== t13_p3_60s r1: gs->m2 3.08e-02  m2->gs 6.10e-02
+ABRUN DONE 16:47:58
+jtag_check P3 m2: board=m2 PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x280C 0x40=0x1018)  rx: OTHER 3/200 PEER 197/200 distinct=200  expect=peer -> FAIL
+jtag_check P3 gs: board=gs PLL_LOCKED=1 CDR=1  LOOPBACK_SEL=0 (far:RX_PMA=0 RX_PCS=0 near:TX_PMA=0 TX_PCS=0 RX_OVR=0 TX_OVR=0; 0x2A=0x080C 0x40=0x1018)  rx: OTHER 9/200 PEER 191/200 distinct=200  expect=peer -> FAIL
+| Point | load | BER gs→m2 | synced gs→m2 | BER m2→gs | synced m2→gs |
+|---|---|---|---|---|---|
+| t13_2g5 | r1 | 1.06e-11 | 1.0e+00 | 0.00e+00 | 1.0e+00 |
+| t13_2g5 | r2 | 1.00e-09 | 9.7e-01 | 0.00e+00 | 9.7e-01 |
+| t13_2g5 | r3 | 2.01e-09 | 9.7e-01 | 2.16e-09 | 9.7e-01 |
+| t13_p2_60s | r1 | 2.25e-02 | 2.1e-05 | 1.12e-02 | 1.2e-03 |
+| t13_p2_60s | r2 | 2.99e-02 | 2.1e-04 | 9.34e-03 | 1.1e-02 |
+| t13_p2_60s | r3 | 3.84e-02 | 1.9e-04 | 1.16e-02 | 1.5e-03 |
+| t13_p3_60s | r1 | 3.15e-02 | 6.0e-06 | 3.27e-02 | 3.7e-05 |
+| t13_p3_60s | r2 | 3.99e-02 | 3.1e-04 | 7.42e-02 | 6.3e-04 |
+| t13_p3_60s | r3 | 3.08e-02 | 3.0e-03 | 6.10e-02 | 1.8e-05 |
+
+| Point | n | BER gs→m2 median (worst) | BER m2→gs median (worst) | bits per direction | synced share gs→m2 / m2→gs |
+|---|---|---|---|---|---|
+| t13_2g5 | 3 | 1.00e-09 (2.01e-09) | 0.00e+00 (2.16e-09) | 1.13e+12 | 9.7e-01 / 9.7e-01 |
+| t13_p3_60s | 3 | 3.15e-02 (3.99e-02) | 6.10e-02 (7.42e-02) | 5.80e+08 | 3.1e-04 / 3.7e-05 |
+| t13_p2_60s | 3 | 2.99e-02 (3.84e-02) | 1.12e-02 (1.16e-02) | 7.38e+07 | 1.9e-04 / 1.5e-03 |
+| Point | load | board | PLL lock | FT_OF / FT_UF | CAP_FT | CDR lock | EQA lock | phase span |
+|---|---|---|---|---|---|---|---|---|
+| t13_2g5 | r1 | gs | 1 | 0 / 0 | 446 | 1 | 1 | 527 |
+| t13_2g5 | r1 | m2 | 1 | 0 / 0 | 507 | 1 | 1 | 263 |
+| t13_2g5 | r2 | gs | 1 | 0 / 0 | 446 | 1 | 1 | 496 |
+| t13_2g5 | r2 | m2 | 1 | 0 / 0 | 504 | 1 | 1 | 139 |
+| t13_2g5 | r3 | gs | 1 | 0 / 0 | 442 | 1 | 1 | 388 |
+| t13_2g5 | r3 | m2 | 1 | 0 / 0 | 507 | 1 | 1 | 186 |
+| t13_p2_60s | r1 | gs | 1 | 0 / 0 | 448 | 0 | 1 | 744 |
+| t13_p2_60s | r1 | m2 | 1 | 0 / 0 | 513 | 0 | 1 | 589 |
+| t13_p2_60s | r2 | gs | 1 | 0 / 0 | 446 | 0 | 1 | 1062 |
+| t13_p2_60s | r2 | m2 | 1 | 0 / 0 | 513 | 0 | 1 | 77 |
+| t13_p2_60s | r3 | gs | 1 | 0 / 0 | 446 | 1 | 1 | 1620 |
+| t13_p2_60s | r3 | m2 | 1 | 0 / 0 | 512 | 0 | 1 | 1046 |
+| t13_p3_60s | r1 | gs | 1 | 0 / 0 | 449 | 1 | 1 | 852 |
+| t13_p3_60s | r1 | m2 | 1 | 0 / 0 | 515 | 1 | 1 | 760 |
+| t13_p3_60s | r2 | gs | 1 | 0 / 0 | 446 | 1 | 1 | 1984 |
+| t13_p3_60s | r2 | m2 | 1 | 0 / 0 | 512 | 0 | 1 | 2456 |
+| t13_p3_60s | r3 | gs | 1 | 0 / 0 | 450 | 1 | 1 | 2325 |
+| t13_p3_60s | r3 | m2 | 1 | 0 / 0 | 515 | 1 | 1 | 3046 |
+
+| Point | board | loads | PLL lock | FT_OF | FT_UF | CDR lock | EQA lock | CAP_FT range |
+|---|---|---|---|---|---|---|---|---|
+| t13_2g5 | gs | 3 | 3/3 | 0/3 | 0/3 | 3/3 | 3/3 | 442–446 |
+| t13_2g5 | m2 | 3 | 3/3 | 0/3 | 0/3 | 3/3 | 3/3 | 504–507 |
+| t13_p2_60s | gs | 3 | 3/3 | 0/3 | 0/3 | 1/3 | 3/3 | 446–448 |
+| t13_p2_60s | m2 | 3 | 3/3 | 0/3 | 0/3 | 0/3 | 3/3 | 512–513 |
+| t13_p3_60s | gs | 3 | 3/3 | 0/3 | 0/3 | 3/3 | 3/3 | 446–450 |
+| t13_p3_60s | m2 | 3 | 3/3 | 0/3 | 0/3 | 2/3 | 3/3 | 512–515 |
+LAB13 DONE 16:49:27
