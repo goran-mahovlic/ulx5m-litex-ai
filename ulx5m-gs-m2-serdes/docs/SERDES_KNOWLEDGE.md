@@ -96,7 +96,7 @@ reach the gs UART inside the m2→gs stream, so at 5 G they can be corrupted (`a
 | `TX_DET_RX` | 0 | `TX_DETECT_RX_I`. 0 = upstream since pu-cc dda07f7. 1 vs 0: no measurable difference (E1) |
 | `TX_CALIB` | 1 | `TX_CALIB_EN` in every profile. Keep 1 |
 | `PLL_RTERM` | 1 | refclk termination. 0 on gs (E6): no change |
-| `CDR_CKI` | 0 | CDR frequency integrator. 0 is right with a shared refclk. **Needed (1) with two oscillators** (§6) |
+| `CDR_CKI` | 0 | CDR frequency integrator. 0 with a shared refclk; with two oscillators at +2.6 ppm 0 was also enough and 1 was not better (§6, VERIFY_RATES §11) |
 | `EYE_EN` | 0 | eye counters in the bitstream — they never count anyway |
 | `RX_POL` | 1 | `RX_POLARITY_I`, must be 1 (P/N swap) |
 
