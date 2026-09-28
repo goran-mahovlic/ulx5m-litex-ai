@@ -4,13 +4,37 @@ Loading (SRAM only): `openFPGALoader -c dirtyJtag <bit> -r`. All of them have CM
 
 Older bitstreams and CPU-less designs (100 Mb/s `target_eth.py`, 1 Gb/s `target_gbe.py`) are no longer in this
 repository; their descriptions and sources are in git tag `pre-cleanup-20260926` (see `docs/REVIEW_LITEX_DUPLICATES.md`).
-The folder holds three bitstreams: `pll60 s1` (recommended), `grec_3` and `ghrec_1`.
+The folder holds four bitstreams: `pll60 s2 oss0928` (recommended), `pll60 s1`, `grec_3` and `ghrec_1`.
 
 | File | sha256 | Use |
 |---|---|---|
-| **`ETH_GateMateA1_2609_1646_Linux_GbE_DVI_USBPNRU_pll60s1.bit`** | `9aeda4dc1115f22c731039c6119a8d5d95be1bbbb4c68fc029bb0c11ee7a5f5a` | **Recommended.** Linux 6.12 + 1G Ethernet + DVI + USB host (keyboard, mouse, hub) |
+| **`ETH_GateMateA1_2809_1923_Linux_GbE_DVI_USBPNRU_pll60s2_oss0928.bit`** | `bd3e0251f56bae94456c15dc1f6a2e7230cd87961c9f7f31a9e39f6cb8648496` | **Recommended.** Same design as `pll60 s1`, rebuilt with oss-cad-suite 2026-09-28 (nextpnr c4fbb55a, GateMate FF_OBF/FF_IBF clock-inversion fix #1810), seed 2 |
+| `ETH_GateMateA1_2609_1646_Linux_GbE_DVI_USBPNRU_pll60s1.bit` | `9aeda4dc1115f22c731039c6119a8d5d95be1bbbb4c68fc029bb0c11ee7a5f5a` | Previous recommended one (oss-cad-suite 2026-09-23). Linux 6.12 + 1G Ethernet + DVI + USB host |
 | `ETH_GateMateA1_2509_2330_Linux_GbE_DVI_lr0_rec3.bit` | `1ee3ba4034d63d215c061368921c19102f51d14accd03bd6be7a5968f1aeb597` | Previous recommended one: Linux 5.14 + 1G + DVI + DOOM, no USB |
 | `ETH_GateMateA1_2509_2330_Linux_GbE_DVI_USBHID_rec1.bit` | `f035d9a369c7b9eb52d0254ff11b10bd9c6e7a20d6f7788e467b7bdf707daa16` | Emard's low-speed keyboard host. Never tested on the board; replaced by the PNRU host |
+
+## TASK-5090 (rebuild with the GateMate nextpnr fixes of 25.–28.09.2026)
+
+**`ETH_GateMateA1_2809_1923_Linux_GbE_DVI_USBPNRU_pll60s2_oss0928.bit`** — the `s_usb5_pll60` design unchanged (same `target_soc.py` options, same LiteX b6ae9e0b2, CSR map identical to
+`s_usb5_pll60_s1`, so `rv32_k612.dtb` and the Linux 6.12 images stay valid), built with **oss-cad-suite 2026-09-28**
+(Yosys 0.69+154, nextpnr 0.11.1-34-gc4fbb55a = upstream incl. #1810 "gatemate: fix clock inversion for FF_OBF/FF_IBF pack").
+Seed **2**; `gmpack --reset` (CFGRST checked). Build dir `build/s_usb5_pll60_s2_oss0928/`.
+
+| post-route Fmax [MHz] | 26.09. s1 (oss 0923) | 28.09. s1 (oss 0928) | **28.09. s2 (oss 0928)** |
+|---|---|---|---|
+| usb_clk (60 MHz) | 64.6 | 59.3 (fail) | **64.2** |
+| grx_clk (125 MHz) | 121.4 | 109.8 | **127.8** |
+| gtx0_clk | 45.6 | 46.1 | 43.6 |
+| ref_clk | 104.9 | 91.9 | 83.2 |
+
+Board test 28.09.2026 (ULX5M-GS on the CM4 baseboard, `lxrun.sh`, Image612 + rv32_k612.dtb + rootfs612.cpio): BIOS memtest OK,
+netboot, **login after 261 s**, USB PNRU keyboard/mouse found, ping from the Pi 20/20 and 300/300 × 1400 B (avg 24 ms),
+DVI console and login prompt on the grabber. Seed 1 also boots (same result) but misses usb_clk; seed 3 did not finish routing.
+
+**nextpnr 3c42800d (#1814 "gatemate: add missing timing check from and to IOSEL", 28.09.2026) crashes on this design**
+right after packing, in timing analysis: `terminate … std::out_of_range: dict::at()`. The commit before it (073bb87e),
+built the same way with the same chipdb, gets past that point and places normally, so the crash comes from #1814.
+Not used here; to be reported upstream.
 
 ## TASK-5051 (USB PNRU host, Linux 6.12)
 

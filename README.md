@@ -72,7 +72,8 @@ The bitstreams are in `ulx5m-gs-linux-sbc/bitstreams/`:
 
 | File | Use |
 |---|---|
-| `ETH_GateMateA1_2609_1646_Linux_GbE_DVI_USBPNRU_pll60s1.bit` | **Use this one.** Linux 6.12 + Ethernet + DVI + USB keyboard. |
+| `ETH_GateMateA1_2809_1923_Linux_GbE_DVI_USBPNRU_pll60s2_oss0928.bit` | **Use this one.** Linux 6.12 + Ethernet + DVI + USB keyboard; rebuilt 28.09.2026 with oss-cad-suite 2026-09-28 (nextpnr GateMate IO-FF fix #1810), seed 2. |
+| `ETH_GateMateA1_2609_1646_Linux_GbE_DVI_USBPNRU_pll60s1.bit` | Previous one (oss-cad-suite 2026-09-23); same design. |
 | `ETH_GateMateA1_2509_2330_Linux_GbE_DVI_lr0_rec3.bit` | Older: Linux 5.14 + Ethernet + DVI + DOOM, no USB. |
 | `ETH_GateMateA1_2509_2330_Linux_GbE_DVI_USBHID_rec1.bit` | Older USB keyboard host (low speed only). Never tested on the board. |
 
@@ -131,7 +132,7 @@ BIOS: Linux was not loaded (usually `boot.json` points to other files). The cons
 
 **4. Load the FPGA and wait.**
 
-    openFPGALoader -c dirtyJtag ulx5m-gs-linux-sbc/bitstreams/ETH_GateMateA1_2609_1646_Linux_GbE_DVI_USBPNRU_pll60s1.bit -r
+    openFPGALoader -c dirtyJtag ulx5m-gs-linux-sbc/bitstreams/ETH_GateMateA1_2809_1923_Linux_GbE_DVI_USBPNRU_pll60s2_oss0928.bit -r
 
 The serial console is on the same USB cable (`/dev/ttyACM0`, 115200 baud). After about 4.5 minutes you get
 a login prompt, on the serial console and on the DVI screen. Log in as `root` (no password).
