@@ -140,6 +140,16 @@ direction it does not finish in 15 min.
 > (loader `Done`, JTAG `--detect` fine). The question for the maintainers becomes: is there a known way a CCGM1A2
 > gets into a state where die-1B CPE flip-flops (or the whole configuration) no longer start, that only `RST_N` /
 > power clears, and how should a loader reset an A2 before JTAG configuration? (Our DirtyJTAG does not drive `RST_N`.)
+>
+> **Update 30.09. 00:26 (TASK-5095/5096).** Narrower now: the first load after a power cycle always works, and
+> loading a *different* layout over a running A2 design fails (4/5 before, and again T2.1 below). gmpack writes die
+> 1B completely (CFGRST … CHG_STATUS) while die 1A still runs the old design, so we tried a local
+> `gmpack --reset-all-first` that sends the existing CFGRST records of both dies before any configuration: the
+> fresh load works (`K0000000B`), the reload over it is still silent. So `CMD_CFGRST`, before or after the 1B
+> section, does not bring the chip back to its power-on state. Questions to add: (1) what does `CMD_CFGRST` reset
+> on a die that is in user mode, and does a multi-die reload need something else (e.g. a `CMD_CHG_STATUS` back to
+> configuration mode on 1A before `CMD_PATH` forwards to 1B)? (2) Is `RST_N` bonded to both dies of the CCGM1A2
+> (DS1001 §2.6.2 lists only the clock pins as shared)? (3) Is there a minimum `RST_N` low time?
 
 **Device:** CCGM1A2 on ULX5M-GS, loaded over JTAG (`openFPGALoader ... -r --index-chain 0`), bitstream from
 nextpnr + `gmpack --reset` (oss-cad-suite 2026-09-28, libgm `b1eb52f`).

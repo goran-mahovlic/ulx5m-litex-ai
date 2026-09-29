@@ -485,6 +485,45 @@ The series scripts now write `~/t5095/NEEDS_POWER_CYCLE` when a step misses (age
 after T2.1: both `run_series_t.sh` and `run_series.sh` stop with `last DirtyJTAG enumeration 00:23:18 is before the
 note 00:25:30`, exit 3.
 
+**Goran's note #114 (00:26: other ways to reset, a longer reset, gmpack reset of both dies).** Offline, the board
+was already silent after T2.1:
+
+- *Documentation.* DS1001 §3.2 (RST_N, POR), §3.3 (CFG_MD table 3.1, CFG_DONE/CFG_FAILED_N table 3.3), §3.4 (JTAG
+  instructions) say nothing about resetting one die of the A2 or about a minimum `RST_N` low time; UG1001 (primitives)
+  has nothing on configuration. No A2/multi-die application note was found locally or in §5.5's search. prjpeppercorn
+  `serialise_chip` and openFPGALoader `CologneChip::reset()` are covered above and in §5.7.
+- *JTAG TLR/TRST.* Test-Logic-Reset (5× TMS=1) resets the TAP only, not the configuration (IEEE 1149.1); DirtyJTAG
+  SRST/TRST pulses of 200–300 ms did nothing on gs (TASK-5093). Not a candidate.
+- *Longer reset.* A design cannot make the pulse longer: when `IO_SB_B8` pulls `RST_N` below the threshold the chip
+  goes into reset and tri-states its IOs (DS1001 fig. 3.2 `/ResetIO`), so it lets go of the net itself. With an
+  8 mA driver C138 (100 nF) falls from 1.8 V to ~1.0 V in ~10 µs; from there R111 (10 k, τ = 1 ms) brings it back
+  over the rising threshold (~1.2 V, table 4.8 VIO,TH+ as a proxy; the pin threshold itself is not specified) in
+  τ·ln(0.8/0.6) ≈ 0.3 ms. So `R!` gives a reset of the order of **0.3 ms** and nothing longer. A longer reset needs
+  an external pull on the `RST_N` net: on gs that net is also at the module connector **J2.99** = CM5 `PMIC_Enable`,
+  on Waveshare CM5-IO-BASE-A the net `PI_GLOBAL_EN` (schematic `CM5-IO-BASE-A_Sch.pdf`, p. 1), and **J2.72** = CM5
+  `SD_DAT6` (unused by the 4-bit TF slot). Grounding `PI_GLOBAL_EN` (a pad/header on the baseboard, or a wire to a
+  Pi GPIO in open-drain) for 1 / 10 / 100 ms is the only way to measure a longer reset; it needs Goran at the board.
+  (U7/U8 74LVC2G00 only read `RST_N`, they do not drive it.)
+- *gmpack reset of both dies:* done — `--reset-all-first` (T, rejected). The order 1A-first is the same idea with
+  the same `CMD_CFGRST`; after T2.1 it is not worth a power cycle.
+- *Empty "reset" stream between two designs* (series E) and *1B through its own TAP* (series J) — built:
+  `die1b_ff_t5095/empty/` (`empty.v`: no logic, UART TX idle-high on `IO_NB_B5`; `build.sh` rebuilds the same
+  sha256), `empty_a2_r.bit` (255 B, `983fec22ac4a4d82…`) and `empty_a1_r.bit` (106 B, `af8884403a9771e9…`); their
+  command lists (`exp/gmbit.py`) have the same skeleton as the real streams (PATH/fill/CFGRST/D2D/PLL/CHG_STATUS, 1B
+  status `10 1f…`, 1A `13 1f 20…`), no hand-made records. Scripts `run_series_e.sh` (E1 `sr_x` fresh, then ×3:
+  empty → `inv_sr` → empty → `sr_x`, judged on the real designs) and `run_series_j.sh` (J1 `sr_x`, then ×3:
+  `empty_a1_r` to `--index-chain 1` (observed only) → `inv_sr` → again → `sr_x`). Both on the Pi, both stop in the
+  preflight now (exit 3).
+
+**Order for the next power cycles (one series per power cycle while they fail; each stops at the first miss):**
+
+1. **S** `~/t5095/run_series.sh --control` — `R!` (design-driven ~0.3 ms `RST_N`). If S passes, it is the flow fix.
+2. **E** `~/t5095/run_series_e.sh` — empty stream between designs (pure JTAG, no board change).
+3. **J** `~/t5095/run_series_j.sh` — 1B through its own TAP.
+4. **L** (needs Goran): with `sr_x` running, ground `PI_GLOBAL_EN` for 100 ms, then 10 ms, then 1 ms, each followed
+   by `inv_sr` / `sr_x`; records the shortest external reset that works. If even 100 ms fails, the state survives
+   `RST_N` and only a power cycle clears it.
+
 After the next power cycle: clear the note in `/home/pi/gs.owner` or leave it (the probes' re-enumeration lets the
 preflight pass either way), then `fpga-klaudio@pi:~/t5095/run_series.sh --control`.
 
@@ -493,7 +532,7 @@ preflight pass either way), then `fpga-klaudio@pi:~/t5095/run_series.sh --contro
 1. **Die-1B CPE flip-flops (D)**: they work on a fresh chip with the local toolchain (§5.6, §5.7 Q1); the open
    problem is reloading over a running A2 design (H7). A reset of both dies from the stream (`gmpack
    --reset-all-first`, H8) does not fix it (§5.8, T2.1 silent). Next: the pre-registered self-reset series S1–S6
-   (§5.7), `~/t5095/run_series.sh --control`, after a power cycle. Until it passes, **every A2 session starts with a
+   (§5.7), `~/t5095/run_series.sh --control`, after a power cycle; then E, J, L (§5.8). Until one passes, **every A2 session starts with a
    power cycle and loads one design only.**
 2. **`force_die=1A` is not stable across builds** (s4 works, s5 and the fabric-RX builds do not): diff the die-1B
    tile configuration of `a2_f1A_s4.txt` and `a2_f1A_s5.txt`.
