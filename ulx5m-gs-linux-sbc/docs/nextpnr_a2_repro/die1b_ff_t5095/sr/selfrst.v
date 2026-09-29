@@ -6,6 +6,15 @@
 // for good. Any other byte (0x00 from uart_nr.sh, a lone "R" or "!") does nothing.
 // GateMate does not apply FF init values, so the enable is a 16-bit key that only the byte sequence writes: a random
 // start state asserts it with p = 2^-16, a cleared one (all 0) never.
+// SR_HALF/SR_FULL: clk cycles per half / whole UART bit, 25 MHz by default. The A2 SoC (TASK-5094) clocks it from its
+// 20 MHz sys clock (clk25 as a fabric clock needs a GLBOUT, the SoC already uses 2/2 per die) and reads this file with
+// -DSR_HALF=87 -DSR_FULL=174. Macros, not parameters: a parameter changes the die1b_ff bitstreams (sha256 checked).
+`ifndef SR_HALF
+`define SR_HALF 108
+`endif
+`ifndef SR_FULL
+`define SR_FULL 216
+`endif
 module selfrst (input clk, input rx, output rst_oe);
   reg [15:0] key = 16'h0000;
   assign rst_oe = (key == 16'hA55A);
@@ -14,8 +23,8 @@ module selfrst (input clk, input rx, output rst_oe);
   always @(posedge clk) begin
     rx1 <= rx; rx2 <= rx1;
     if (!busy) begin
-      if (!rx2) begin busy <= 1; div <= 108; bitn <= 0; end     // start bit: sample at mid-bit
-    end else if (div == 216) begin
+      if (!rx2) begin busy <= 1; div <= `SR_HALF; bitn <= 0; end     // start bit: sample at mid-bit
+    end else if (div == `SR_FULL) begin
       div <= 0; bitn <= bitn + 1;
       if (bitn == 0) begin if (rx2) busy <= 0; end               // false start
       else if (bitn <= 8) sh <= {rx2, sh[7:1]};

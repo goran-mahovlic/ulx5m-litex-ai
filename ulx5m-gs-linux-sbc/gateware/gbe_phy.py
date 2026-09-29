@@ -438,3 +438,120 @@ class GbePHY(LiteXModule):
         iddr(pads.rx_ctl, core.rx_rs_ctl, core.rx_fs_ctl)
         for i in range(4):
             iddr(pads.rx_data[i], core.rx_rs_dat[i], core.rx_fs_dat[i])
+
+
+# 100 Mb/s over the same RGMII pins (TASK-5094) ---------------------------------------------------------------
+# For the CCGM1A2 (A2): the RGMII balls are bonded only to die 1B, and at 1G the RX path from the IOSEL on 1B to
+# logic on 1A needs ~12 ns in an 8 ns cycle (A2_CCGM1A2_TASK-5092.md §3). At 100 Mb/s the KSZ9031 runs RGMII at
+# 25 MHz with ONE nibble per RXC/TXC cycle (the same nibble on both edges; RX_CTL = DV on the rising and DV ^ ER on
+# the falling edge), so every path gets 40 ns. The PHY logic is GbePHYCore unchanged, under clock enables:
+#   RX: grx = RXC (25 MHz); the falling-edge sample (mid-nibble, 20 ns from either data edge) is the nibble of the
+#       cycle. The core advances every 2nd cycle and gets rs = this nibble, fs = the previous one, so its A/B
+#       pairing = the two possible byte phases of the enable; the SFD picks one per frame, exactly as at 1G.
+#       rx_ctl is DV ^ ER, so an RX_ER nibble ends the frame early (bad FCS, dropped by the MAC).
+#   TX: gtx stays 125 MHz (it also clocks DVI/USB); the core advances every 10th cycle (80 ns = one byte), the output
+#       stage sends the low nibble for 5 cycles, then the high one, and makes TXC itself: high 2 of 5 cycles
+#       (25 MHz, 40 % duty), rising 16 ns after the nibble changed, falling 8 ns before the next change. TXC is a
+#       register output, so it needs no global net (the 1G TXC takes one).
+# The MDIO controller must advertise 100BASE-TX only (REG9 = 0, REG4 = 0x0101).
+
+class Rgmii100Core(LiteXModule):
+    """100 Mb/s PHY logic without IO primitives. Domains: sys (sink/source), gtx (125 MHz), grx (RXC, 25 MHz).
+
+    grx inputs  : rx_ctl/rx_dat = falling-edge RGMII sample of this RXC cycle.
+    gtx outputs : tx_ctl, tx_dat, txc (registered, straight to the pads).
+    """
+    def __init__(self, rx_ce_phase=0):
+        self.core = core = CEInserter(["gtx", "grx"])(GbePHYCore(prim=False))
+        self.sink, self.source = core.sink, core.source
+        self.rx_frames, self.tx_frames, self.rx_drops = core.rx_frames, core.tx_frames, core.rx_drops
+
+        # RX -------------------------------------------------------------------------------------------
+        # The enable phase is re-aligned on every SFD (nibbles 5 -> D while not in a frame): a free-running phase
+        # would change against the nibble stream from frame to frame, and the core only re-trains its A/B pairing
+        # on a pairing change, losing that frame. At the SFD's D nibble (cycle c) the enable is set so that the
+        # core's current pairing sees 0xD5: B needs an enable at c ({nib c-1, nib c}), A one at c+1 ({last enabled
+        # rising sample = preamble 5, nib c}); so the pairing never has to change.
+        self.rx_ctl, self.rx_dat = RL(), RL(4)
+        prev_c, prev_d = RL(), RL(4)
+        ce_r = RL(reset=rx_ce_phase)
+        infr = RL()
+        ce, sfd = Signal(), Signal()
+        self.comb += [
+            sfd.eq(~infr & self.rx_ctl & prev_c & (self.rx_dat == 0xD) & (prev_d == 0x5)),
+            ce.eq(Mux(sfd, core.rx_sel, ce_r)),
+        ]
+        self.sync.grx += [
+            prev_c.eq(self.rx_ctl), prev_d.eq(self.rx_dat), ce_r.eq(~ce),
+            infr.eq(self.rx_ctl & (infr | sfd)),
+        ]
+        self.comb += [
+            core.ce_grx.eq(ce),
+            core.rx_rs_ctl.eq(self.rx_ctl), core.rx_rs_dat.eq(self.rx_dat),
+            core.rx_fs_ctl.eq(prev_c),      core.rx_fs_dat.eq(prev_d),
+        ]
+
+        # TX -------------------------------------------------------------------------------------------
+        self.tx_ctl, self.tx_dat, self.txc = RL(), RL(4), RL()
+        k = RL(4)      # 0..9; the core's byte changes at the edge that ends k = 9
+        self.comb += core.ce_gtx.eq(k == 9)
+        self.sync.gtx += [
+            k.eq(Mux(k == 9, 0, k + 1)),
+            self.tx_ctl.eq(core.tx_en),
+            self.tx_dat.eq(Mux(k < 5, core.tx_byte[:4], core.tx_byte[4:]) & Replicate(core.tx_en, 4)),
+            self.txc.eq((k == 2) | (k == 3) | (k == 7) | (k == 8)),
+        ]
+
+
+class Rgmii100PHY(LiteXModule):
+    """100 Mb/s RGMII PHY with GateMate IO primitives (same pads and interface as GbePHY).
+
+    clk_tx : 125 MHz (gtx0). RXC: pad -> CC_BUFG -> grx. LiteEth sees eth_tx/eth_rx = sys.
+    """
+    dw          = 8
+    tx_clk_freq = 20e6     # overwritten by the target: LiteEth's eth_tx/eth_rx = sys
+    rx_clk_freq = 20e6
+
+    def __init__(self, clock_pads, pads, clk_tx, rst):
+        self.c = c = Rgmii100Core()
+        self.sink, self.source = c.sink, c.source
+
+        self.cd_gtx = ClockDomain()
+        self.cd_grx = ClockDomain()
+        self.cd_eth_tx = ClockDomain()
+        self.cd_eth_rx = ClockDomain()
+        self.comb += [
+            self.cd_gtx.clk.eq(clk_tx),
+            self.cd_eth_tx.clk.eq(ClockSignal("sys")), self.cd_eth_tx.rst.eq(ResetSignal("sys")),
+            self.cd_eth_rx.clk.eq(ClockSignal("sys")), self.cd_eth_rx.rst.eq(ResetSignal("sys")),
+        ]
+        rxc_buf = Signal()
+        self.specials += Instance("CC_BUFG", i_I=clock_pads.rx, o_O=rxc_buf)
+        self.comb += self.cd_grx.clk.eq(rxc_buf)
+        self.specials += [
+            AsyncResetSynchronizer(self.cd_gtx, rst),
+            AsyncResetSynchronizer(self.cd_grx, rst),
+        ]
+
+        # TX: the output stage is already registered in gtx; CC_ODDR with D0 = D1 puts that register in the IOSEL
+        # (same value on both edges, as RGMII 10/100 wants).
+        def oddr(d, pad):
+            self.specials += Instance("CC_ODDR", p_CLK_INV=0, i_CLK=ClockSignal("gtx"), i_DDR=ClockSignal("gtx"),
+                                      i_D0=d, i_D1=d, o_Q=pad)
+        oddr(c.tx_ctl, pads.tx_ctl)
+        for i in range(4):
+            oddr(c.tx_dat[i], pads.tx_data[i])
+        oddr(c.txc, clock_pads.tx)
+
+        # RX: CC_IDDR Q1 (falling edge, mid-nibble) -> negedge reg -> posedge reg = sample of this RXC cycle.
+        def iddr_fall(pad, out):
+            q0, q1, q1n = Signal(), Signal(), Signal()
+            self.specials += [
+                Instance("CC_IDDR", p_CLK_INV=0, i_CLK=ClockSignal("grx"), i_D=pad, o_Q0=q0, o_Q1=q1),
+                Instance("CC_DFF", p_CLK_INV=1, p_EN_INV=0, p_SR_INV=0, p_SR_VAL=0,
+                         i_D=q1, i_CLK=ClockSignal("grx"), i_EN=1, i_SR=0, o_Q=q1n),
+            ]
+            self.sync.grx += out.eq(q1n)
+        iddr_fall(pads.rx_ctl, c.rx_ctl)
+        for i in range(4):
+            iddr_fall(pads.rx_data[i], c.rx_dat[i])

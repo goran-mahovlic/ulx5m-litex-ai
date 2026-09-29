@@ -1,9 +1,16 @@
 // selfrst_tb.v (TASK-5095): selfrst drives RST_N low only after the bytes "R!" (0x52 0x21), never after 0x00 or "R".
 `timescale 1ns/1ps
 module tb;
-  reg clk = 0, rx = 1; always #20 clk = ~clk;              // 25 MHz
+  // default 25 MHz (die1b_ff designs); -DSYS20: 20 MHz sys clock of the A2 SoC (TASK-5094)
+`ifdef SYS20
+  reg clk = 0, rx = 1; always #25 clk = ~clk;
+  wire rst_oe;
+  selfrst dut (.clk(clk), .rx(rx), .rst_oe(rst_oe));      // iverilog -DSYS20 -DSR_HALF=87 -DSR_FULL=174
+`else
+  reg clk = 0, rx = 1; always #20 clk = ~clk;
   wire rst_oe;
   selfrst dut (.clk(clk), .rx(rx), .rst_oe(rst_oe));
+`endif
   task sendb(input [7:0] b); integer k; begin
     rx = 0; #8680; for (k = 0; k < 8; k = k + 1) begin rx = b[k]; #8680; end rx = 1; #8680; end endtask
   integer fails = 0;

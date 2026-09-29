@@ -198,3 +198,28 @@ In the A2 stream the offset falls inside the 12 zero bytes gmpack writes right a
 further in the reader code). Found while trying a gmunpack → gmpack round-trip
 as an offline check (TASK-5093). Reproduce: any design without a PLL, `gmpack top.txt top.bit; gmunpack top.bit x.txt`.
 
+
+---
+
+## 6. Issue/PR (nextpnr, common): placer_heap cell-placement timeout overflows `int` from 46 341 cells on
+
+Found in TASK-5094 (30.09.2026), nextpnr `ad8527f8` and upstream HEAD `eb4f15c3` (29.09.2026) — same line.
+
+`common/place/placer_heap.cc:2180`:
+
+```cpp
+cell_placement_timeout = std::max(10000, (int(ctx->cells.size()) * int(ctx->cells.size()) / timeout_divisor));
+```
+
+The product is computed in `int`. From 46 341 cells on it exceeds 2^31−1 (signed overflow, UB; in practice it wraps
+negative), `std::max` then returns 10000, and a large design fails in the analytical placer with
+`Unable to find legal placement for cell '...' of type 'CPE_FF' after 10001 attempts` although utilisation is low
+(CCGM1A2: CPE_LT 37 %, CPE_FF 13 %).
+
+Observed: the ULX5M-GS Linux SoC (VexRiscv-SMP + LiteDRAM + 1G MAC + DVI + USB) for CCGM1A2 printed
+`max placement attempts per cell = 267833940` (≈ 46 289 cells, just below the limit) and placed; the same SoC with
+a 37-cell UART reset sniffer added (and a different ABC result, +400 LUT2) printed `... = 10000` and failed on 12 of 12
+runs (6 seeds × 2 die strategies). `--placer-heap-cell-placement-timeout 0` (no limit) places it.
+
+Fix (one line): compute in 64 bit and clamp, e.g.
+`int64_t n = ctx->cells.size(); cell_placement_timeout = int(std::min<int64_t>(INT_MAX, std::max<int64_t>(10000, n * n / timeout_divisor)));`

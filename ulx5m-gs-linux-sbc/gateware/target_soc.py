@@ -152,7 +152,7 @@ class ULX5MSoC(SoCCore):
                  fb_base=0x43f00000, video_ce_rep=False, video_neg_sync=False,
                  pll_lock_req=1, video_640x240=False, with_usb_hid=False, video_recover=False,
                  phy_write_after=0, phy_reg4=0x0001, phy_snap_csr=False, with_usb_pnru=False,
-                 usb_pnru_clk="pll48", usb_pnru_freq=48e6, **kwargs):
+                 usb_pnru_clk="pll48", usb_pnru_freq=48e6, eth_100m=False, **kwargs):
         platform = intergalaktik_ulx5m_gs.Platform("peppercorn")
         # nextpnr timing model = VDD_CORE 1.1 V (SPEED); PLLs stay ECONOMY (lessons B3, I9).
         platform.toolchain._pnr_opts += " --vopt fpga_mode=%d " % {"lowpower": 1, "economy": 2, "speed": 3}[pnr_mode]
@@ -290,9 +290,17 @@ class ULX5MSoC(SoCCore):
                 txc = dict(txc_clks=[crg.cd_gtx0.clk, crg.cd_gtx90.clk, crg.cd_gtx270.clk], txc_sel=4, txc_bufg=False)
             else:
                 txc = dict(txc_clks=[crg.cd_gtx0.clk, crg.cd_gtx90.clk], txc_sel=2, txc_bufg=True)
-            self.ethphy = phy = GbePHY(clock_pads, pads, clk_tx=crg.cd_gtx0.clk, rst=crg.eth_rst, **txc)
+            if eth_100m:
+                # TASK-5094: 100 Mb/s on the same pins (gbe_phy.Rgmii100PHY): 40 ns per RGMII cycle, for the CCGM1A2
+                # where the RGMII balls are on die 1B and the logic on 1A (A2_CCGM1A2_TASK-5092.md §3). TXC is a
+                # register output (no global net), gtx0 stays 125 MHz for DVI/USB.
+                from gbe_phy import Rgmii100PHY
+                self.ethphy = phy = Rgmii100PHY(clock_pads, pads, clk_tx=crg.cd_gtx0.clk, rst=crg.eth_rst)
+                platform.add_period_constraint(clock_pads.rx, 1e9/25e6)
+            else:
+                self.ethphy = phy = GbePHY(clock_pads, pads, clk_tx=crg.cd_gtx0.clk, rst=crg.eth_rst, **txc)
+                platform.add_period_constraint(clock_pads.rx, 1e9/125e6)
             phy.tx_clk_freq = phy.rx_clk_freq = sys_clk_freq
-            platform.add_period_constraint(clock_pads.rx, 1e9/125e6)
             # CPU-only MAC (TASK-5033): the CPU answers ping (Linux) and does TFTP (BIOS netboot) itself, on local_ip.
             # 8-bit MAC in sys; add_ethernet(data_width=32) was tried first: TX works but RX never delivers a frame
             # to the CPU (ARP reply lost, TASK-5033).
@@ -301,7 +309,9 @@ class ULX5MSoC(SoCCore):
             self.add_cpu_mac_regions(self.ethmac, cpu_mac_address, local_ip, remote_ip)
             # KSZ9031: RESET_N + advertisement 1000FD on the first MDIO pass (lessons I2/I3), in hardware.
             from mdio_core import MDIOCore
-            self.phy_mdio = m = MDIOCore(pads, write_after=phy_write_after, reg9=0x0200, reg4=phy_reg4, reg0=0x1200,
+            # 100 Mb/s: advertise 100BASE-TX FD only (REG9 = 0: no 1000BASE-T, REG4 = 0x0101).
+            self.phy_mdio = m = MDIOCore(pads, write_after=phy_write_after, reg9=0x0000 if eth_100m else 0x0200,
+                                         reg4=0x0101 if eth_100m else phy_reg4, reg0=0x1200,
                                          rxc_domain="grx")
             self.phy_status0 = CSRStatus(32, description="KSZ9031 R1 (bits 31:16) and R1F (15:0); R1F bit 6 = 1000 Mb/s")
             self.phy_status1 = CSRStatus(32, description="KSZ9031 RA (31:16), RXC edges per 2^20 sys cycles >> 8 (15:0)")
@@ -448,6 +458,7 @@ def main():
     p.add_argument("--phy-write-after", default=0, type=int, help="MDIO pass in which REG9/4/0 are written")
     p.add_argument("--phy-reg4", default=0x0001, type=lambda x: int(x, 0), help="KSZ9031 REG4 written by MDIOCore")
     p.add_argument("--phy-snap-csr", action="store_true", help="CSR phy_snap = MDIOCore snap (256 bit)")
+    p.add_argument("--eth-100m", action="store_true", help="100 Mb/s RGMII (gbe_phy.Rgmii100PHY) instead of 1G (TASK-5094, A2)")
     soc_core_args(p)
     p.set_defaults(cpu_type="vexriscv", integrated_rom_size=0x10000, integrated_sram_size=0x2000, l2_size=0)
     args = p.parse_args()
@@ -460,7 +471,7 @@ def main():
                    video_640x240=args.video_640x240, with_usb_hid=args.with_usb_hid, video_recover=args.video_recover,
                    phy_write_after=args.phy_write_after, phy_reg4=args.phy_reg4, phy_snap_csr=args.phy_snap_csr,
                    with_usb_pnru=args.with_usb_pnru, usb_pnru_clk=args.usb_pnru_clk,
-                   usb_pnru_freq=args.usb_pnru_freq,
+                   usb_pnru_freq=args.usb_pnru_freq, eth_100m=args.eth_100m,
                    **soc_core_argdict(args))
     if args.synth_extra:
         soc.platform.toolchain._synth_opts += " " + args.synth_extra + " "

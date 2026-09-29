@@ -527,6 +527,59 @@ was already silent after T2.1:
 After the next power cycle: clear the note in `/home/pi/gs.owner` or leave it (the probes' re-enumeration lets the
 preflight pass either way), then `fpga-klaudio@pi:~/t5095/run_series.sh --control`.
 
+### 5.9 Linux + Ethernet again with the local toolchain, one load per power cycle (TASK-5094, Jelena, 30.09. from 00:33, written BEFORE the board)
+
+**State at the start (00:35):** `gs` silent since T2.1 (§5.8); `~/t5095/preflight.sh` on the Pi: `last DirtyJTAG
+enumeration 00:23:18 is before the note 00:25:30`, exit 3. Nothing was loaded. Goran's notes #113/#115 (reset both
+dies, longer reset, gmpack reset of both dies, alternatives) are answered in §5.8 as far as possible without the
+board; the remaining measurements (S, E, J, L) are folded into the session below.
+
+**Why a new attempt makes sense.** The SoC results of §5.2/§5.3 (split s2/s4 "no UART", s3 "MDIO dead", fab builds,
+`force_die` s5) were loads of *different layouts one after another in the same session* — exactly H7 (§5.7): only the
+first load after a power cycle is known to be applied cleanly. So those results say nothing reliable about the
+builds; each of them has to be judged again as the **first** load after a power cycle. The die-1B FFs themselves work
+on a fresh chip with this toolchain (§5.6, §5.7 Q1, §5.8 T1), so the region split of Goran's #108 (PHY + MAC-side
+up to the frame buffers on 1B, CDC on the sys side, `gtx` from the PLL copy on 1B fed by CLK0 = clk25 on both dies)
+is no longer blocked by (D).
+
+**Build (`tools/a2_soc_sr_build.sh`, local toolchain `~/app/raid/tools/nextpnr-a2fix`):**
+
+- Source: the TASK-5091 SoC (`build/s_usb5_pll60_s2_np1817`: VexRiscv-SMP, 1G MAC, DVI, USB PNRU, Linux 6.12 on
+  the A1) — same gateware, same `rv32_k612.dtb` (no CSR change).
+- **Self-reset added** (`selfrst.v` from §5.7, instance `a2_selfrst`, pad `a2_rst_pad` = `IO_SB_B8` = `RST_N` net,
+  `CC_IOBUF`, open drain). It is clocked by the 20 MHz `sys_clk` (`-DSR_HALF=87 -DSR_FULL=174`): clocked by clk25 it
+  would need a third global clock per die (GLBOUT is 2/2) — first attempt failed. `selfrst.v` got macros instead of
+  parameters because a parameter changed the §5.7 bitstreams; with macros `die1b_ff_t5095/build.sh` still rebuilds
+  `sr_x_nr.bit` `fa11676b…` and `inv_sr_nr.bit` `c4b8f368…` byte-identically. `selfrst_tb.v`: 25 MHz PASS, 20 MHz
+  with `-DSYS20 -DSR_HALF=87 -DSR_FULL=174` PASS, 20 MHz with the 25 MHz divider FAIL 2 (negative control).
+- Synthesis once (yosys 0.69+154, oss-cad-suite 2026-09-28, 48 s): 37 selfrst cells (25 DFF, 12 ADDF), `a2_rst_pad` on
+  a `CC_IOBUF`.
+- Variants: **split** = `a2_die_split.py --from-io --clk grx_clk --clk gtx0_clk --clk gtx90_clk --clk
+  ulx5msoc_gbephy_txc_g` (1B = 474 cells: 293 DFF + 2 BRAM_40K + their combinational cone; the rest 1A), `mirror`,
+  no `force_die`; **f1A** = `--vopt force_die=1A` (control, the §3 build type). Seeds 1–6 each, `--freq 125
+  --vopt fpga_mode=3 --router router2 --timing-allow-fail`, `gmpack --reset`, `gm_cfgrst_check.py`.
+- **New tool bug on the way (E):** all 12 runs first failed in the placer (`Unable to find legal placement for cell
+  … CPE_FF after 10001 attempts`, CPE_LT 37 %). `placer_heap.cc:2180` computes `int(cells)*int(cells)/8` in `int`;
+  from 46 341 cells on it overflows and the limit falls to 10000 (the TASK-5091 netlist printed 267833940 ≈ 46 289
+  cells, just under it). Same line in upstream HEAD `eb4f15c3`. Workaround `--placer-heap-cell-placement-timeout 0`;
+  draft §6 in `nextpnr_a2_repro/UPSTREAM_DRAFTS.md` (not posted).
+
+SEEDTABLE
+
+**Pre-registered session after the next power cycle** (`~/t5094/a2_session.sh`, stops at the first miss; every
+load is a direct gmpack output, CFGRST present; board IP 192.168.10.213; boot.json `linux` = Image612 +
+`rv32_k612.dtb` + `rootfs612.cpio` + `opensbi612.bin`):
+
+| step | action | expected if it works | otherwise |
+|---|---|---|---|
+| P1 | first load: best split seed (`a2_board_once.sh`, `STAB=1800`) | BIOS memtest OK → netboot TFTP (= 1G RX + TX) → Linux 6.12 login → `ping` Pi 5/5, Pi → board 20/20 × 1400 B, `input0` (USB), `/dev/fb0` (DVI), dmesg 0 error → 30 min: SDRAM loop + 1800 pings, 0 % loss | BIOS but `litex>` (netboot failed): `mem_read 0xf0002804 8` = PHY status (MDIO), RXC counter → 1G RX still broken → 100 Mb/s variant (item 4); silent → marker, stop |
+| R1 | `R!` on the console | board stops answering ping (SoC reset through `RST_N`) | still answers → R! does not reach `RST_N` in the SoC, stop |
+| S1 | `sr_x_nr.bit` (another layout) after R1 | `E00000000 K0000000B` → **R! returns the chip to the power-on state: the H7 flow fix** | silent → R! resets only part of the chip (only 1A? #113) or is too short (#115) → marker; next power cycle: series E/J (§5.8), then L (Goran, longer external reset) |
+| P2… | after `R!`: next split seed / the f1A control | as P1 (without the 30 min) | first miss stops |
+
+If P1 already gives Linux with working Ethernet, the result of the task does not depend on R1/S1; those only decide
+whether later loads need a power cycle.
+
 ## 6. Open items
 
 1. **Die-1B CPE flip-flops (D)**: they work on a fresh chip with the local toolchain (§5.6, §5.7 Q1); the open

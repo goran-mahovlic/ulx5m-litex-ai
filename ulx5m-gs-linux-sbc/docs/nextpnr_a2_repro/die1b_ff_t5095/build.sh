@@ -4,7 +4,7 @@
 # Same flow as TASK-5093 (checked: it rebuilds inv_nr.bit byte-identical, sha256 2bcd50523a23de25).
 set -euo pipefail
 H=$(cd "$(dirname "$0")" && pwd); O=${OUT:-$HOME/.tmp/a2/t5095sr}; mkdir -p $O
-export PATH=$HOME/app/raid/tools/oss-cad-suite-20260928/bin:$PATH; T=$HOME/app/raid/tools/nextpnr-a2fix/bin
+export TMPDIR=${TMPDIR:-$HOME/.tmp} PATH=$HOME/app/raid/tools/oss-cad-suite-20260928/bin:$PATH; T=$HOME/app/raid/tools/nextpnr-a2fix/bin
 CS=$(dirname "$(which yosys)")/../share/yosys/gatemate/cells_sim.v
 cp $H/sr/selfrst.v $H/sr/selfrst_tb.v $H/sr/top_tb.v $H/sr/stub.v $H/sr/top.ccf $H/../die1b_ff/mark_dies.py $O/
 cp $H/sr/top.v $O/sr_top.v; cp $H/inv_sr/top.v $O/inv_sr_top.v; cd $O
