@@ -340,11 +340,70 @@ Q1 `inv_nr.bit` as the **first** load on the fresh chip — if the 1B FFs are er
 X28/X29) is the trigger; if raw alternates `D`/`2`, the chip degrades with loads over a running design. Q2 `top_x_nr.bit`,
 Q3 `inv_nr.bit` again, Q4 `top_x_nr.bit` ×3 in a row — the first silent/erratic result stops the series.
 
+### 5.7 Q1/Q2 after the second power cycle, and a design-driven chip reset (TASK-5095, Jelena, 29.09. 23:55–00:40)
+
+`gs` was power-cycled at 23:55:14 (both DirtyJTAG probes re-enumerated in the Pi `dmesg`). Bitstreams on the Pi checked
+against §5.6 (sha256 `2bcd5052…` `inv_nr`, `b294109d…` `top_x_nr`). Series Q1–Q4 from §5.6, `uart_nr.sh`
+(no `--reset`, no `-r`, `--index-chain 0`):
+
+| order | bitstream | UART | meaning |
+|---|---|---|---|
+| Q1 | `inv_nr.bit`, **first** load on the fresh chip | `E00000000 K0000002B / K000000DB` alternating, 7 frames | 1B FFs work, not inverted; the `inv` placement (X28/X29) is **not** the trigger |
+| Q2 | `top_x_nr.bit` over the running `inv` design | `load: Done`, **UART silent** (4 s, then 8 s more after `0x00`) | series stopped (rule 5a); `--detect`: both dies `0x20000001` |
+
+**Pattern over both sessions (§5.6 + this one):** the first load after a power cycle always works (`top_x_nr`
+23:25, `inv_nr` 23:57). Reloading the **same** layout works (§5.6 loads 2, 3). Loading a **different** layout over a
+running A2 design went wrong 4 times out of 5: erratic 1B FFs (§5.6 load 4), no running design (§5.6 loads 6–7, Q2);
+the exception is §5.6 load 5 (`top_x` over `inv_r`, worked), so it is not deterministic. That fits
+H7: **a load over a running A2 design is not applied cleanly, because nothing resets the chip before it.**
+openFPGALoader `CologneChip::reset()` for DirtyJTAG sets SRST low and high again with no wait (`colognechip.cpp`
+l. 88–105, 676e53e), SRST does not reach `RST_N` on gs (§5.5), and DS1001 §3.4 has no JTAG instruction that
+resets the configuration (the only ones are BYPASS, CONFIGURE, SPI_*, SERDES_REGFILE, SET_TESTMODE,
+SAMPLE_PRELOAD, EXTEST). `CMD_CFGRST` in the stream (`--reset`) does not replace it (§5.6 load 4 used `--reset`). On the
+A1 this never showed because a single-die stream has no 1A→1B forwarding path to leave half-configured.
+
+**A reset the board already has.** `kicad_netlist.py` on `ulx5m-gs-hw` 61b6709: net `RST_N` = `U4.T15` (the RST_N
+ball) + **`U4.N15` = `IO_SB_B8`** + R111 (10 k to +1V8) + C138 (100 nF) + J2.72/J2.99 (CM4 connector). A design can
+therefore reset its own chip by pulling `IO_SB_B8` low. On the A2, bank SB is 1A W2 (§1), so the pin is on die 1A.
+The reset tri-states every IO, so the pin lets go by itself and R111/C138 give a rising edge ~1 ms later: the design
+**cannot** hold the chip in reset. What the chip does after the edge is decided by `CFG_MD` (SW1), the same as after
+a power cycle.
+
+`die1b_ff_t5095/` (built with `nextpnr-a2fix`, `build.sh`):
+
+- `sr/selfrst.v`: 8N1 receiver; after the bytes `R!` (0x52 0x21) a 16-bit key becomes `A55A` and `IO_SB_B8` is driven
+  low (open drain, otherwise high-Z). A key instead of one bit because GateMate does not apply FF init values: a
+  random start state fires with p = 2⁻¹⁶, a cleared one never. `0x00` (`uart_nr.sh`), a lone `R` or `!` do nothing.
+- `sr/top.v` = `die1b_ff/top.v` + selfrst (diff: port `rst_pad` + 4 lines); `inv_sr/top.v` = `die1b_ff_t5093/inv/top.v` + the same.
+- Checks before the board: `selfrst_tb.v` 7/7; `top_tb.v` RTL and gate-level (yosys netlist + `cells_sim.v`) for both
+  tops: `rst_pad` = 1 (pull-up) at start, after `00 00`, after `R`; 0 after `R!` → `RESULT PASS`; gate-level
+  `inv_sr` with the short tick prints `K…2`/`K…D` alternating like the original; nextpnr places `rst_pad` on
+  `IO_SB_B8` die 1A (IOSEL `OE_ENABLE=1`, data 0, `OE_SIGNAL` from the key); the same flow rebuilds Kosjenka's
+  `inv_nr.bit` byte-identical (sha256 `2bcd50523a23de25`).
+- Bitstreams (gmpack without `--reset`): `sr_x_nr.bit` sha256 `fa11676b8ebf7137…`, `inv_sr_nr.bit`
+  `c4b8f36839f544c4…`; copied to `fpga-klaudio@pi:~/t5095/` with `sr_reset.sh` and `run_series.sh`, **not loaded**
+  (the chip is in the bad state since Q2).
+
+**Pre-registered, after the next power cycle (`~/t5095/run_series.sh`, stops at the first miss):**
+
+| step | action | expected if H7 + self-reset hold | otherwise |
+|---|---|---|---|
+| S1 | load `sr_x_nr.bit` (fresh chip) | `E00000000 K0000000B` | — (as §5.6 load 1) |
+| S2 | `sr_reset.sh`: send `R!` | UART silent (or the flash design, per `CFG_MD`) | frames keep coming → `IO_SB_B8` does not reset the chip |
+| S3 | load `inv_sr_nr.bit` | `K000000DB` / `K0000002B` alternating (as Q1 on a fresh chip) | silent/erratic → RST_N does not clear what a power cycle clears |
+| S4 | `R!` | silent | — |
+| S5/S6 ×3 | `sr_x` → `R!` → `inv_sr` → `R!` | every load as on a fresh chip | first miss stops |
+
+If S1–S6 pass, the load flow for the A2 on gs becomes: **`R!` (or any design-driven pull of `IO_SB_B8`) before
+every load**. That is a flow/board fix, not a tool patch: a SoC for the A2 keeps an `IO_SB_B8` reset register, and
+`fpga-jtag`/`uart_nr.sh` send the trigger first. A control run (`inv_sr` → `sr_x` **without** `R!`) at the end would
+reproduce Q2 and close H7.
+
 ## 6. Open items
 
-1. **Die-1B CPE flip-flops (D)** (TASK-5093 §5.5: H1/H3 rejected, H2/H4 built but not measured, board waits for a power cycle): find the missing piece (a per-die start/reset command in the bitstream, or a
-   CPE/tile configuration bit on die 1B) — ideally with a vendor-generated A2 bitstream (Cologne Chip p_r with A2
-   support) as reference. Until then no registers on die 1B.
+1. **Die-1B CPE flip-flops (D)**: they work on a fresh chip with the local toolchain (§5.6, §5.7 Q1); the open
+   problem is reloading over a running A2 design (H7). Next: the pre-registered self-reset series S1–S6 (§5.7) after
+   a power cycle. Until it passes, **every A2 session starts with a power cycle and loads one design only.**
 2. **`force_die=1A` is not stable across builds** (s4 works, s5 and the fabric-RX builds do not): diff the die-1B
    tile configuration of `a2_f1A_s4.txt` and `a2_f1A_s5.txt`.
 3. RX at 1G is not possible with everything on 1A (12 ns crossing in an 8 ns cycle); next practical step is the
