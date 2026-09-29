@@ -1,0 +1,22 @@
+diff --git a/himbaechel/uarch/gatemate/delay.cc b/himbaechel/uarch/gatemate/delay.cc
+index b8bfed67..70782744 100644
+--- a/himbaechel/uarch/gatemate/delay.cc
++++ b/himbaechel/uarch/gatemate/delay.cc
+@@ -200,7 +200,7 @@ bool GateMateImpl::getCellDelay(const CellInfo *cell, IdString fromPort, IdStrin
+             return get_delay_from_tmg_db(id_timing_del_TOBF_ctrl, delay);
+         if (fromPort == id_I && toPort == id_Y)
+             return get_delay_from_tmg_db(id_timing_del_IBF, delay);
+-        return true;
++        return false;
+     } else if (cell->type.in(id_CPE_LVDS_IBUF, id_CPE_LVDS_OBUF, id_CPE_LVDS_TOBUF, id_CPE_LVDS_IOBUF)) {
+         if (fromPort == id_A && toPort.in(id_O_P, id_O_N))
+             return get_delay_from_tmg_db(id_timing_del_LVDS_OBF, delay);
+@@ -208,7 +208,7 @@ bool GateMateImpl::getCellDelay(const CellInfo *cell, IdString fromPort, IdStrin
+             return get_delay_from_tmg_db(id_timing_del_LVDS_TOBF_ctrl, delay);
+         if (fromPort.in(id_I_P, id_I_N) && toPort == id_Y)
+             return get_delay_from_tmg_db(id_timing_del_LVDS_IBF, delay);
+-        return true;
++        return false;
+     } else if (cell->type.in(id_IOSEL)) {
+         bool output = bool_or_default(cell->params, id_OUT_SIGNAL);
+         bool enable = bool_or_default(cell->params, id_OE_ENABLE);

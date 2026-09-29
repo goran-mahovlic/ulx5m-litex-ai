@@ -73,6 +73,7 @@ The bitstreams are in `ulx5m-gs-linux-sbc/bitstreams/`:
 | File | Use |
 |---|---|
 | `ETH_GateMateA1_2809_1923_Linux_GbE_DVI_USBPNRU_pll60s2_oss0928.bit` | **Use this one.** Linux 6.12 + Ethernet + DVI + USB keyboard; rebuilt 28.09.2026 with oss-cad-suite 2026-09-28 (nextpnr GateMate IO-FF fix #1810), seed 2. |
+| `ETH_GateMateA1_2909_1015_Linux_GbE_DVI_USBPNRU_pll60s2_np1817.bit` | Same design, built 29.09.2026 with nextpnr `ad8527f8` (GateMate IOSEL timing #1814 + fix #1817), seed 2; board-tested (36 min under load, ping 1800/1800, DVI, USB). |
 | `ETH_GateMateA1_2609_1646_Linux_GbE_DVI_USBPNRU_pll60s1.bit` | Previous one (oss-cad-suite 2026-09-23); same design. |
 | `ETH_GateMateA1_2509_2330_Linux_GbE_DVI_lr0_rec3.bit` | Older: Linux 5.14 + Ethernet + DVI + DOOM, no USB. |
 | `ETH_GateMateA1_2509_2330_Linux_GbE_DVI_USBHID_rec1.bit` | Older USB keyboard host (low speed only). Never tested on the board. |

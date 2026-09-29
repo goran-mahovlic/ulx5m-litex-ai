@@ -4,14 +4,28 @@ Loading (SRAM only): `openFPGALoader -c dirtyJtag <bit> -r`. All of them have CM
 
 Older bitstreams and CPU-less designs (100 Mb/s `target_eth.py`, 1 Gb/s `target_gbe.py`) are no longer in this
 repository; their descriptions and sources are in git tag `pre-cleanup-20260926` (see `docs/REVIEW_LITEX_DUPLICATES.md`).
-The folder holds four bitstreams: `pll60 s2 oss0928` (recommended), `pll60 s1`, `grec_3` and `ghrec_1`.
+The folder holds five bitstreams: `pll60 s2 oss0928` (recommended), `pll60 s2 np1817`, `pll60 s1`, `grec_3` and `ghrec_1`.
 
 | File | sha256 | Use |
 |---|---|---|
 | **`ETH_GateMateA1_2809_1923_Linux_GbE_DVI_USBPNRU_pll60s2_oss0928.bit`** | `bd3e0251f56bae94456c15dc1f6a2e7230cd87961c9f7f31a9e39f6cb8648496` | **Recommended.** Same design as `pll60 s1`, rebuilt with oss-cad-suite 2026-09-28 (nextpnr c4fbb55a, GateMate FF_OBF/FF_IBF clock-inversion fix #1810), seed 2 |
+| `ETH_GateMateA1_2909_1015_Linux_GbE_DVI_USBPNRU_pll60s2_np1817.bit` | `dcf82c64a44db1f307feda950e9d8ed991162fdad036b63578af823b345dac75` | Same design, built with nextpnr main `ad8527f8` (incl. #1814 IOSEL timing + #1817 IOBUF fix for the #1814 crash), seed 2. Board-tested 29.09.2026: 36 min under SDRAM load, ping 1800/1800, DVI, USB |
 | `ETH_GateMateA1_2609_1646_Linux_GbE_DVI_USBPNRU_pll60s1.bit` | `9aeda4dc1115f22c731039c6119a8d5d95be1bbbb4c68fc029bb0c11ee7a5f5a` | Previous recommended one (oss-cad-suite 2026-09-23). Linux 6.12 + 1G Ethernet + DVI + USB host |
 | `ETH_GateMateA1_2509_2330_Linux_GbE_DVI_lr0_rec3.bit` | `1ee3ba4034d63d215c061368921c19102f51d14accd03bd6be7a5968f1aeb597` | Previous recommended one: Linux 5.14 + 1G + DVI + DOOM, no USB |
 | `ETH_GateMateA1_2509_2330_Linux_GbE_DVI_USBHID_rec1.bit` | `f035d9a369c7b9eb52d0254ff11b10bd9c6e7a20d6f7788e467b7bdf707daa16` | Emard's low-speed keyboard host. Never tested on the board; replaced by the PNRU host |
+
+## TASK-5091 (nextpnr with the #1814 crash fixed upstream in #1817)
+
+**`ETH_GateMateA1_2909_1015_Linux_GbE_DVI_USBPNRU_pll60s2_np1817.bit`** — the `s_usb5_pll60` design unchanged, built with nextpnr main **`ad8527f8`** (PR #1817 "gatemate: only set
+IOBUF delays where connection exists", which fixes the #1814 `dict::at()` crash) and Yosys from oss-cad-suite 2026-09-28.
+Seed 2, `gmpack --reset` (CFGRST checked). Build dir `build/s_usb5_pll60_s2_np1817/`. CSR map identical, Linux 6.12 images unchanged.
+
+Post-route Fmax: usb_clk 61.2, grx_clk 118.3 (fail at 125), gtx0_clk 46.6, ref_clk 83.0 MHz. #1814 adds IOSEL timing
+checks, so the numbers are not fully comparable with the older builds. Seed 1 did not finish routing.
+
+Board test 29.09.2026: login after 266 s, USB PNRU keyboard/mouse, DVI console on the grabber, 36 min under constant SDRAM
+load without reboot, ping 300/300 and 1800/1800 × 1400 B (30 min, 0 % loss, avg 17.6 ms), no video recoveries, clean dmesg.
+Cause, minimal repro and fix: `docs/NEXTPNR_1814_IOBUF_CRASH_TASK-5091.md`.
 
 ## TASK-5090 (rebuild with the GateMate nextpnr fixes of 25.–28.09.2026)
 
@@ -34,7 +48,7 @@ DVI console and login prompt on the grabber. Seed 1 also boots (same result) but
 **nextpnr 3c42800d (#1814 "gatemate: add missing timing check from and to IOSEL", 28.09.2026) crashes on this design**
 right after packing, in timing analysis: `terminate … std::out_of_range: dict::at()`. The commit before it (073bb87e),
 built the same way with the same chipdb, gets past that point and places normally, so the crash comes from #1814.
-Not used here; to be reported upstream.
+Not used here. Fixed upstream in #1817 (`ad8527f8`), see TASK-5091 above.
 
 ## TASK-5051 (USB PNRU host, Linux 6.12)
 
