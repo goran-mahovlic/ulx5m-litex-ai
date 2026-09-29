@@ -3,7 +3,7 @@
 # Pre-registered in A2_CCGM1A2_TASK-5092.md §5.7. Stops at the first result that differs from the expectation.
 cd "$(dirname "$0")"
 . ./preflight.sh; preflight || exit 3   # TASK-5096: never load on a chip that still needs a power cycle
-ok(){ echo "$1" | grep -q "$2" || { echo "STOP: expected '$2'"; exit 1; }; }
+ok(){ echo "$1" | grep -q "$2" || { echo "STOP: expected '$2'"; mark_wedged "$0 expected $2"; exit 1; }; }
 o=$(./uart_nr.sh sr_x_nr.bit 3);   echo "S1 $o";  ok "$o" "E00000000 K0000000B"
 o=$(./sr_reset.sh 3);              echo "S2 $o";  ok "$o" "sent R!"; echo "$o" | grep -q "K0000000B" && { echo "STOP: design still running after R!"; exit 1; }
 o=$(./uart_nr.sh inv_sr_nr.bit 4); echo "S3 $o";  ok "$o" "K000000DB"; ok "$o" "K0000002B"

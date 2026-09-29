@@ -443,7 +443,7 @@ enumeration in `dmesg` is 23:55:18 (the power cycle of §5.7), the lease `/home/
   the first load always works; on a reload the old 1A logic drives the die-to-die connections into the new 1B
   configuration. That fits every observation of §5.6/§5.7, including §5.6 load 4 (`--reset` did not help: its 1A
   CFGRST came after 1B). Call it **H8**.
-  Local patch `nextpnr-a2fix/patches/prjpeppercorn/0001-gmpack-reset-all-first.patch` (branch `a2fix-reset-first`):
+  Local patch `nextpnr-a2fix/patches/prjpeppercorn/0001-gmpack-reset-all-first-resets-every-die-before-any-d.patch` (branch `a2fix-reset-first`):
   new option `gmpack --reset-all-first` (implies `--reset`) writes, before the first die's configuration, the reset
   records of every die: 1B `PATH 01, PATH 02, PATH 10, CFGRST 00` then 1A `PATH 01, PATH 10, CFGRST 00` (94 bytes).
   Offline checks, `nextpnr-a2fix/tests/gmpack_reset_first_test.py`: 15 ok, 0 fail — without the option the output
@@ -468,15 +468,33 @@ If T passes, the tool fix is `gmpack --reset-all-first` for every A2 load (and a
 for multi-die streams when `--reset` is given). If T1 passes and a reload fails, H8 is rejected and series S (§5.7)
 runs after the next power cycle.
 
+**Result of series T (00:24–00:26, after the power cycle of 00:23:14; preflight passed, board otherwise untouched):**
+
+| step | bitstream | UART | meaning |
+|---|---|---|---|
+| T1 | `sr_x_raf.bit` (sha256 `bb2e1afb…`), fresh chip | `load: Done`, `E00000000 K0000000B N0001..N0004` | 1B FFs work; the reset-first prefix does no harm on a fresh load |
+| T2.1 | `inv_sr_raf.bit` (`4049745c…`) over running `sr_x` | `load: Done`, **silent** (4 s, then 8 s more after `0x00`, 00:25:57) | series stopped; `--detect` both dies `0x20000001` |
+
+**H8 is rejected as the (whole) cause:** resetting both dies with `CMD_CFGRST` before either is configured does not
+make a reload of another layout work. So the in-stream `CMD_CFGRST` does not return the chip to the state a power
+cycle gives, whether it comes before or after 1B's configuration. The gmpack patch stays in the local tree (harmless:
+byte-identical without the option, T1 fine) but it is **not** a fix and is not proposed upstream. What remains is a
+real reset of the chip: series S (`R!` = `IO_SB_B8` → `RST_N`, §5.7) after the next power cycle.
+The series scripts now write `~/t5095/NEEDS_POWER_CYCLE` when a step misses (agents cannot write `/home/pi/gs.owner`);
+`preflight.sh` takes the newer of that marker and the lease note (`preflight_test.sh` 8 pass, 0 fail). On the Pi
+after T2.1: both `run_series_t.sh` and `run_series.sh` stop with `last DirtyJTAG enumeration 00:23:18 is before the
+note 00:25:30`, exit 3.
+
 After the next power cycle: clear the note in `/home/pi/gs.owner` or leave it (the probes' re-enumeration lets the
 preflight pass either way), then `fpga-klaudio@pi:~/t5095/run_series.sh --control`.
 
 ## 6. Open items
 
 1. **Die-1B CPE flip-flops (D)**: they work on a fresh chip with the local toolchain (§5.6, §5.7 Q1); the open
-   problem is reloading over a running A2 design (H7). Next: the pre-registered self-reset series S1–S6 (§5.7) after
-   a power cycle, with the preflight and control of §5.8. Until it passes, **every A2 session starts with a power
-   cycle and loads one design only.**
+   problem is reloading over a running A2 design (H7). A reset of both dies from the stream (`gmpack
+   --reset-all-first`, H8) does not fix it (§5.8, T2.1 silent). Next: the pre-registered self-reset series S1–S6
+   (§5.7), `~/t5095/run_series.sh --control`, after a power cycle. Until it passes, **every A2 session starts with a
+   power cycle and loads one design only.**
 2. **`force_die=1A` is not stable across builds** (s4 works, s5 and the fabric-RX builds do not): diff the die-1B
    tile configuration of `a2_f1A_s4.txt` and `a2_f1A_s5.txt`.
 3. RX at 1G is not possible with everything on 1A (12 ns crossing in an 8 ns cycle); next practical step is the
