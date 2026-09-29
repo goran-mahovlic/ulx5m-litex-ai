@@ -1,0 +1,95 @@
+diff --git a/himbaechel/uarch/gatemate/delay.cc b/himbaechel/uarch/gatemate/delay.cc
+index 3bc08f80..26f04032 100644
+--- a/himbaechel/uarch/gatemate/delay.cc
++++ b/himbaechel/uarch/gatemate/delay.cc
+@@ -27,14 +27,18 @@
+ 
+ NEXTPNR_NAMESPACE_BEGIN
+ 
++// Extra horizontal distance of a die crossing when both ends lie left of the first column with die-to-die
++// connections (the route has to go there and back).
++static int d2d_detour(int d2d_x0, int sx, int dx) { return 2 * std::max(0, d2d_x0 - std::max(sx, dx)); }
++
+ delay_t GateMateImpl::estimateDelay(WireId src, WireId dst) const
+ {
+     int sx, sy, dx, dy;
+     int d2d = 0;
+-    if (tile_extra_data(src.tile)->die != tile_extra_data(dst.tile)->die)
+-        d2d += 2000;
+     tile_xy(ctx->chip_info, src.tile, sx, sy);
+     tile_xy(ctx->chip_info, dst.tile, dx, dy);
++    if (tile_extra_data(src.tile)->die != tile_extra_data(dst.tile)->die)
++        d2d += 2000 + 100 * d2d_detour(d2d_x0, sx, dx);
+ 
+     return 100 + 100 * (std::abs(dx - sx) + std::abs(dy - sy)) + d2d;
+ }
+@@ -42,10 +46,10 @@ delay_t GateMateImpl::estimateDelay(WireId src, WireId dst) const
+ delay_t GateMateImpl::predictDelay(BelId src_bel, IdString src_pin, BelId dst_bel, IdString dst_pin) const
+ {
+     int d2d = 0;
++    Loc src_loc = ctx->getBelLocation(src_bel), dst_loc = ctx->getBelLocation(dst_bel);
+     if (tile_extra_data(src_bel.tile)->die != tile_extra_data(dst_bel.tile)->die)
+-        d2d += 2000;
++        d2d += 2000 + 100 * d2d_detour(d2d_x0, src_loc.x, dst_loc.x);
+ 
+-    Loc src_loc = ctx->getBelLocation(src_bel), dst_loc = ctx->getBelLocation(dst_bel);
+     return 100 + 100 * (std::abs(dst_loc.x - src_loc.x) + std::abs(dst_loc.y - src_loc.y)) + d2d;
+ }
+ 
+diff --git a/himbaechel/uarch/gatemate/gatemate.cc b/himbaechel/uarch/gatemate/gatemate.cc
+index 6c08e76f..eb0ad36f 100644
+--- a/himbaechel/uarch/gatemate/gatemate.cc
++++ b/himbaechel/uarch/gatemate/gatemate.cc
+@@ -199,6 +199,30 @@ void GateMateImpl::init(Context *ctx)
+     }
+     if (!die_name.empty() && !found)
+         log_error("Unable to select forced die '%s'.\n", die_name.c_str());
++
++    // Die-to-die connections do not exist in every column (CCGM1A2: only from X29 up). Remember where they
++    // start, so the delay estimate and the routing box of a net that crosses a die boundary include the detour.
++    d2d_x0 = 0;
++    if (index > 1) {
++        d2d_x0 = ctx->getGridDimX();
++        for (auto wire : ctx->getWires()) {
++            if (ctx->getWireName(wire)[1].str(ctx).find("D2D") == std::string::npos)
++                continue;
++            // every SB has D2D wires, only those joined to the other die (a pip there drives them) count
++            int die = tile_extra_data(wire.tile)->die;
++            bool crosses = false;
++            for (auto pip : ctx->getPipsUphill(wire))
++                crosses |= tile_extra_data(pip.tile)->die != die;
++            for (auto pip : ctx->getPipsDownhill(wire))
++                crosses |= tile_extra_data(pip.tile)->die != die;
++            if (!crosses)
++                continue;
++            int x, y;
++            tile_xy(ctx->chip_info, wire.tile, x, y);
++            d2d_x0 = std::min(d2d_x0, x);
++        }
++        log_info("Die-to-die connections from X%d.\n", d2d_x0);
++    }
+ }
+ 
+ bool GateMateImpl::isBelLocationValid(BelId bel, bool explain_invalid) const
+@@ -968,6 +992,9 @@ BoundingBox GateMateImpl::getRouteBoundingBox(WireId src, WireId dst) const
+     int dx, dy;
+     tile_xy(ctx->chip_info, dst.tile, dx, dy);
+     expand(dx, dy);
++    // a net that changes die has to reach a column with die-to-die connections
++    if (tile_extra_data(src.tile)->die != tile_extra_data(dst.tile)->die)
++        expand(std::max(x0, d2d_x0), y0);
+ 
+     return {(x0 & 0xfffe), (y0 & 0xfffe), (x1 & 0xfffe) + 1, (y1 & 0xfffe) + 1};
+ }
+diff --git a/himbaechel/uarch/gatemate/gatemate.h b/himbaechel/uarch/gatemate/gatemate.h
+index 5fc003f0..efddbc94 100644
+--- a/himbaechel/uarch/gatemate/gatemate.h
++++ b/himbaechel/uarch/gatemate/gatemate.h
+@@ -98,6 +98,7 @@ struct GateMateImpl : HimbaechelAPI
+     pool<IdString> ddr_nets;
+     dict<std::pair<IdString, int>, Loc> locations;
+     int dies;
++    int d2d_x0 = 0; // first column with die-to-die connections (multi-die devices)
+     int preferred_die;
+     pool<IdString> multiplier_a_passthru_lowers;
+     pool<IdString> multiplier_a_passthru_uppers;

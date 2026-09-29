@@ -1,0 +1,13 @@
+--- a/himbaechel/uarch/gatemate/route_clock.cc
++++ b/himbaechel/uarch/gatemate/route_clock.cc
+@@ -179,6 +179,10 @@
+                     if (!(extra_data.resource == PipMask::C_CY2_I && extra_data.value == 0))
+                         continue;
+                 }
++                // Never use a CPE in bridge mode: the bridge takes one of the CPE's IN inputs, the clock net is
++                // bound before router2 runs, and the logic placed in that CPE can then not reach its input.
++                if (extra_data.type == PipExtra::PIP_EXTRA_MUX && (extra_data.flags & MUX_ROUTING))
++                    continue;
+                 if (!ctx->checkPipAvailForNet(dh, clk_net))
+                     continue;
+                 WireId dst = ctx->getPipDstWire(dh);

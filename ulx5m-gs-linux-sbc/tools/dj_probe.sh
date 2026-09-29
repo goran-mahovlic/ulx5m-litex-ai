@@ -5,4 +5,6 @@
 DJ_BOARD=${DJ_BOARD:-gs}
 DJ_UART=$(fpga-jtag uart "$DJ_BOARD" 2>/dev/null)
 [ -n "$DJ_UART" ] && [ -e "$DJ_UART" ] || { echo "fpga-jtag: no console for $DJ_BOARD"; exit 2; }
-dj_load() { sudo -n /usr/local/bin/fpga-jtag "$DJ_BOARD" "$1" -r 2>&1 | grep -E "^Done|rror" | tail -1; }
+# DJ_LOAD_ARGS: extra openFPGALoader arguments, e.g. "--index-chain 0" for a CCGM1A2 (two dies in the JTAG chain,
+# index 0 = die 1A; without it openFPGALoader stops with "more than one FPGA found", TASK-5092).
+dj_load() { sudo -n /usr/local/bin/fpga-jtag "$DJ_BOARD" "$1" -r $DJ_LOAD_ARGS 2>&1 | grep -E "^Done|rror" | tail -1; }

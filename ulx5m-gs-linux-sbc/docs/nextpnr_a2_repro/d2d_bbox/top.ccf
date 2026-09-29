@@ -1,0 +1,10 @@
+Net "clk25" Loc = "IO_SB_A8" | SCHMITT_TRIGGER=true;
+Net "serial_tx" Loc = "IO_NB_B5";
+Net "led[0]" Loc = "IO_SB_A0" | DRIVE=3;
+Net "led[1]" Loc = "IO_SB_B0" | DRIVE=3;
+Net "led[2]" Loc = "IO_SB_A1" | DRIVE=3;
+Net "led[3]" Loc = "IO_SB_B1" | DRIVE=3;
+Net "led[4]" Loc = "IO_SB_B2" | DRIVE=3;
+Net "led[5]" Loc = "IO_SB_A2" | DRIVE=3;
+Net "led[6]" Loc = "IO_SB_B3" | DRIVE=3;
+Net "led[7]" Loc = "IO_SB_A3" | DRIVE=3;

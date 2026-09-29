@@ -1,0 +1,3 @@
+Net "clk" Loc = "IO_EB_A7";
+Net "d"   Loc = "IO_EB_A0";
+Net "q"   Loc = "IO_EB_B5";
