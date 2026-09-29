@@ -283,6 +283,58 @@ FFs on die 1B (our nextpnr, checked). If it was verified on an A2 board, die-1B 
 the issue draft (`UPSTREAM_DRAFTS.md` §4). GitHub search: no issue about die-1B FFs (nextpnr #1501, #1550, #1811;
 prjpeppercorn #18 is about JTAG pins bonded through the interposer).
 
+### 5.6 Die-1B flip-flops: pre-registered experiments after the power cycle (TASK-5093, 29.09. 23:40, written BEFORE the board)
+
+Board state: `gs` power-cycled at 22:54:54 (USB re-enumeration in the Pi `dmesg`), UART silent (no design running).
+
+**Re-reading the old result.** `K0000000C` on 1B means: toggle FF never toggles, FF with D=1 reads **0**, FF with
+D=0 reads **1**. A FF that simply keeps its start value would have to start at 0 in one CPE and at 1 in the other.
+All three observations (and E=`FFFFFFFF`) are explained at once by **an inversion in the 1B FF data path**
+(Q = ~D: the toggle loop D=~Q then holds its value). So "the FF does not update" and "the FF is inverted" were never
+told apart.
+
+| # | Hypothesis | Bitstream (made by gmpack itself, not patched) | sha256 | Expected if hypothesis true | Otherwise |
+|---|---|---|---|---|---|
+| P1 | H5: `CMD_CFGRST` (`gmpack --reset`) and/or `openFPGALoader -r` stops the 1B FFs (upstream `127-bufg-a2` flow uses neither) | `top_x_nr.bit` = same `top_x.txt`, `gmpack` **without** `--reset`, loaded `--index-chain 0` **without** `-r` | `b294109d110cfac8…` | `E00000000 K0000000B` | `EFFFFFFFF K0000000C` again |
+| P2 | H6: 1B FF works but data is inverted, vs. H0: 1B FF stuck | `inv_nr.bit` (`die1b_ff_t5093/inv/top.v`: K[7:4] = raw {L, 1B FF D=L, 1B FF D=~L, 1A FF D=L}, L = frame bit), no `--reset` | `2bcd50523a23de25…` | H6: K[7:4] alternates `B`/`4` | working: `D`/`2`; stuck: bits 6,5 constant |
+| P3 | same as P2 with `--reset` (only if P1 differs from P2's reset-free result) | `inv_r.bit` | `4ea901c11fac2428…` | as P2 | — |
+
+Offline checks done before the board: (1) `top_x.bit` rebuilt with the local toolchain is byte-identical to the one
+measured on 21:02 (sha256 `1bab6321…`); (2) the command skeleton of `top_x_nr.bit` equals upstream `127-bufg-a2`
+packed by the same gmpack (`exp/gmbit.py`, only the design's GPIO-bank bytes in `CHG_STATUS` differ) — no
+hand-made commands; (3) RTL and gate-level (yosys netlist + `cells_sim.v`, iverilog) simulation of `inv/top.v`
+print `K…DA`/`K…2A` alternating (working chip; bit 0 is X in simulation because the toggle FF has no init);
+(4) `gmunpack` round-trip is **not possible**: gmunpack `b1eb52f` fails on gmpack's own output (A1 too) with
+`Unhandled command 0x00` at the 12 zero bytes written after the PLL block — a separate tool bug.
+
+**Measured 29.09. 23:25–23:36 (after the power cycle; each load a gmpack output, script `uart_nr.sh` = no `-r`,
+`uart_r.sh` = with `-r`, both `--index-chain 0`):**
+
+| order | bitstream | flow | UART | meaning |
+|---|---|---|---|---|
+| 1 | `top_x_nr.bit` (P1) | no `--reset`, no `-r` | `E00000000 K0000000B` ×5 | **die-1B FFs work**: toggle, D=1→1, D=0→0, 32/32 registered crossings |
+| 2 | `top_x_nr.bit` | same, repeated | `E00000000 K0000000B` | reproducible |
+| 3 | `top_x.bit` | `--reset`, no `-r` | `E00000000 K0000000B` | CFGRST is harmless (same design as 2, so this load alone does not prove it was applied) |
+| 4 | `inv_r.bit` (P2/P3) | `--reset`, no `-r` | `EF7FFFFFF K000000DB / 69 / B9 / 2B` | different layout → load applied; **1B FFs erratic**: raw nibble D, 6, B, 2 — q1b sometimes keeps the previous frame's value, `one_s` once 0 |
+| 5 | `top_x.bit` | `--reset` **with `-r`** (the old flow) | `E00000000 K0000000B` | old flow works too → neither CFGRST nor `-r` is the cause (H5 rejected) |
+| 6 | `inv_nr.bit` | no `--reset`, no `-r` | **UART silent** (10 s) | openFPGALoader `Done` |
+| 7 | `top_x_nr.bit` | no `--reset`, no `-r` | **UART silent** | — board stopped here (rule 5a: stop, report); `--detect` sees both dies |
+
+Conclusions so far: (1) the tool chain (nextpnr a2fix + gmpack `b1eb52f`) produces working die-1B flip-flops;
+H1–H5 and "missing config bit" are not the cause. (2) The `K0000000C` state of 29.09. and the "wedge" at 21:05
+were a **chip state** that only a power cycle cleared; the same bitstreams work on a fresh chip. (3) The chip
+falls back into a bad state during a session: erratic 1B FFs at load 4, no running design from load 6 on. What
+triggers it is open — candidates: a load over a running A2 design (the DirtyJTAG `-r`/pre-load `reset()` does not
+reach `RST_N` on gs, so no load starts from a real chip reset), the `inv` placement (1B FFs at X28/X29 next to the
+die crossing, `ib.ub` X28Y137, `nb.ub` X29Y137), or the board (see below). No D2D site is used by two nets in either
+build (checked in the routed JSON).
+
+Board note (DS1001 §5.3/§5.4, "Combined PCB for A1 or A2"): ULX5M-GS is wired for the A1 — U14/V14 go straight to
+GND and U16/V16 to GND through 0 Ω (R7/R8), V15 (`POR_ADJ` on A1) has only C133 100 n. On the A2 these balls are
+`SER1_RX_P/N`, `SER1_TX_P/N` and `SER1_RTERM` (die-1B SerDes), which DS1001 says to leave open (case 2). This only
+touches `VDD_SER` (own rail on gs, not `VDD_CORE`), so it is not a likely cause of the FF problem, but it is a
+known deviation from the datasheet for an A2 on this board.
+
 ## 6. Open items
 
 1. **Die-1B CPE flip-flops (D)** (TASK-5093 §5.5: H1/H3 rejected, H2/H4 built but not measured, board waits for a power cycle): find the missing piece (a per-die start/reset command in the bitstream, or a
