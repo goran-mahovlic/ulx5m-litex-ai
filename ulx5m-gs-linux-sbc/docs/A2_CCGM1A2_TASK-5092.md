@@ -425,6 +425,49 @@ enumeration in `dmesg` is 23:55:18 (the power cycle of §5.7), the lease `/home/
 - **Control run:** `run_series.sh --control` appends the H7 control after S6 (C1 `inv_sr`, C2 `sr_x` **without**
   `R!`); it leaves the chip in the bad state, so only use it when the next session starts with a power cycle anyway.
 
+**Goran's note #112 (00:20, "maybe both dies need a reset").** Checked before the board:
+
+- *Does `RST_N` reach die 1B?* DS1001 does not say. §2.6.2 lists what is bonded to both dies (SER_CLK/SER_CLK_N,
+  CLK0..3); `RST_N` (T15) is not in that list, and §3.2 / the A2 pin list only give one `RST_N` ball. Open; S2/S3
+  measure it indirectly (if `R!` only resets 1A, S3 is a load with 1B still running).
+- *Minimum `RST_N` low time:* DS1001 table 4.8 gives only POR thresholds, no pulse width. `selfrst.v` holds `IO_SB_B8`
+  low until the reset tri-states the pad; then R111/C138 (10 k, 100 nF, τ = 1 ms) make the rising edge. `CFG_DONE`
+  (V3) goes only to U6 (LED) on gs, and DS1001 §3.4 has no JTAG status instruction, so the Pi cannot see CFG_DONE.
+- *Reset 1B over JTAG index 1 (1B's own TAP) with a single-die stream:* not built. Kosjenka's loads to
+  `--index-chain 1` in the wedged state had no effect (README of nextpnr-a2fix), and a stream written into 1B
+  directly bypasses the 1A→1B path the A2 flow uses; kept as a fallback.
+- **gmpack order (candidate b) — this is a tool problem, and it is fixed locally.** `Bitstream::serialise_chip`
+  (b1eb52f l. 862–901) writes, per die in the order 1B, 1A: path select, `CMD_PATH 0x10`, `CMD_CFGRST` (only with
+  `--reset`), configuration, `CMD_CHG_STATUS`. So during a reload **die 1A keeps running the previous design while
+  die 1B is reset and written** — 1A is reset only after 1B is done. On a fresh chip 1A runs nothing, which is why
+  the first load always works; on a reload the old 1A logic drives the die-to-die connections into the new 1B
+  configuration. That fits every observation of §5.6/§5.7, including §5.6 load 4 (`--reset` did not help: its 1A
+  CFGRST came after 1B). Call it **H8**.
+  Local patch `nextpnr-a2fix/patches/prjpeppercorn/0001-gmpack-reset-all-first.patch` (branch `a2fix-reset-first`):
+  new option `gmpack --reset-all-first` (implies `--reset`) writes, before the first die's configuration, the reset
+  records of every die: 1B `PATH 01, PATH 02, PATH 10, CFGRST 00` then 1A `PATH 01, PATH 10, CFGRST 00` (94 bytes).
+  Offline checks, `nextpnr-a2fix/tests/gmpack_reset_first_test.py`: 15 ok, 0 fail — without the option the output
+  is byte-identical to b1eb52f for A1 and A2 (with and without `--reset`); on the A1 the option equals `--reset`;
+  on the A2 the output is `prefix + (b1eb52f --reset stream)`, and both prefix blocks are byte copies of records that
+  stream already contains (1B block at offset 0, 1A block at offset 6450 in `sr`, 7028 in `inv_sr`) — no new
+  command, no changed filler (the §5.5 wedge came from changed filler). `gm_cfgrst_check.py`: CFGRST present.
+  Bitstreams: `sr_x_raf.bit` sha256 `bb2e1afb0234a40c…`, `inv_sr_raf.bit` `4049745c95212735…` (same `.txt` as
+  `sr_x_nr`/`inv_sr_nr`), on the Pi in `~/t5095/`.
+
+**Pre-registered series T (tool fix, run first after the power cycle of 00:23:14; `~/t5095/run_series_t.sh`, no
+`R!` anywhere, stops at the first miss):**
+
+| step | action | expected if H8 holds and the patch fixes it | otherwise |
+|---|---|---|---|
+| T1 | `sr_x_raf.bit` on the fresh chip | `E00000000 K0000000B` | CFGRST-first breaks a fresh load → patch wrong |
+| T2.1 | `inv_sr_raf.bit` over running `sr_x` | `K000000DB` / `K0000002B` alternating | silent/erratic → H8 is not (the whole) cause; recover with `R!`? no design runs → power cycle, then series S |
+| T3.1 | `sr_x_raf.bit` over running `inv_sr` (the Q2 case) | `E00000000 K0000000B` | as above |
+| T2/T3 ×2 more | | every load as on a fresh chip | first miss stops |
+
+If T passes, the tool fix is `gmpack --reset-all-first` for every A2 load (and an upstream PR: make it the default
+for multi-die streams when `--reset` is given). If T1 passes and a reload fails, H8 is rejected and series S (§5.7)
+runs after the next power cycle.
+
 After the next power cycle: clear the note in `/home/pi/gs.owner` or leave it (the probes' re-enumeration lets the
 preflight pass either way), then `fpga-klaudio@pi:~/t5095/run_series.sh --control`.
 
