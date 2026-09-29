@@ -399,11 +399,41 @@ every load**. That is a flow/board fix, not a tool patch: a SoC for the A2 keeps
 `fpga-jtag`/`uart_nr.sh` send the trigger first. A control run (`inv_sr` → `sr_x` **without** `R!`) at the end would
 reproduce Q2 and close H7.
 
+### 5.8 Follow-up without the board (TASK-5096, Jelena, 30.09. 00:15–00:40)
+
+The board was **not** loaded: `gs` has not been power-cycled since Q2. Evidence on the Pi (00:15): last DirtyJTAG
+enumeration in `dmesg` is 23:55:18 (the power cycle of §5.7), the lease `/home/pi/gs.owner` says
+`jelena 1790719839 TASK-5095 gs NEEDS POWER CYCLE (silent since 23:58)`. Only a read-only `fpga-jtag gs --detect
+--index-chain 0` was run: both dies answer `0x20000001`, so JTAG is fine and the chip is in the H7 state.
+
+- **Rebuild check:** `OUT=~/.tmp/a2/t5096_rebuild die1b_ff_t5095/build.sh` from scratch (56 s): `selfrst_tb` and both
+  gate-level tops `RESULT PASS`, `sr_x_nr.bit` sha256 `fa11676b8ebf7137…`, `inv_sr_nr.bit` `c4b8f36839f544c4…` —
+  byte-identical to the copies in `fpga-klaudio@pi:~/t5095/` (checked with `sha256sum` on both sides).
+- **What the chip does after the `R!` pulse (S2):** `kicad_netlist.py` on `ulx5m-gs-hw` 61b6709: `CFG_MD0` (R5) and
+  `CFG_MD1` (T5) are pulled to GND by R29/R27 10 k (the pull-ups R28/R26 are DNP); `CFG_MD2` (U4) and `CFG_MD3` (V4)
+  have 10 k to GND (R25/R24) and go to SW1, whose common pins 1/2 are the `+1V8` power symbol (config sheet at
+  17.78/73.66; `kicad_netlist.py` lists that net only as `N$0034` because it does not name power-symbol nets). DS1001 table 3.1: SW1 both on = `0xC` JTAG, both off = `0x0` SPI active
+  (loads the flash), only one on = `0x4` SPI passive or `0x8` (not allowed, "malfunction"). The mode is captured on
+  the rising edge of `RST_N`, so after `R!` the chip does exactly what it does after power-on — the same starting
+  point that §5.6/§5.7 showed works for the first load. The SW1 position is not recorded; if S2 prints output that is
+  not ours, it is the flash design (`0x0`), which is expected and not a miss.
+- **Guard against loading a wedged chip:** `die1b_ff_t5095/preflight.sh` (sourced first by `run_series.sh`) stops with
+  exit 3 while the lease has `NEEDS POWER CYCLE` and the DirtyJTAG probes have not re-enumerated after the note's
+  timestamp; it fails closed without a lease file or without a DirtyJTAG line in `dmesg`. `preflight_test.sh`:
+  5 pass, 0 fail (fake dmesg/uptime/lease). On the Pi with real data it stops: `last DirtyJTAG enumeration 23:55:19
+  is before the note 00:10:39`, exit 3.
+- **Control run:** `run_series.sh --control` appends the H7 control after S6 (C1 `inv_sr`, C2 `sr_x` **without**
+  `R!`); it leaves the chip in the bad state, so only use it when the next session starts with a power cycle anyway.
+
+After the next power cycle: clear the note in `/home/pi/gs.owner` or leave it (the probes' re-enumeration lets the
+preflight pass either way), then `fpga-klaudio@pi:~/t5095/run_series.sh --control`.
+
 ## 6. Open items
 
 1. **Die-1B CPE flip-flops (D)**: they work on a fresh chip with the local toolchain (§5.6, §5.7 Q1); the open
    problem is reloading over a running A2 design (H7). Next: the pre-registered self-reset series S1–S6 (§5.7) after
-   a power cycle. Until it passes, **every A2 session starts with a power cycle and loads one design only.**
+   a power cycle, with the preflight and control of §5.8. Until it passes, **every A2 session starts with a power
+   cycle and loads one design only.**
 2. **`force_die=1A` is not stable across builds** (s4 works, s5 and the fabric-RX builds do not): diff the die-1B
    tile configuration of `a2_f1A_s4.txt` and `a2_f1A_s5.txt`.
 3. RX at 1G is not possible with everything on 1A (12 ns crossing in an 8 ns cycle); next practical step is the
