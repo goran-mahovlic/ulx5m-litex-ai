@@ -335,6 +335,11 @@ GND and U16/V16 to GND through 0 Ω (R7/R8), V15 (`POR_ADJ` on A1) has only C133
 touches `VDD_SER` (own rail on gs, not `VDD_CORE`), so it is not a likely cause of the FF problem, but it is a
 known deviation from the datasheet for an A2 on this board.
 
+**Next, pre-registered (after the next power cycle, only the bitstreams above, no hand-made streams):**
+Q1 `inv_nr.bit` as the **first** load on the fresh chip — if the 1B FFs are erratic, the `inv` build (placement at
+X28/X29) is the trigger; if raw alternates `D`/`2`, the chip degrades with loads over a running design. Q2 `top_x_nr.bit`,
+Q3 `inv_nr.bit` again, Q4 `top_x_nr.bit` ×3 in a row — the first silent/erratic result stops the series.
+
 ## 6. Open items
 
 1. **Die-1B CPE flip-flops (D)** (TASK-5093 §5.5: H1/H3 rejected, H2/H4 built but not measured, board waits for a power cycle): find the missing piece (a per-die start/reset command in the bitstream, or a

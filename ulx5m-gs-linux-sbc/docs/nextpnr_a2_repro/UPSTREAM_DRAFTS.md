@@ -130,7 +130,16 @@ direction it does not finish in 15 min.
 
 ---
 
-## 4. Issue (prjpeppercorn / nextpnr): CCGM1A2 — CPE flip-flops on die 1B never update
+## 4. Issue (prjpeppercorn / nextpnr): CCGM1A2 — CPE flip-flops on die 1B stop working after some JTAG loads
+
+> **Update 29.09. 23:40 (TASK-5093) — rewrite before sending.** After a power cycle the same `die1b_ff` bitstream
+> works (`E00000000 K0000000B`: toggle, D=1→1, D=0→0, 32/32 registered crossings), with and without `gmpack --reset`
+> and with and without `openFPGALoader -r`. So the tools are not (known to be) wrong; the failing state below was a
+> chip state that survived JTAG loads and `CMD_CFGRST`. In the same session the chip fell back: a build with the
+> probes at X28/X29 next to the crossing showed erratic 1B flip-flops, and two loads later no design ran at all
+> (loader `Done`, JTAG `--detect` fine). The question for the maintainers becomes: is there a known way a CCGM1A2
+> gets into a state where die-1B CPE flip-flops (or the whole configuration) no longer start, that only `RST_N` /
+> power clears, and how should a loader reset an A2 before JTAG configuration? (Our DirtyJTAG does not drive `RST_N`.)
 
 **Device:** CCGM1A2 on ULX5M-GS, loaded over JTAG (`openFPGALoader ... -r --index-chain 0`), bitstream from
 nextpnr + `gmpack --reset` (oss-cad-suite 2026-09-28, libgm `b1eb52f`).
@@ -169,3 +178,13 @@ Is there a known difference in how the second die's CPE flip-flops are released 
 in the bitstream, a per-die configuration bit, or the order of the dies)? A vendor-generated CCGM1A2 bitstream of
 a trivial design with one flip-flop on die 1B would settle it. Was `127-bufg-a2` (88 flip-flops on die 1B with
 `strategy=full`) checked on an A2 board, and with which gmpack / loader?
+
+## 5. Issue (prjpeppercorn): gmunpack cannot read gmpack output (`Unhandled command 0x00`)
+
+gmunpack `b1eb52f` stops on bitstreams written by gmpack `b1eb52f` itself, for CCGM1A1 and CCGM1A2 alike:
+`Bitstream Parse Error: Unhandled command 0x00 [at 0x0000003d]` (A1) / `[at 0x00000064]` (A2 without `--reset`).
+In the A2 stream the offset falls inside the 12 zero bytes gmpack writes right after the (empty) PLL block
+(`exp/gmbit.py`: `PLL 24` at 62, zero fill at 92–103); the reader apparently does not accept them there (not traced
+further in the reader code). Found while trying a gmunpack → gmpack round-trip
+as an offline check (TASK-5093). Reproduce: any design without a PLL, `gmpack top.txt top.bit; gmunpack top.bit x.txt`.
+
