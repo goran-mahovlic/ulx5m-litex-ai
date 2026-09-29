@@ -244,9 +244,48 @@ it is not (only) that byte. The Cologne Chip `p_r` 4.2 in `~/app/raid/tools/cc-t
 is no vendor A2 bitstream to compare with. This is the finding to take to prjpeppercorn/nextpnr (draft §4 in
 `nextpnr_a2_repro/UPSTREAM_DRAFTS.md`).
 
+### 5.5 Die-1B flip-flops, continued (TASK-5093, Kosjenka, 29.09. 20:55–21:40) — cause still open
+
+Local toolchain `~/app/raid/tools/nextpnr-a2fix/` (`build.sh`, README with commits and patches): nextpnr `ad8527f8`
++ fixes B and C only (no DEBUG commits), gmpack from prjpeppercorn `b1eb52f`. Regression: CCGM1A1 output equal to
+`ad8527f8` (`cmp`, sha1 `58a7a6d1fd43`), CCGM1A2 `top_x` `.txt` and `.bit` equal to the `t5092-a2` build.
+
+Repro re-measured at 21:02: `top_1a` `E00000000 K0000000B`, `top_x` `EFFFFFFFF K0000000C` (same as §5.4).
+
+| Hypothesis | Test | Result |
+|---|---|---|
+| H1: die 1B needs configuration clocks after its final `CMD_CHG_STATUS` (the stream switches back to 1A at once) | 64 / 1024 / 16384 NOP bytes inserted after the die-1B `CHG_STATUS` fill, also with status 0x11 (`exp/mkvar.py`) | no change on the UART (`EFFFFFFFF K0000000C`), **but see the wedge below — these loads may not have been applied at all** |
+| H3: die-1B global clock dead (pad not bonded to 1B) | read the configuration | rejected: `CLKIN1`/`GLBOUT1` on 1B configured, IOSEL of the 1B copy of `IO_SB_A8` (`X0Y237`) has `INPUT_ENABLE`; DS1001 §2.6.2: CLK0..3 and SER_CLK are connected to both dies; TX ODDRs on 1B work from a PLL on 1B |
+| earlier status-byte test (§5.4) | re-checked `p1.bit` vs `p1_0x13.bit` | the patch was really applied (byte 7221 0x10 → 0x13, CRC changed); that negative result stands |
+| H2: position (every 1B FF so far sat at Y134–140, next to the BES / D2D row) | `exp/pos/`: 8 probe groups placed with CCF place boxes (1A ×2, 1B at Y≈137/153/203/253, X≈7/143) | built, **not measured** (board wedged) |
+| H4: global freeze vs clock | `exp/h4/`: 1B FF with async SET driven by a signal, FF with routed EN | built, **not measured** |
+
+**The board wedged (21:05).** After the NOP-variant loads, no load is applied any more: `top_1a.bit`, a 1A-only
+stream, `CMD_CFGRST` alone, streams to `--index-chain 1` — each ends in openFPGALoader `Done`, and the UART still
+shows the old `top_x` design (its frame counter keeps running). JTAG itself is fine: `--detect` sees 2× `0x20000001`;
+a BYPASS loopback (IR = 12 ones, 48 bits through DR) returns the pattern shifted by exactly 2 bits (`a5c3f00f1234` →
+`2970fc03c48d`). DirtyJTAG (firmware `DJTAG2`) SRST and TRST held low for 200–300 ms: no effect (the design does
+not reset, so SRST is not wired to `RST_N` or does not reset the controller). Most likely cause: the extra bytes in
+the die-1B section left the configuration path (1A forwarding to 1B, `CMD_PATH`) in a state that only a power
+cycle clears. **Rule: never change the filler between the die sections of an A2 stream.** Goran asked for a power cycle
+(21:10); after it: `~/t5092/run_after_powercycle.sh` (top_1a must again give `K0000000B`, then top_x, pos, h4).
+
+**Vendor reference does not exist.** Cologne Chip `p_r` 2025.11 (prints `Version 4.2`) has a hidden option `-A 2`
+(help string "GateMate Device number A1..A25"). With it, a counter design is placed and routed on the CCGM1A2
+(`not routed: 0`), then `p_r` exits with `ERangeError` before writing a bitstream (also with `-tm 2`, `-om 2`, `-fs`,
+`+uCIO`, `-cgb`, `-pr`). The bitstream writer `Fpga_cfg::Fill_cfg_file` (disassembled, symbols present) writes one
+`CMD_PATH 0x10`, optional `CMD_SLAVE_MODE`, PLL, RAM, latches, SERDES and one `CMD_CHG_STATUS` (0x11 | 0x02 = 0x13,
++0x04/0x08 with reconfig, +0x40 with SerDes) — a single-die writer, no `CMD_PATH 0x02`. So the vendor tool cannot
+produce an A2 bitstream to compare with either.
+
+Upstream: prjpeppercorn-test-cases `127-bufg-a2` (Miodrag Milanović, 25.09., `strategy=full`) places 88 of 176
+FFs on die 1B (our nextpnr, checked). If it was verified on an A2 board, die-1B FFs work there — question added to
+the issue draft (`UPSTREAM_DRAFTS.md` §4). GitHub search: no issue about die-1B FFs (nextpnr #1501, #1550, #1811;
+prjpeppercorn #18 is about JTAG pins bonded through the interposer).
+
 ## 6. Open items
 
-1. **Die-1B CPE flip-flops (D)**: find the missing piece (a per-die start/reset command in the bitstream, or a
+1. **Die-1B CPE flip-flops (D)** (TASK-5093 §5.5: H1/H3 rejected, H2/H4 built but not measured, board waits for a power cycle): find the missing piece (a per-die start/reset command in the bitstream, or a
    CPE/tile configuration bit on die 1B) — ideally with a vendor-generated A2 bitstream (Cologne Chip p_r with A2
    support) as reference. Until then no registers on die 1B.
 2. **`force_die=1A` is not stable across builds** (s4 works, s5 and the fabric-RX builds do not): diff the die-1B

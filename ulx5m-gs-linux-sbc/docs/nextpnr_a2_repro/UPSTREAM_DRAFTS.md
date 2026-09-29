@@ -158,7 +158,14 @@ three probe flip-flops on 1B (toggle, D=1, D=0); sticky error masks on the UART 
   to 0x00/0x01/0x03/0x11/0x13 (CRC16 fixed) changed nothing.
 - IOSEL flip-flops on die 1B work (RGMII TX through CC_ODDR on bank EB reaches the link partner).
 
+### Also checked (29.09., TASK-5093)
+- 64–16384 NOP bytes after the die-1B `CMD_CHG_STATUS` (start-up clocks): no change; afterwards the chip accepted no
+  JTAG configuration any more until a power cycle (JTAG itself working).
+- Cologne Chip p_r 2025.11 with `-A 2` places and routes an A2 design but stops with `ERangeError` before writing a
+  bitstream; its writer emits a single `CMD_PATH 0x10`, so there is no vendor A2 bitstream to compare with.
+
 ### Question
 Is there a known difference in how the second die's CPE flip-flops are released from reset / started (a command
 in the bitstream, a per-die configuration bit, or the order of the dies)? A vendor-generated CCGM1A2 bitstream of
-a trivial design with one flip-flop on die 1B would settle it.
+a trivial design with one flip-flop on die 1B would settle it. Was `127-bufg-a2` (88 flip-flops on die 1B with
+`strategy=full`) checked on an A2 board, and with which gmpack / loader?
