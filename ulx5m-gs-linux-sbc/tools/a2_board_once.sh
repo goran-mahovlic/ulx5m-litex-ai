@@ -6,7 +6,8 @@
 #                  STAB=<s> then runs the TASK-5091 stability test: SDRAM load loop on the board + Pi ping for <s> s.
 #   - "litex>"  -> netboot failed: BIOS diagnostics (PHY status, RXC counter, MAC counters), no reload.
 #   - no output for 40 s after the load -> the chip is wedged: write ./NEEDS_POWER_CYCLE and stop (exit 4).
-# Exit: 0 login, 5 BIOS only, 4 silent (marker written), 3 preflight stop, 2 no bitstream, 6 load failed.
+# Exit: 0 login, 5 BIOS only, 7 console stopped (CPU hang), 4 silent (marker written), 3 preflight stop, 2 no bitstream,
+# 6 load failed.
 # Log: ./<tag>.uart (raw console) and ./<tag>.txt (summary). Board IP 192.168.10.213 (tools/linux/README.md).
 cd "$(dirname "$(readlink -f "$0")")"
 BIT=$1; TAG=${2:-$(basename "$BIT" .bit)}; LOG=$PWD/$TAG.uart; SUM=$PWD/$TAG.txt
@@ -26,17 +27,23 @@ L=$(dj_load "$BIT"); echo "load: $L"; T0=$(date +%s)
 case "$L" in Done*) ;; *) echo "LOAD FAILED (no marker; check fpga-jtag gs --detect --index-chain 0)"; exit 6 ;; esac
 TYPE() { local c="$1"; for ((i=0; i<${#c}; i++)); do printf "%s" "${c:$i:1}" > $U; sleep ${D:-0.08}; done; printf "\r" > $U; }
 SHOW() { tr '\r' '\n' < $LOG | tr -c '[:print:]\n' '.' | sed 's/\.\[[0-9;]*m//g' | grep -av "^\.*$" | tail -${1:-40}; }
-state=silent
+state=silent; sz=0; still=0
 for ((t=0; t<${BOOT_WAIT:-600}; t+=2)); do
   sleep 2
   grep -aq "login:" $LOG && { state=login; break; }
-  grep -aq "litex>" $LOG && { state=bios; break; }
+  tr -d '\033' < $LOG | sed 's/\[[0-9;]*m//g' | grep -aq "litex>" && { state=bios; break; }   # prompt is ANSI-coloured
   [ $t -ge ${SILENT_S:-40} ] && [ ! -s $LOG ] && break
+  # output started and then stopped: the design runs (selfrst works), the CPU hangs -> no power-cycle marker
+  n=$(stat -c %s $LOG); if [ "$n" -gt 0 ] && [ "$n" = "$sz" ]; then still=$((still+2)); else still=0; sz=$n; fi
+  [ $still -ge ${HANG_S:-150} ] && { state=hang; break; }
 done
 echo "state after $(( $(date +%s) - T0 )) s: $state"
 case $state in
   silent)
     mark_wedged "TASK-5094 $TAG: no console output 40 s after the load"; echo "SILENT -> marked NEEDS_POWER_CYCLE"; exit 4 ;;
+  hang)
+    echo "HANG: console stopped after $(stat -c %s $LOG) bytes (no marker: the design runs, use R! before the next load)"
+    SHOW 12; exit 7 ;;
   bios)
     D=0.03 TYPE ""; sleep 1
     for c in "mem_read 0xf0002804 8" "ident"; do D=0.03 TYPE "$c"; sleep 3; done

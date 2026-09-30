@@ -152,7 +152,7 @@ class ULX5MSoC(SoCCore):
                  fb_base=0x43f00000, video_ce_rep=False, video_neg_sync=False,
                  pll_lock_req=1, video_640x240=False, with_usb_hid=False, video_recover=False,
                  phy_write_after=0, phy_reg4=0x0001, phy_snap_csr=False, with_usb_pnru=False,
-                 usb_pnru_clk="pll48", usb_pnru_freq=48e6, eth_100m=False, **kwargs):
+                 usb_pnru_clk="pll48", usb_pnru_freq=48e6, eth_100m=False, phy_diag_csr=False, eth_rx_fabric=False, **kwargs):
         platform = intergalaktik_ulx5m_gs.Platform("peppercorn")
         # nextpnr timing model = VDD_CORE 1.1 V (SPEED); PLLs stay ECONOMY (lessons B3, I9).
         platform.toolchain._pnr_opts += " --vopt fpga_mode=%d " % {"lowpower": 1, "economy": 2, "speed": 3}[pnr_mode]
@@ -295,7 +295,8 @@ class ULX5MSoC(SoCCore):
                 # where the RGMII balls are on die 1B and the logic on 1A (A2_CCGM1A2_TASK-5092.md §3). TXC is a
                 # register output (no global net), gtx0 stays 125 MHz for DVI/USB.
                 from gbe_phy import Rgmii100PHY
-                self.ethphy = phy = Rgmii100PHY(clock_pads, pads, clk_tx=crg.cd_gtx0.clk, rst=crg.eth_rst)
+                self.ethphy = phy = Rgmii100PHY(clock_pads, pads, clk_tx=crg.cd_gtx0.clk, rst=crg.eth_rst,
+                                                rx_fabric=eth_rx_fabric, diag=phy_diag_csr)
                 platform.add_period_constraint(clock_pads.rx, 1e9/25e6)
             else:
                 self.ethphy = phy = GbePHY(clock_pads, pads, clk_tx=crg.cd_gtx0.clk, rst=crg.eth_rst, **txc)
@@ -310,9 +311,11 @@ class ULX5MSoC(SoCCore):
             # KSZ9031: RESET_N + advertisement 1000FD on the first MDIO pass (lessons I2/I3), in hardware.
             from mdio_core import MDIOCore
             # 100 Mb/s: advertise 100BASE-TX FD only (REG9 = 0: no 1000BASE-T, REG4 = 0x0101).
+            # phy_diag_csr: MDIOCore also counts RX_CTL rising edges of the IDDR sample (m.frames; 0 without it).
+            core = phy.c.core if eth_100m else phy.core
             self.phy_mdio = m = MDIOCore(pads, write_after=phy_write_after, reg9=0x0000 if eth_100m else 0x0200,
                                          reg4=0x0101 if eth_100m else phy_reg4, reg0=0x1200,
-                                         rxc_domain="grx")
+                                         rxc_domain="grx", rx_ctl=core.rx_rs_ctl if phy_diag_csr else 0)
             self.phy_status0 = CSRStatus(32, description="KSZ9031 R1 (bits 31:16) and R1F (15:0); R1F bit 6 = 1000 Mb/s")
             self.phy_status1 = CSRStatus(32, description="KSZ9031 RA (31:16), RXC edges per 2^20 sys cycles >> 8 (15:0)")
             self.comb += [self.phy_status0.status.eq(Cat(m.rf, m.r1)),
@@ -392,6 +395,17 @@ class ULX5MSoC(SoCCore):
         if with_gbe:
             self.comb += leds[5].eq(crg.lock_tx.locked)
 
+        # TASK-5094: RX path counters for the A2 (1G and 100 Mb/s both end in "ARP failed" with MDIO/link/RXC fine).
+        # CSR name sorts last in the main block, so no existing CSR moves (rv32_k612.dtb stays valid).
+        # [15:0] frames delivered to LiteEth, [31:16] frames accepted for TX (sys), [47:32] RX_CTL rising edges of
+        # the IDDR sample (MDIOCore, sys), [55:48] RX frames dropped by the PHY (RX_ER/overflow), [63:56] pairing
+        # changes (grx), [79:64] frames the TX serializer put out (gtx); grx/gtx fields are read quasi-statically.
+        if with_gbe and phy_diag_csr:
+            dbg = core.dbg if getattr(core, "diag", False) else C(0, 40)
+            self.zdiag = CSRStatus(128, name="zdiag", description="PHY RX/TX counters (TASK-5094)")
+            self.comb += self.zdiag.status.eq(Cat(core.rx_frames, core.tx_frames, m.frames, core.rx_drops,
+                                                  core.rx_flips, core.tx_emit, dbg))   # [119:80] = GbePHYCore.dbg
+
 
     def add_cpu_mac_regions(self, ethmac, mac_address, local_ip, remote_ip):
         """Wishbone SRAM slots, IRQ and BIOS constants of the CPU MAC (as LiteX SoC.add_ethernet)."""
@@ -459,6 +473,8 @@ def main():
     p.add_argument("--phy-reg4", default=0x0001, type=lambda x: int(x, 0), help="KSZ9031 REG4 written by MDIOCore")
     p.add_argument("--phy-snap-csr", action="store_true", help="CSR phy_snap = MDIOCore snap (256 bit)")
     p.add_argument("--eth-100m", action="store_true", help="100 Mb/s RGMII (gbe_phy.Rgmii100PHY) instead of 1G (TASK-5094, A2)")
+    p.add_argument("--phy-diag-csr", action="store_true", help="CSR zdiag: PHY RX/TX frame counters (TASK-5094)")
+    p.add_argument("--eth-rx-fabric", action="store_true", help="--eth-100m: RX sampled by fabric FFs, not CC_IDDR (A2)")
     soc_core_args(p)
     p.set_defaults(cpu_type="vexriscv", integrated_rom_size=0x10000, integrated_sram_size=0x2000, l2_size=0)
     args = p.parse_args()
@@ -471,7 +487,7 @@ def main():
                    video_640x240=args.video_640x240, with_usb_hid=args.with_usb_hid, video_recover=args.video_recover,
                    phy_write_after=args.phy_write_after, phy_reg4=args.phy_reg4, phy_snap_csr=args.phy_snap_csr,
                    with_usb_pnru=args.with_usb_pnru, usb_pnru_clk=args.usb_pnru_clk,
-                   usb_pnru_freq=args.usb_pnru_freq, eth_100m=args.eth_100m,
+                   usb_pnru_freq=args.usb_pnru_freq, eth_100m=args.eth_100m, phy_diag_csr=args.phy_diag_csr, eth_rx_fabric=args.eth_rx_fabric,
                    **soc_core_argdict(args))
     if args.synth_extra:
         soc.platform.toolchain._synth_opts += " " + args.synth_extra + " "

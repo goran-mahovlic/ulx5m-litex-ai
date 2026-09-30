@@ -223,3 +223,23 @@ runs (6 seeds × 2 die strategies). `--placer-heap-cell-placement-timeout 0` (no
 
 Fix (one line): compute in 64 bit and clamp, e.g.
 `int64_t n = ctx->cells.size(); cell_placement_timeout = int(std::min<int64_t>(INT_MAX, std::max<int64_t>(10000, n * n / timeout_divisor)));`
+
+---
+
+## 7. Issue (nextpnr gatemate / prjpeppercorn): CCGM1A2 — `CC_IDDR` on die 1B never returns data, `CC_ODDR` does work
+
+Found in TASK-5094 (30.09.2026) on a ULX5M-GS with a CCGM1A2 (KSZ9031 RGMII on bank EB = die 1B N2), nextpnr
+`ad8527f8` + fixes B/C, gmpack `b1eb52f`, oss-cad-suite 2026-09-28. Minimal design `rxprobe/` (`top.v`, `build.sh`):
+RXC (`IO_EB_A7`) → `CC_BUFG`; RX_CTL (`IO_EB_A8`) and RXD0 (`IO_EB_A0`) sampled on RXC; gray-coded edge counters on
+the UART; logic `--vopt force_die=1A`, the pads are on die 1B.
+
+| variant | RX_CTL / RXD0 edges while the Pi sends frames to the PHY |
+|---|---|
+| `CC_IDDR` (packed into the die-1B IOSEL: `GPIO.IN1_FF 1`, `IN2_FF 1`, `INV_IN2_CLOCK 1`, `IN_CLOCK 00`) | 0 / 0 |
+| `CC_IBUF` → fabric `CC_DFF` (die 1A) | 7 / 194 |
+
+In the same bank, `CC_ODDR` (TXD/TX_CTL/TXC of the same PHY) works, and so do plain inputs (MDIO read-back, RXC into
+`CC_BUFG`). The IOSEL configuration words of the IDDR pad are the same as in the CCGM1A1 build of the same design; only
+the IOES input muxes differ (A1 `IOES1.SB_IN_06`, `IOES2.SB_IN_07`; A2 die 1B `IOES1.SB_IN_08`, `IOES1.SB_IN_11`).
+Suspect: the clock (or Q0/Q1 return path) of the input registers on die 1B is routed through a resource the chip
+database models differently from the silicon. Question: is input DDR on die 1B of the A2 tested anywhere?

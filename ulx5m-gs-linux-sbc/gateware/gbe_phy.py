@@ -71,10 +71,12 @@ class GbePHYCore(LiteXModule):
     grx inputs  : rx_rs_ctl/rx_rs_dat = RGMII sample at the rising RXC edge of this cycle,
                   rx_fs_ctl/rx_fs_dat = sample at the falling edge of the PREVIOUS cycle.
     """
-    def __init__(self, prim=False):
+    def __init__(self, prim=False, diag=False):
         # prim: build duplicated registers from CC_DFF primitives (yosys opt_merge would fold plain copies
         # back into one flip-flop, even with (* keep *)); False = plain registers for the migen simulation.
+        # diag (TASK-5094): extra RX state for a CSR (self.dbg): drops by cause, sys read/commit pointers, space.
         self.prim = prim
+        self.diag = diag
         self.sink   = sink   = stream.Endpoint(eth_phy_description(8))
         self.source = source = stream.Endpoint(eth_phy_description(8))
 
@@ -311,6 +313,10 @@ class GbePHYCore(LiteXModule):
             drop.eq((commit & bad) | (ofirst & ~space_ok)),
             If(drop, self.rx_drops.eq(self.rx_drops + 1)),
         ]
+        if self.diag:
+            self.dbg_drop_bad, self.dbg_drop_space = RL(8), RL(8)
+            self.sync.grx += [If(commit & bad, self.dbg_drop_bad.eq(self.dbg_drop_bad + 1)),
+                              If(ofirst & ~space_ok, self.dbg_drop_space.eq(self.dbg_drop_space + 1))]
         wc_g = RL(AW)
         self.sync.grx += wc_g.eq(gray(wc))
 
@@ -354,6 +360,11 @@ class GbePHYCore(LiteXModule):
         )
         self.comb += source.data.eq(Array([wd[8*i:8*i+8] for i in range(4)])[ln])
         self.sync += If(source.valid & source.ready & source.last, self.rx_frames.eq(self.rx_frames + 1))
+        if self.diag:
+            # [7:0] drops with RX_ER, [15:8] drops without space, [25:16] ra, [35:26] wc_s, [36] space, [37] idle,
+            # [38] source.valid, [39] source.ready (sys fields exact, grx fields quasi-static)
+            self.dbg = Cat(self.dbg_drop_bad, self.dbg_drop_space, ra, wc_s, space_sys, fsm.ongoing("IDLE"),
+                           source.valid, source.ready)
 
 
 class GbePHY(LiteXModule):
@@ -461,8 +472,8 @@ class Rgmii100Core(LiteXModule):
     grx inputs  : rx_ctl/rx_dat = falling-edge RGMII sample of this RXC cycle.
     gtx outputs : tx_ctl, tx_dat, txc (registered, straight to the pads).
     """
-    def __init__(self, rx_ce_phase=0):
-        self.core = core = CEInserter(["gtx", "grx"])(GbePHYCore(prim=False))
+    def __init__(self, rx_ce_phase=0, diag=False):
+        self.core = core = CEInserter(["gtx", "grx"])(GbePHYCore(prim=False, diag=diag))
         self.sink, self.source = core.sink, core.source
         self.rx_frames, self.tx_frames, self.rx_drops = core.rx_frames, core.tx_frames, core.rx_drops
 
@@ -512,8 +523,11 @@ class Rgmii100PHY(LiteXModule):
     tx_clk_freq = 20e6     # overwritten by the target: LiteEth's eth_tx/eth_rx = sys
     rx_clk_freq = 20e6
 
-    def __init__(self, clock_pads, pads, clk_tx, rst):
-        self.c = c = Rgmii100Core()
+    def __init__(self, clock_pads, pads, clk_tx, rst, rx_fabric=False, diag=False):
+        # rx_fabric: sample RX_CTL/RXD with fabric flip-flops (CC_IBUF -> negedge CC_DFF) instead of CC_IDDR. On the
+        # CCGM1A2 the CC_IDDR in the die-1B IOSEL never returns data (docs/nextpnr_a2_repro/rxprobe, TASK-5094),
+        # while the pins themselves carry the frames; at 25 MHz the pad -> die 1A fabric path (~12 ns) fits.
+        self.c = c = Rgmii100Core(diag=diag)
         self.sink, self.source = c.sink, c.source
 
         self.cd_gtx = ClockDomain()
@@ -546,11 +560,12 @@ class Rgmii100PHY(LiteXModule):
         # RX: CC_IDDR Q1 (falling edge, mid-nibble) -> negedge reg -> posedge reg = sample of this RXC cycle.
         def iddr_fall(pad, out):
             q0, q1, q1n = Signal(), Signal(), Signal()
-            self.specials += [
-                Instance("CC_IDDR", p_CLK_INV=0, i_CLK=ClockSignal("grx"), i_D=pad, o_Q0=q0, o_Q1=q1),
-                Instance("CC_DFF", p_CLK_INV=1, p_EN_INV=0, p_SR_INV=0, p_SR_VAL=0,
-                         i_D=q1, i_CLK=ClockSignal("grx"), i_EN=1, i_SR=0, o_Q=q1n),
-            ]
+            if rx_fabric:
+                q1 = pad            # the negedge CC_DFF samples the pad itself (mid-nibble)
+            else:
+                self.specials += Instance("CC_IDDR", p_CLK_INV=0, i_CLK=ClockSignal("grx"), i_D=pad, o_Q0=q0, o_Q1=q1)
+            self.specials += Instance("CC_DFF", p_CLK_INV=1, p_EN_INV=0, p_SR_INV=0, p_SR_VAL=0,
+                                      i_D=q1, i_CLK=ClockSignal("grx"), i_EN=1, i_SR=0, o_Q=q1n)
             self.sync.grx += out.eq(q1n)
         iddr_fall(pads.rx_ctl, c.rx_ctl)
         for i in range(4):

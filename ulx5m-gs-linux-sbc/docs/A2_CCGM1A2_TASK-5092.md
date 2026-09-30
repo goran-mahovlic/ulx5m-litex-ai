@@ -564,7 +564,16 @@ is no longer blocked by (D).
   cells, just under it). Same line in upstream HEAD `eb4f15c3`. Workaround `--placer-heap-cell-placement-timeout 0`;
   draft §6 in `nextpnr_a2_repro/UPSTREAM_DRAFTS.md` (not posted).
 
-SEEDTABLE
+| build | sha256 | sys (20) | grx_clk$die1 | gtx0_clk$die1 | usb_clk (60) | grx_clk / gtx0_clk (1A) | CFGRST |
+|---|---|---|---|---|---|---|---|
+| split s3 | `bbe3ae2e7d428e13…` | 23.7 | **126.8 PASS** | 106.3 | 56.2 | 256.3 / 41.9 | yes |
+| split s4 | `32eb557c2cb68baa…` | 25.4 | 120.5 | 107.0 | 56.1 | 206.8 / 47.1 | yes |
+| split s5 | `9f1fca691c04b00c…` | 23.9 | 124.0 | 96.4 | 51.9 | 205.6 / 45.5 | yes |
+| split s6 | — | killed by the OOM killer (12 parallel runs, 62 GB) | | | | | |
+| f1A s4 | `934c2faaeb538807…` | 24.9 | — | — | 50.4 | 82.4 / 42.3 | yes |
+
+(f1A s1–s3, s6 were stopped to free memory; split s1/s2 still routing when the board session started.) No hold
+violations in split s3/s5 after routing. `a2_rst_pad` is on `IO_SB_B8` on die 1A in every run.
 
 **Pre-registered session after the next power cycle** (`~/t5094/a2_session.sh`, stops at the first miss; every
 load is a direct gmpack output, CFGRST present; board IP 192.168.10.213; boot.json `linux` = Image612 +
@@ -579,6 +588,83 @@ load is a direct gmpack output, CFGRST present; board IP 192.168.10.213; boot.js
 
 If P1 already gives Linux with working Ethernet, the result of the task does not depend on R1/S1; those only decide
 whether later loads need a power cycle.
+
+**Result of the session (power cycle by Goran at 00:51:34; all loads direct gmpack output with CFGRST; scripts
+`~/t5094/a2_board_once.sh`, `~/t5095/sr_reset.sh`, `~/t5095/uart_nr.sh`):**
+
+| step | time | bitstream | load onto | console | meaning |
+|---|---|---|---|---|---|
+| P1 | 01:08:39 | split s3 (`bbe3ae2e…`) | **fresh chip** | BIOS banner, `Ethernet init`, `Memtest at 0x40000000`, `Write: 0x40000000` — then nothing (90 s) | SoC starts; the CPU hangs on the first SDRAM write of the memtest: a problem of this routing, not of the chip state (fresh load) |
+| R1 | 01:09:56 | — | P1 | `R!` sent | (no Linux, so the ping proof does not apply; S1 is the proof) |
+| **S1** | 01:09:59 | `sr_x_nr.bit` (`fa11676b…`, other layout) | SoC after R1 | **`E00000000 K0000000B` ×5** | **R! returns the chip to the power-on state**: a different layout, loaded over an A2 design after the design-driven `RST_N` pulse, works exactly as on a fresh chip; die-1B FFs work (item 1 of the task: die1b_ff repro OK with the local toolchain) |
+| R2 | 01:11:14 | — | `sr_x` | `R!` | |
+| P2 | 01:11:16 | f1A s4 (`934c2faa…`) | after R2 | BIOS, **Memtest OK**, 22.8/10.2 MiB/s, netboot `ARP failed` ×2 → `litex>`; `phy_status0 = 0x796d0348` (link up, 1000 Mb/s, MDIO OK), `phy_status1 = 0x38006400` (RXC 125 MHz), `ethmac_sram_writer_length = 0x7ff`, pending 1 | same as §3: TX and MDIO work, 1G RX delivers garbage; the load after R! behaves like the §3 loads |
+| R3 | 01:14:54 | — | P2 (BIOS prompt) | `R!` | |
+| P3 | 01:14:56 | split s5 (`9f1fca69…`) | after R3 | Memtest OK, `ARP failed` ×2, `0x796d0348`, writer length `0x7ff` | **1G RX broken with the PHY registers on die 1B as well** |
+| R4 | 01:16:07 | — | P3 | `R!` | |
+| P4 | 01:16:09 | split s4 | after R4 | Memtest OK, `ARP failed` ×2, `0x796d0348` | as P3 |
+
+So: (1) **the reset question of #113/#115 has a working answer**: `R!` (design pulls `IO_SB_B8` = `RST_N`, pulse
+~0.3 ms, §5.8) resets both dies — four loads of three different layouts after it all came up as on a fresh chip,
+none needed a power cycle. `RST_N` does reach die 1B (S1: the 1B FFs of `sr_x` work after the SoC). (2) 1G RX on the
+A2 does not work in any variant, including Goran's #108 cut (PHY + frame buffers on 1B, timing met for `grx_clk$die1`
+on s3); MDIO, TX and the RX clock do. (3) → item 4 of the task: 100 Mb/s on a `force_die=1A` build (below).
+
+**100 Mb/s (item 4 of the task).** `gateware/gbe_phy.py` `Rgmii100Core`/`Rgmii100PHY`, `target_soc.py --eth-100m`:
+the unchanged `GbePHYCore` under migen clock enables — RX: RXC = 25 MHz, the falling-edge IDDR sample (mid-nibble)
+is the nibble, the core advances every 2nd RXC cycle and its enable is re-aligned on every SFD (5 → D) so the core's
+A/B pairing never has to change; TX: gtx stays 125 MHz (DVI/USB need it), the core advances every 10th cycle, the
+output stage holds each nibble 5 cycles and makes TXC itself (register, 2 of 5 cycles high = 25 MHz, 40 % duty,
+rising edge 16 ns after the nibble change). MDIOCore advertises only 100BASE-TX FD (REG9 = 0, REG4 = 0x0101). The
+CSR map is identical to the 1G SoC (same `rv32_k612.dtb`). `sim/tb_rgmii100.py`: TX nibbles at the rising TXC →
+25 MHz RX loop, both enable phases × both nibble offsets + an RX_ER frame: **4/4 PASS**; the 1G `sim/tb_gbe_phy.py`
+still passes (A, B). The first version (free-running RX enable) failed 2 of 4 cases (a frame whose SFD falls on the
+other phase is lost while the pairing re-trains) — fixed by the SFD re-alignment.
+
+Build `SRC=build/s_a2_e100 OUT=~/.tmp/a2/t5094e100 tools/a2_soc_sr_build.sh f1A`, seed 1: sys 23.4 PASS, grx_clk
+72.7 MHz (needs 25), CFGRST yes, sha256 `12242bc2e6f7a324…` (Pi `~/t5094/A2_f1A_eth100M_selfrst_s1.bit`).
+
+| step | time | bitstream | console / registers | meaning |
+|---|---|---|---|---|
+| R5 + P5 | 01:34 | 100M f1A s1 | Memtest OK; `phy_status0 = 0x796d0328` (R1F bit 5: **100 Mb/s FD**, link up), `phy_status1 = 0x40001400` (**RXC 25 MHz**); `ARP failed` ×2, `netboot` again by hand after the link was surely up: `ARP failed` ×2; `ethmac_sram_writer_length 0x7ff`, pending 1 | same signature as 1G |
+| | 01:36 | (same) | RX slots `0x80000000`/`0x80000800`: **all zero**; TX slot `0x80001000`: a correct ARP request (`ff…ff 10e2d5000001 0806 … c0a80ad5 … c0a80a0e`) | the MAC got a 2047-byte stream of zeros, i.e. the PHY core's sys side emitted words that were never written (not corrupted real frames) |
+| R6 + P6 | 01:55 | 100M f1A s1 + CSR `zdiag` (`--phy-diag-csr`, sha256 `b1905c636d4ab0d3…`) | `zdiag`: rx_frames 0, **tx_frames 16**, drops 0, flips 0 (the RX_CTL edge field was 0 by construction: the SoC never passed `rx_ctl` to MDIOCore — fixed for the next diag build) | the core accepted 16 ARP requests; RX delivered no frame |
+| R7 + P7 | 02:34 | 100M diag2 (`6c453a8b9c11ace5…`, RX_CTL edges of the IDDR sample now counted) | `zdiag`: tx_emit 16, tx_frames 16, **RX_CTL rising edges 1**, rx_frames 0; after 10 pings from the Pi to .213 (unicast to `10:e2:d5:00:00:01`): still 1 | the RX_CTL the core sees never toggles |
+
+**RX pin probe (`docs/nextpnr_a2_repro/rxprobe/`, `build.sh`, sim `top_tb.v` prints `C0003 F0003 D0096`).**
+RX_CTL (`IO_EB_A8`) and RXD0 (`IO_EB_A0`) sampled on RXC, UART prints gray-coded edge counters; RESET_N held high,
+MDIO untouched (the PHY keeps the 100 Mb/s link of the SoC before). Both loaded after `R!`, while the Pi pinged .213:
+
+| variant | sha256 | UART (0.67 s apart) |
+|---|---|---|
+| `CC_IDDR` in the die-1B IOSEL (as the SoC) | `174ea69a84724eee…` | `C0000 F0000 D0000` ×4 |
+| `CC_IBUF` → fabric FF on die 1A (`-DFAB`) | `bc7cd8177f6657c8…` | `C0002 → C0005 → C0007`, `D003A → D008E → D00C2` |
+
+**This is the cause of "ARP failed" on the A2 at 1G and at 100 Mb/s:** the KSZ9031 does deliver the frames on the
+RX pins, but the `CC_IDDR` input registers in the die-1B IOSEL never return data (both Q0 and Q1 stay constant),
+while the `CC_ODDR` output registers of the same bank work (TX, TXC) and so does a plain input (`CC_IBUF` → fabric,
+also the MDIO input and RXC → `CC_BUFG`). Whether that is the silicon, the chip database or the bitstream writer for
+input DDR on die 1B is open (next: diff the IOSEL configuration words of `IO_EB_A8` in `rxp_iddr.txt` against an
+A1 build of the same design; candidate issue for prjpeppercorn/nextpnr, not posted). The `R` field of the probe
+does not match RXC = 25 MHz (it advances by 2 per line in both variants); not needed for the verdict, not chased.
+
+Consequence for the SoC: `Rgmii100PHY(rx_fabric=True)` / `--eth-rx-fabric` samples RX_CTL/RXD with a negedge
+`CC_DFF` behind the `CC_IBUF` (no `CC_IDDR`; 40 ns per nibble, the pad → die-1A path of ~12 ns fits). 1G cannot
+use that (8 ns cycle, 12 ns crossing) — at 1G the A2 needs working input DDR on die 1B.
+
+| step | time | bitstream | result |
+|---|---|---|---|
+| R8 + P8 | 02:59 | 100M, `--eth-rx-fabric --phy-diag-csr`, f1A s2 (`d4b03a6ecaa2785d…`; sys 25.1 PASS, usb 64.4 PASS) | Memtest OK, `ARP failed` ×2; `zdiag` at the prompt: RX_CTL edges 27, **drops 27**, rx_frames 0; after 10 pings from the Pi 38 / 38 |
+| | 03:05 | (same), `netboot` by hand | tx_frames 16 → 32, **RX_CTL edges +16, drops +16**, rx_frames 0 |
+
+With fabric sampling the frames reach the PHY core: for every one of our 16 ARP requests one frame came back (the
+Pi's replies — so **100 Mb/s TX works**), and the core dropped each of them (`drop = (commit & bad) | (ofirst &
+~space_ok)`). Which of the two is being measured with separate counters (`GbePHYCore(diag=True)`, zdiag bits
+[119:80]: drops with RX_ER, drops without space, `ra`, `wc_s`, `space`, FSM idle, source valid/ready).
+
+The Pi's neighbour entry for .213 was not refreshed by any load of this session (`updated` 11 h ago), which weakly
+suggests the Pi did not receive our ARP requests (Linux does not always refresh a STALE entry with the same lladdr,
+so this is not proof). The Pi agent account has no packet capture (tcpdump needs root).
 
 ## 6. Open items
 

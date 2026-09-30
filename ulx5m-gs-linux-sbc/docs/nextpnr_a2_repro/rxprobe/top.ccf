@@ -1,0 +1,8 @@
+Net "clk25" Loc = "IO_SB_A8" | SCHMITT_TRIGGER=true;
+Net "serial_tx" Loc = "IO_NB_B5";
+Net "serial_rx" Loc = "IO_NA_B6";
+Net "rst_pad" Loc = "IO_SB_B8";   # = RST_N (U4.T15) on ULX5M-GS, open drain from selfrst.v
+Net "eth_clocks_rx" Loc = "IO_EB_A7";
+Net "eth_rx_ctl" Loc = "IO_EB_A8";
+Net "eth_rx_d0" Loc = "IO_EB_A0";
+Net "eth_rst_n" Loc = "IO_EB_B3";
