@@ -19,6 +19,8 @@ chain, index 0 = die 1A; without it openFPGALoader stops with "more than one FPG
   design. **A design-driven reset (`R!` → `IO_SB_B8` = `RST_N`) returns both dies to the power-on state**, so the A2
   can be reloaded without a power cycle.
 - New tool bug: nextpnr's heap placer limit overflows `int` from 46 341 cells (all placements of the SoC failed).
+- Review §5.10 (TASK-5097): after the test the board still runs (45 min, dmesg 0 errors, `rx_errors` 0); the
+  45.8 MHz gtx figure is the DVI scaler path the working A1 has too (46.6 MHz), not the RX front end.
 
 Short version (29.09., TASK-5092):
 
@@ -644,6 +646,10 @@ Build `SRC=build/s_a2_e100 OUT=~/.tmp/a2/t5094e100 tools/a2_soc_sr_build.sh f1A`
 | R6 + P6 | 01:55 | 100M f1A s1 + CSR `zdiag` (`--phy-diag-csr`, sha256 `b1905c636d4ab0d3…`) | `zdiag`: rx_frames 0, **tx_frames 16**, drops 0, flips 0 (the RX_CTL edge field was 0 by construction: the SoC never passed `rx_ctl` to MDIOCore — fixed for the next diag build) | the core accepted 16 ARP requests; RX delivered no frame |
 | R7 + P7 | 02:34 | 100M diag2 (`6c453a8b9c11ace5…`, RX_CTL edges of the IDDR sample now counted) | `zdiag`: tx_emit 16, tx_frames 16, **RX_CTL rising edges 1**, rx_frames 0; after 10 pings from the Pi to .213 (unicast to `10:e2:d5:00:00:01`): still 1 | the RX_CTL the core sees never toggles |
 
+The Pi's neighbour entry for .213 was not refreshed by any load of this session (`updated` 11 h ago), which weakly
+suggests the Pi did not receive our ARP requests (Linux does not always refresh a STALE entry with the same lladdr,
+so this is not proof). The Pi agent account has no packet capture (tcpdump needs root).
+
 **RX pin probe (`docs/nextpnr_a2_repro/rxprobe/`, `build.sh`, sim `top_tb.v` prints `C0003 F0003 D0096`).**
 RX_CTL (`IO_EB_A8`) and RXD0 (`IO_EB_A0`) sampled on RXC, UART prints gray-coded edge counters; RESET_N held high,
 MDIO untouched (the PHY keeps the 100 Mb/s link of the SoC before). Both loaded after `R!`, while the Pi pinged .213:
@@ -716,18 +722,46 @@ Logs: `docs/linux/a2_t5094/P11_linux612_100M_session.log` (Pi side), `P11_linux6
 **Concerns (DONE_WITH_CONCERNS):**
 - Ethernet on the A2 runs at **100 Mb/s**, not 1G: the die-1B `CC_IDDR` returns nothing (issue draft §7), and a 1G RX
   without input DDR does not fit (8 ns cycle, ~12 ns die crossing).
-- The oversampling front end and the nibble enable are single-cycle paths in gtx; nextpnr reports gtx0 45.8 MHz for
-  seed 5 (the PHY core itself is multi-cycle under its enables). It works on the board and over 30 min, but it is
-  not timing-clean: next step is to latch the nibble one cycle after the RXC edge and give the enable 3 cycles
-  (and duplicate its fan-out), then re-seed. Seeds 1/2 did not route (router2 stuck at 2–4 overused wires).
+- The oversampling front end and the nibble enable are single-cycle paths in gtx and their slack is **not known**:
+  the 45.8 MHz nextpnr prints for seed 5 (clock net `grx_clk` = `gtx_clk` = `gtx0_clk`) is the DVI scaler path
+  (`framebuffer2x_scaler2x` line buffer → adder, `vid_clk` = `gtx0_clk`), which the working A1 build of TASK-5091 has
+  as well (46.57 MHz) — see §5.10. It works on the board and over 30 min; to be sure, latch the nibble one cycle after
+  the RXC edge, give the enable 3 cycles (and duplicate its fan-out), then re-seed. Seeds 1/2 did not route (router2
+  stuck at 2–4 overused wires).
 - yosys reduces `selfrst`'s 16-bit key to one flip-flop (the key only takes 0 or A55A), so the "random start state"
   protection of §5.7 is not what the netlist has; on the board the FFs start cleared and R! never fired by itself.
 - Nothing is pushed; the upstream drafts §6 (placer overflow) and §7 (IDDR on die 1B) wait for Goran.
 
 
-The Pi's neighbour entry for .213 was not refreshed by any load of this session (`updated` 11 h ago), which weakly
-suggests the Pi did not receive our ARP requests (Linux does not always refresh a STALE entry with the same lladdr,
-so this is not proof). The Pi agent account has no packet capture (tcpdump needs root).
+### 5.10 Review of §5.9 (TASK-5097, Kosjenka, 30.09. 04:45–05:15) — no load, board only read
+
+Independent checks of the TASK-5094 result; nothing was loaded onto `gs`, the running Linux was only read over the
+console (`~/t5094/k5097_q.sh`, logs `~/t5094/K5097_*.uart` on the Pi).
+
+| check | result |
+|---|---|
+| bitstream on the Pi | `sha256sum` = `872d54ee51ce7f76…` = local `~/.tmp/a2/t5094e100os/t5094_A2_sr_f1A_s5.bit`; `gm_cfgrst_check.py` → `CFGRST` |
+| board after the test | Pi → .213 `ping -c 3`: 3/3; `/proc/uptime` 2693 s (45 min, same boot as P11), SDRAM loop still running (load 4.45), `vrec 0` |
+| dmesg (the count §5.9 lost at the end) | `dmesg \| grep -ciE 'error\|fail\|oops'` = **0**, the listing is empty |
+| eth0 counters | `rx_errors 0`, `rx_dropped 51` (49 → 51 in 4 min, no traffic of ours), `rx_packets 2624`, `tx_packets 1957` |
+| sims (`. tools/sbc_env.sh`) | `tb_rgmii100_os.py`, `tb_rgmii100.py`, `tb_gbe_phy.py` (1G): ALL TESTS PASSED; `tools/tests/a2_board_once_test.sh`: 8 ok, 0 fail |
+
+- **`rx_dropped` is not a PHY/MAC fault.** `litex_liteeth.c` (6.12) drops a frame with bad length or without an skb
+  at `rx_drop:`, which increments `rx_dropped` **and** `rx_errors`; `rx_errors` is 0, so all 51 are counted by the
+  network core after the driver delivered a good frame (frames with a protocol the buildroot kernel does not handle,
+  e.g. IPv6/LLDP multicast from the LAN). Not verified per frame (no capture on the Pi: tcpdump is not installed).
+- **The 45.8 MHz in §5.9 is not the RX front end.** In the `--eth-rx-os` netlist `grx_clk` = `gtx_clk` = `gtx0_clk`
+  (`soc_sr.v:6445/6450`), and the reported critical path (21.8 ns) starts at the DVI scaler line buffer
+  (`mem_1` = `framebuffer2x_scaler2x`, `vid_clk` = `gtx0_clk`, `soc_sr.v:4018/13979`) and goes through an adder.
+  The same clock limits every build: A2 100M s1 44.1 MHz, A2 1G f1A s4 39.6 MHz, and the **working A1 build of
+  TASK-5091 46.57 MHz** (`build/s_usb5_pll60_s2_np1817/litex.log`). So the concern is "RX front end slack unknown"
+  (masked by the scaler path), not "RX front end fails timing". Same for `ref_clk` 89.8 MHz (a `multiregimpl`
+  synchronizer path, A1: 83.0 MHz).
+- **Lab state left behind:** `/home/pi/gs.owner` still says `jelena … TASK-5095 gs NEEDS POWER CYCLE (silent since
+  23:58)` (written 00:10), and `~/t5095/NEEDS_POWER_CYCLE` (01:02) is still there. `preflight.sh` passes because the
+  DirtyJTAG enumeration after Goran's power cycle (00:51) is newer, but a human reading the lease note gets the wrong
+  state: the chip runs the §5.9 Linux design and needs no power cycle (`R!` resets both dies). The agent account
+  cannot write `gs.owner` (owned by `pi`) — Goran/pi should update it.
 
 ## 6. Open items
 
@@ -738,7 +772,8 @@ so this is not proof). The Pi agent account has no packet capture (tcpdump needs
    loads). Every A2 design should contain selfrst; before each load run `~/t5095/sr_reset.sh 2`.
 3. **1G on the A2 needs the die-1B input DDR:** `CC_IDDR` in the die-1B IOSEL returns nothing (`rxprobe/`, draft §7).
    Next: diff the IOSEL/IOES configuration against a working A1 IDDR bit by bit, or ask upstream.
-4. Timing of the 100 Mb/s RX front end in gtx (45.8 MHz reported, §5.9 concerns) — make it multi-cycle, re-seed.
+4. Timing of the 100 Mb/s RX front end in gtx: slack unknown, hidden behind the DVI scaler path that limits gtx0 in
+   every build incl. the A1 (§5.10) — make it multi-cycle, re-seed, and read its own path with a timing report.
 5. `force_die=1A` s4/s5 differences and the split s3 memtest hang (§5.9 P1) are not chased further: all earlier SoC
    board results before §5.9 were reloads without a reset (H7) and are not reliable.
 6. Upstream (after Goran's review): issue A, PRs B and C, issue D (§4, now: FFs work, reload needs a reset), E/§6
@@ -760,4 +795,9 @@ nextpnr-himbaechel --json $G/intergalaktik_ulx5m_gs.json --vopt ccf=$G/intergala
 gmpack --reset a2.txt a2.bit && python3 ~/app/regoc_system/tools/gm_cfgrst_check.py a2.bit
 # on the Pi
 DJ_LOAD_ARGS="--index-chain 0" ./bios_cmds.sh a2.bit "mem_read 0xf0002804 8" "netboot"
+# A2 Linux 6.12 + 100 Mb/s Ethernet (§5.9): LiteX build with the target_soc.py line from build/s_a2_e100os/litex.log
+# (... --with-gbe --eth-mode mac --boot netboot --phy-diag-csr --eth-100m --eth-rx-os), then selfrst + local A2 toolchain:
+SRC=build/s_a2_e100os OUT=~/.tmp/a2/t5094e100os SEEDS=5 tools/a2_soc_sr_build.sh f1A    # -> t5094_A2_sr_f1A_s5.bit
+# on the Pi (preflight, one load, login, ping, USB/DVI, STAB = stability seconds); before a reload: ~/t5095/sr_reset.sh 2
+STAB=1800 ~/t5094/a2_board_once.sh A2_f1A_eth100M_rxos_diag_selfrst_s5.bit P11_e100os_s5
 ```
