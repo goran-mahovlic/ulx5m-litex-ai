@@ -662,6 +662,22 @@ Pi's replies — so **100 Mb/s TX works**), and the core dropped each of them (`
 ~space_ok)`). Which of the two is being measured with separate counters (`GbePHYCore(diag=True)`, zdiag bits
 [119:80]: drops with RX_ER, drops without space, `ra`, `wc_s`, `space`, FSM idle, source valid/ready).
 
+| R9 + P9 | 03:20 | 100M fabric RX + core diag, f1A s2 (`144f32b261180a8e…`) | at the prompt: RX_CTL edges 27, **drops 0**, **rx_frames 11**, `ra = wc_s = 743`, idle, space; `netboot`: 16 requests out, RX_CTL edges +17, rx_frames **+1**, drops 0, `ra` +105 words (≈ 420 bytes, i.e. the replies were written and read) → still `ARP failed` |
+
+The same RX logic behaved differently in two routings (P8: every frame dropped with a clean pointer state; P9: no
+drops, but the replies came out without their frame ends — merged into one long frame). In simulation a one-nibble
+skew between RX_CTL and RXD drops every frame (`tb_rgmii100.py --skew`: 0/7). So the RX flip-flops clocked by RXC
+sample at a **placement-dependent phase**: RXC reaches die 1A through `CC_BUFG` on 1B and the die-to-die clock,
+RXD/RX_CTL through ordinary die-to-die routes, and nothing times the two against each other.
+
+**RX by oversampling (`Rgmii100OSCore`, `--eth-rx-os`).** RXC, RX_CTL and RXD are all sampled as levels by gtx
+(125 MHz, 2 synchronizer stages, fabric on 1A): a rising RXC between two samples marks the nibble change, the sample
+2 gtx cycles later (16–24 ns after the edge) is the middle of the 40 ns nibble; the core runs in gtx with a nibble
+strobe (`rx_valid`) instead of the RXC domain. Skews between the pads of up to ~12 ns and a drifting RXC do not
+matter. RXC no longer needs a `CC_BUFG` (the MDIO controller's RXC counter then counts gtx — diagnostics only).
+`sim/tb_rgmii100_os.py`: RXC periods 5, 5/5/6/5/4, 5/6/5/5/4/5 with RX_CTL one sample late, 5/4/5/6 with RX_CTL one
+sample early, plus an RX_ER frame: **4/4 PASS**; `tb_rgmii100.py` (nibble strobe added) still 4/4.
+
 The Pi's neighbour entry for .213 was not refreshed by any load of this session (`updated` 11 h ago), which weakly
 suggests the Pi did not receive our ARP requests (Linux does not always refresh a STALE entry with the same lladdr,
 so this is not proof). The Pi agent account has no packet capture (tcpdump needs root).

@@ -483,7 +483,10 @@ class Rgmii100Core(LiteXModule):
         # on a pairing change, losing that frame. At the SFD's D nibble (cycle c) the enable is set so that the
         # core's current pairing sees 0xD5: B needs an enable at c ({nib c-1, nib c}), A one at c+1 ({last enabled
         # rising sample = preamble 5, nib c}); so the pairing never has to change.
+        # rx_valid: nibble strobe (1 = every grx cycle carries a nibble; the oversampling front end of
+        # Rgmii100OSCore pulses it once per RXC period in a faster domain).
         self.rx_ctl, self.rx_dat = RL(), RL(4)
+        self.rx_valid = Signal(reset=1)
         prev_c, prev_d = RL(), RL(4)
         ce_r = RL(reset=rx_ce_phase)
         infr = RL()
@@ -492,12 +495,12 @@ class Rgmii100Core(LiteXModule):
             sfd.eq(~infr & self.rx_ctl & prev_c & (self.rx_dat == 0xD) & (prev_d == 0x5)),
             ce.eq(Mux(sfd, core.rx_sel, ce_r)),
         ]
-        self.sync.grx += [
+        self.sync.grx += If(self.rx_valid,
             prev_c.eq(self.rx_ctl), prev_d.eq(self.rx_dat), ce_r.eq(~ce),
             infr.eq(self.rx_ctl & (infr | sfd)),
-        ]
+        )
         self.comb += [
-            core.ce_grx.eq(ce),
+            core.ce_grx.eq(ce & self.rx_valid),
             core.rx_rs_ctl.eq(self.rx_ctl), core.rx_rs_dat.eq(self.rx_dat),
             core.rx_fs_ctl.eq(prev_c),      core.rx_fs_dat.eq(prev_d),
         ]
@@ -514,6 +517,42 @@ class Rgmii100Core(LiteXModule):
         ]
 
 
+class Rgmii100OSCore(LiteXModule):
+    """Rgmii100Core with the RX pins oversampled by gtx (125 MHz, 5 samples per nibble) instead of clocked by RXC.
+
+    On the CCGM1A2 the RGMII balls are on die 1B and the logic on 1A. Clocking the RX flip-flops with RXC (pad ->
+    CC_BUFG on 1B -> die-to-die -> 1A) puts the sampling instant at an unknown, placement-dependent phase relative to
+    the data (pad -> die-to-die -> 1A): on the board one routing dropped every frame, the next one lost most frame
+    ends (A2_CCGM1A2_TASK-5092.md §5.9). Here RXC is sampled like a data pin: RXC, RX_CTL and RXD all go through
+    2 gtx flip-flops; a rising RXC edge between two samples marks the nibble change, and the sample taken 2 gtx cycles
+    (16..24 ns) later is the middle of the 40 ns nibble. Pad-to-pad skews up to ~12 ns do not matter; RXC may drift
+    against gtx (the PHY recovers the partner's clock): a nibble is taken per observed RXC edge.
+
+    gtx inputs: os_rxc, os_ctl, os_dat (raw pad levels). Everything else as Rgmii100Core (grx renamed to gtx).
+    """
+    def __init__(self, diag=False):
+        self.c = c = ClockDomainsRenamer({"grx": "gtx"})(Rgmii100Core(diag=diag))
+        self.sink, self.source = c.sink, c.source
+        self.tx_ctl, self.tx_dat, self.txc = c.tx_ctl, c.tx_dat, c.txc
+        self.os_rxc, self.os_ctl, self.os_dat = Signal(), Signal(), Signal(4)
+        s1, s2 = RL(6), RL(6)             # {dat[3:0], ctl, rxc}, two synchronizer stages
+        rxc3 = RL()
+        rise, r1, v = RL(), RL(), RL()
+        ctl_q, dat_q = RL(), RL(4)
+        self.sync.gtx += [
+            s1.eq(Cat(self.os_rxc, self.os_ctl, self.os_dat)), s2.eq(s1), rxc3.eq(s2[0]),
+            rise.eq(s2[0] & ~rxc3),       # RXC rose between the last two samples
+            r1.eq(rise),
+            v.eq(r1),                     # 2 cycles after the edge was seen: mid-nibble
+            ctl_q.eq(s2[1]), dat_q.eq(s2[2:6]),
+        ]
+        self.comb += [c.rx_valid.eq(v), c.rx_ctl.eq(ctl_q), c.rx_dat.eq(dat_q)]
+
+    @property
+    def core(self):      # a property, not an attribute: LiteXModule would register the module a second time
+        return self.c.core
+
+
 class Rgmii100PHY(LiteXModule):
     """100 Mb/s RGMII PHY with GateMate IO primitives (same pads and interface as GbePHY).
 
@@ -523,11 +562,13 @@ class Rgmii100PHY(LiteXModule):
     tx_clk_freq = 20e6     # overwritten by the target: LiteEth's eth_tx/eth_rx = sys
     rx_clk_freq = 20e6
 
-    def __init__(self, clock_pads, pads, clk_tx, rst, rx_fabric=False, diag=False):
+    def __init__(self, clock_pads, pads, clk_tx, rst, rx_fabric=False, rx_oversample=False, diag=False):
         # rx_fabric: sample RX_CTL/RXD with fabric flip-flops (CC_IBUF -> negedge CC_DFF) instead of CC_IDDR. On the
         # CCGM1A2 the CC_IDDR in the die-1B IOSEL never returns data (docs/nextpnr_a2_repro/rxprobe, TASK-5094),
         # while the pins themselves carry the frames; at 25 MHz the pad -> die 1A fabric path (~12 ns) fits.
-        self.c = c = Rgmii100Core(diag=diag)
+        # rx_oversample: Rgmii100OSCore, the RX pins (and RXC) sampled as levels by gtx (see there); RXC still
+        # feeds the grx domain through a CC_BUFG, which only the MDIO controller's RXC frequency counter uses.
+        self.c = c = Rgmii100OSCore(diag=diag) if rx_oversample else Rgmii100Core(diag=diag)
         self.sink, self.source = c.sink, c.source
 
         self.cd_gtx = ClockDomain()
@@ -539,9 +580,14 @@ class Rgmii100PHY(LiteXModule):
             self.cd_eth_tx.clk.eq(ClockSignal("sys")), self.cd_eth_tx.rst.eq(ResetSignal("sys")),
             self.cd_eth_rx.clk.eq(ClockSignal("sys")), self.cd_eth_rx.rst.eq(ResetSignal("sys")),
         ]
-        rxc_buf = Signal()
-        self.specials += Instance("CC_BUFG", i_I=clock_pads.rx, o_O=rxc_buf)
-        self.comb += self.cd_grx.clk.eq(rxc_buf)
+        if rx_oversample:
+            # RXC is a data input here (a pad cannot feed a CC_BUFG and fabric at once); grx = gtx, so the MDIO
+            # controller's "RXC" counter then measures gtx (125 MHz) - diagnostics only.
+            self.comb += self.cd_grx.clk.eq(ClockSignal("gtx"))
+        else:
+            rxc_buf = Signal()
+            self.specials += Instance("CC_BUFG", i_I=clock_pads.rx, o_O=rxc_buf)
+            self.comb += self.cd_grx.clk.eq(rxc_buf)
         self.specials += [
             AsyncResetSynchronizer(self.cd_gtx, rst),
             AsyncResetSynchronizer(self.cd_grx, rst),
@@ -557,6 +603,9 @@ class Rgmii100PHY(LiteXModule):
             oddr(c.tx_dat[i], pads.tx_data[i])
         oddr(c.txc, clock_pads.tx)
 
+        if rx_oversample:
+            self.comb += [c.os_rxc.eq(clock_pads.rx), c.os_ctl.eq(pads.rx_ctl), c.os_dat.eq(pads.rx_data)]
+            return
         # RX: CC_IDDR Q1 (falling edge, mid-nibble) -> negedge reg -> posedge reg = sample of this RXC cycle.
         def iddr_fall(pad, out):
             q0, q1, q1n = Signal(), Signal(), Signal()

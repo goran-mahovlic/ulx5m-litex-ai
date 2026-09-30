@@ -27,7 +27,7 @@ def make_frames():
     return [PRE + [random.randrange(256) for _ in range(n)] for n in [60, 61, 64, 65, 100, 333, 64]]
 
 
-def run(ce_phase, nib_lag):
+def run(ce_phase, nib_lag, ctl_skew=0):
     frames = make_frames()
     dut = Rgmii100Core(rx_ce_phase=ce_phase)
     wire = []           # (ctl, nibble) sampled by the PHY at every rising TXC edge
@@ -74,6 +74,9 @@ def run(ce_phase, nib_lag):
                 ctl, d = extra[j] if j < len(extra) else (0, 0)
             else:
                 ctl, d = wire[t] if 0 <= t < len(wire) else (0, 0)
+                if ctl_skew:        # RX_CTL sampled ctl_skew nibbles later than RXD (different pad -> fabric paths)
+                    tc = t - ctl_skew
+                    ctl = wire[tc][0] if 0 <= tc < len(wire) else 0
             yield dut.rx_ctl.eq(ctl)
             yield dut.rx_dat.eq(d)
             yield
@@ -96,7 +99,7 @@ def run(ce_phase, nib_lag):
                    clocks={"sys": 50, "gtx": 8, "grx": 40})
 
     ok = True
-    name = "ce%d lag%d" % (ce_phase, nib_lag)
+    name = "ce%d lag%d skew%+d" % (ce_phase, nib_lag, ctl_skew)
     # 1) TX wire (nibbles at rising TXC) -> bytes, IFG
     wire_frames, cur, gap, min_gap = [], None, 99, 99
     for i in range(0, len(wire) - 1, 2):
@@ -144,6 +147,10 @@ def run(ce_phase, nib_lag):
 
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "--skew":     # hypothesis check, not part of the pass criterion
+        for sk in (1, -1):
+            run(0, 0, sk)
+        sys.exit(0)
     res = [run(p, lag) for p in (0, 1) for lag in (0, 1)]
     print("ALL TESTS PASSED" if all(res) else "TESTS FAILED")
     sys.exit(0 if all(res) else 1)

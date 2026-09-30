@@ -152,7 +152,7 @@ class ULX5MSoC(SoCCore):
                  fb_base=0x43f00000, video_ce_rep=False, video_neg_sync=False,
                  pll_lock_req=1, video_640x240=False, with_usb_hid=False, video_recover=False,
                  phy_write_after=0, phy_reg4=0x0001, phy_snap_csr=False, with_usb_pnru=False,
-                 usb_pnru_clk="pll48", usb_pnru_freq=48e6, eth_100m=False, phy_diag_csr=False, eth_rx_fabric=False, **kwargs):
+                 usb_pnru_clk="pll48", usb_pnru_freq=48e6, eth_100m=False, phy_diag_csr=False, eth_rx_fabric=False, eth_rx_os=False, **kwargs):
         platform = intergalaktik_ulx5m_gs.Platform("peppercorn")
         # nextpnr timing model = VDD_CORE 1.1 V (SPEED); PLLs stay ECONOMY (lessons B3, I9).
         platform.toolchain._pnr_opts += " --vopt fpga_mode=%d " % {"lowpower": 1, "economy": 2, "speed": 3}[pnr_mode]
@@ -296,7 +296,7 @@ class ULX5MSoC(SoCCore):
                 # register output (no global net), gtx0 stays 125 MHz for DVI/USB.
                 from gbe_phy import Rgmii100PHY
                 self.ethphy = phy = Rgmii100PHY(clock_pads, pads, clk_tx=crg.cd_gtx0.clk, rst=crg.eth_rst,
-                                                rx_fabric=eth_rx_fabric, diag=phy_diag_csr)
+                                                rx_fabric=eth_rx_fabric, rx_oversample=eth_rx_os, diag=phy_diag_csr)
                 platform.add_period_constraint(clock_pads.rx, 1e9/25e6)
             else:
                 self.ethphy = phy = GbePHY(clock_pads, pads, clk_tx=crg.cd_gtx0.clk, rst=crg.eth_rst, **txc)
@@ -475,6 +475,7 @@ def main():
     p.add_argument("--eth-100m", action="store_true", help="100 Mb/s RGMII (gbe_phy.Rgmii100PHY) instead of 1G (TASK-5094, A2)")
     p.add_argument("--phy-diag-csr", action="store_true", help="CSR zdiag: PHY RX/TX frame counters (TASK-5094)")
     p.add_argument("--eth-rx-fabric", action="store_true", help="--eth-100m: RX sampled by fabric FFs, not CC_IDDR (A2)")
+    p.add_argument("--eth-rx-os", action="store_true", help="--eth-100m: RX pins and RXC oversampled by gtx (A2, TASK-5094)")
     soc_core_args(p)
     p.set_defaults(cpu_type="vexriscv", integrated_rom_size=0x10000, integrated_sram_size=0x2000, l2_size=0)
     args = p.parse_args()
@@ -487,7 +488,7 @@ def main():
                    video_640x240=args.video_640x240, with_usb_hid=args.with_usb_hid, video_recover=args.video_recover,
                    phy_write_after=args.phy_write_after, phy_reg4=args.phy_reg4, phy_snap_csr=args.phy_snap_csr,
                    with_usb_pnru=args.with_usb_pnru, usb_pnru_clk=args.usb_pnru_clk,
-                   usb_pnru_freq=args.usb_pnru_freq, eth_100m=args.eth_100m, phy_diag_csr=args.phy_diag_csr, eth_rx_fabric=args.eth_rx_fabric,
+                   usb_pnru_freq=args.usb_pnru_freq, eth_100m=args.eth_100m, phy_diag_csr=args.phy_diag_csr, eth_rx_fabric=args.eth_rx_fabric, eth_rx_os=args.eth_rx_os,
                    **soc_core_argdict(args))
     if args.synth_extra:
         soc.platform.toolchain._synth_opts += " " + args.synth_extra + " "
