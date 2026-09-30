@@ -1,4 +1,4 @@
-# Bitstreams — naming: ETH_GateMateA1_<DDMM>_<HHMM CEST>_<Description>.bit
+# Bitstreams — naming: ETH_GateMateA1|A2_<DDMM>_<HHMM CEST>_<Description>.bit
 
 Loading (SRAM only): `openFPGALoader -c dirtyJtag <bit> -r`. All of them have CMD_CFGRST (`gmpack --reset`).
 
@@ -13,6 +13,19 @@ The folder holds five bitstreams: `pll60 s2 oss0928` (recommended), `pll60 s2 np
 | `ETH_GateMateA1_2609_1646_Linux_GbE_DVI_USBPNRU_pll60s1.bit` | `9aeda4dc1115f22c731039c6119a8d5d95be1bbbb4c68fc029bb0c11ee7a5f5a` | Previous recommended one (oss-cad-suite 2026-09-23). Linux 6.12 + 1G Ethernet + DVI + USB host |
 | `ETH_GateMateA1_2509_2330_Linux_GbE_DVI_lr0_rec3.bit` | `1ee3ba4034d63d215c061368921c19102f51d14accd03bd6be7a5968f1aeb597` | Previous recommended one: Linux 5.14 + 1G + DVI + DOOM, no USB |
 | `ETH_GateMateA1_2509_2330_Linux_GbE_DVI_USBHID_rec1.bit` | `f035d9a369c7b9eb52d0254ff11b10bd9c6e7a20d6f7788e467b7bdf707daa16` | Emard's low-speed keyboard host. Never tested on the board; replaced by the PNRU host |
+
+## GateMate A2 (CCGM1A2) — TASK-5094
+
+**`ETH_GateMateA2_3009_0411_Linux_ETH100M_DVI_USBPNRU_rxos_selfrst_f1As5.bit`** —
+sha256 `872d54ee51ce7f762e9c91e1c3fa80c2144e0932ab90c66e99034acc852dd941`. **Only for a ULX5M-GS with a CCGM1A2.**
+Linux 6.12 + **100 Mb/s** Ethernet (`--eth-100m --eth-rx-os`) + DVI + USB PNRU, `--device CCGM1A2 --vopt force_die=1A`,
+seed 5, local A2 toolchain (nextpnr `ad8527f8` + the fixes in `docs/nextpnr_a2_repro/`), selfrst, `gmpack --reset`.
+Build: `tools/a2_soc_sr_build.sh` (recipe in `docs/A2_CCGM1A2_TASK-5092.md` §7).
+
+Loading: `openFPGALoader -c dirtyJtag <bit> --index-chain 0`. Before loading another design over it, send `R!` on the
+UART (resets both dies through `RST_N`); otherwise the new load may not start until a power cycle.
+Board-tested on two A2 boards (30.09.2026): login 263 s, ping, USB, DVI, 30 min 1800/1800 pings under SDRAM load.
+Why not 1 Gb/s: `CC_IDDR` on die 1B returns no data (see `docs/A2_1G_ETH_SAZETAK.md`).
 
 ## TASK-5091 (nextpnr with the #1814 crash fixed upstream in #1817)
 

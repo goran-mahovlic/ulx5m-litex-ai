@@ -77,9 +77,31 @@ The bitstreams are in `ulx5m-gs-linux-sbc/bitstreams/`:
 | `ETH_GateMateA1_2609_1646_Linux_GbE_DVI_USBPNRU_pll60s1.bit` | Previous one (oss-cad-suite 2026-09-23); same design. |
 | `ETH_GateMateA1_2509_2330_Linux_GbE_DVI_lr0_rec3.bit` | Older: Linux 5.14 + Ethernet + DVI + DOOM, no USB. |
 | `ETH_GateMateA1_2509_2330_Linux_GbE_DVI_USBHID_rec1.bit` | Older USB keyboard host (low speed only). Never tested on the board. |
+| `ETH_GateMateA2_3009_0411_Linux_ETH100M_DVI_USBPNRU_rxos_selfrst_f1As5.bit` | **Only for boards with the CCGM1A2 (A2).** Linux 6.12 + 100 Mb/s Ethernet + DVI + USB; see below. |
 
 The checksums and build commands are in `ulx5m-gs-linux-sbc/bitstreams/README.md`. Older bitstreams are not in
 this repository.
+
+### Boards with the GateMate A2 (CCGM1A2)
+
+The same board with a **CCGM1A2** (two dies, 1A and 1B) runs Linux 6.12 too, but with **100 Mb/s Ethernet** instead of 1000.
+Bitstream: `ETH_GateMateA2_3009_0411_Linux_ETH100M_DVI_USBPNRU_rxos_selfrst_f1As5.bit`.
+
+- **Works (30.09.2026, two A2 boards):** BIOS memtest, TFTP netboot, login after 263 s, serial console, ping
+  (30 min, 1800/1800 × 1400 B under SDRAM load), USB keyboard/mouse, DVI console.
+- **Does not work: 1000 Mb/s.** On the A2 the Ethernet balls are on die **1B**, and the CPU, SDRAM and UART are on
+  die 1A (`--vopt force_die=1A`). The RGMII input DDR registers (`CC_IDDR`) in the die-1B IO cells never return
+  data (output DDR works). Without them, the RX path 1B → 1A takes ~12 ns in an 8 ns cycle, and nextpnr does not
+  check it. At 100 Mb/s the RX pins are oversampled with the 125 MHz clock instead (`--eth-100m --eth-rx-os`).
+- **Loading:** two dies in the JTAG chain, so use `--index-chain 0`. Loading a *different* design over a running A2
+  design often leaves the chip dead until a power cycle. The A2 design contains a reset: send `R!` on the UART,
+  and it pulls `RST_N` (`IO_SB_B8`) low, which resets **both** dies. Then load the next bitstream.
+- **Tools:** the A2 needs a patched nextpnr (clock router without CPE bridges, die-to-die crossing only where
+  connections exist, placer workaround). The patches, minimal repros and upstream issue drafts are in
+  `ulx5m-gs-linux-sbc/docs/nextpnr_a2_repro/`.
+
+Details: `ulx5m-gs-linux-sbc/docs/A2_CCGM1A2_TASK-5092.md` (full log), `A2_1G_ETH_SAZETAK.md` (short summary, Croatian),
+`nextpnr_a2_repro/rxprobe/README.md` (reproducible `CC_IDDR` test).
 
 ---
 
