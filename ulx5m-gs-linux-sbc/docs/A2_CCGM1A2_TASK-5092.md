@@ -818,3 +818,8 @@ advertisement and autonegotiates 1000 Mb/s (RXC 125 MHz); the 100 Mb/s core cann
 read `R1 = 0x796D`, `R1F = 0x0328` on board 1, so the cause is on board 2 (MDC/MDIO net, pull-up, PHY, or the die-1B
 pads `IO_EB_A6`/`IO_EB_B6` on this chip), not placement. Needs the board revision and a scope on MDC/MDIO.
 The Pi shows recurring `Under-voltage detected!` in dmesg (469 since uptime 102 208 s, i.e. already before this board).
+
+**Update 12:10–12:25:** after Goran's power cycle / rework of board 2 (12:10): `A2_rxprobe_fab.bit` → `R!` → Linux T5094
+`872d54ee` (`a2_board_once.sh`, tag `B2_linux_retry1214`): **login after 263 s**, serial console (liteuart) works,
+board → Pi ping 5/5, Pi → board 20/20, 120 s SDRAM load + 1400 B ping 120/120, USB `input0`, `/dev/fb0`, dmesg
+error count 0. Board 2 now behaves like board 1; what was changed on the board is to be noted by Goran.
