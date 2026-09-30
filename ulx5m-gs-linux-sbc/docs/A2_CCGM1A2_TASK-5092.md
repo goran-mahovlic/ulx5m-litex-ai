@@ -7,7 +7,20 @@ Tools: Yosys 0.69+154 / gmpack from oss-cad-suite 2026-09-28, nextpnr `ad8527f8`
 (`ad8527f8` + the two fixes below). Loading: `fpga-jtag gs <bit> -r --index-chain 0` (two dies in the JTAG
 chain, index 0 = die 1A; without it openFPGALoader stops with "more than one FPGA found").
 
-Short version:
+**Update 30.09.2026 (TASK-5094, §5.9) — supersedes the short version below where they differ:**
+
+- **Linux 6.12 with Ethernet runs on the A2** at **100 Mb/s**: BIOS memtest, TFTP netboot, login after 263 s, ping
+  both ways, USB keyboard/mouse (`input0`), DVI console, 30 min with 1800/1800 pings × 1400 B under SDRAM load.
+  Bitstream `/home/pi/FPGA/A2_CCGM1A2_Linux612_ETH100M_rxos_DVI_USB_selfrst_CFGRST_f1A_s5_T5094.bit`.
+- Why 1G RX never worked on the A2: the **`CC_IDDR` input registers in the die-1B IOSEL return nothing** (RX pin probe
+  `nextpnr_a2_repro/rxprobe/`), and RX flip-flops clocked by RXC across the dies sample at a placement-dependent
+  phase. The 100 Mb/s PHY therefore oversamples RXC/RX_CTL/RXD with the 125 MHz TX clock (`Rgmii100OSCore`).
+- (D) is not a flip-flop defect: die-1B FFs work; the chip only fails when another layout is loaded over a running A2
+  design. **A design-driven reset (`R!` → `IO_SB_B8` = `RST_N`) returns both dies to the power-on state**, so the A2
+  can be reloaded without a power cycle.
+- New tool bug: nextpnr's heap placer limit overflows `int` from 46 341 cells (all placements of the SoC failed).
+
+Short version (29.09., TASK-5092):
 
 - **Keeping everything on die 1A (`--vopt force_die=1A`) is right for the CPU, SDRAM, UART, DVI**: memtest OK
   (22.8 / 10.2 MiB/s), and on Ethernet the TX direction and MDIO work. **RX does not**: the RGMII input registers
@@ -678,26 +691,59 @@ matter. RXC no longer needs a `CC_BUFG` (the MDIO controller's RXC counter then 
 `sim/tb_rgmii100_os.py`: RXC periods 5, 5/5/6/5/4, 5/6/5/5/4/5 with RX_CTL one sample late, 5/4/5/6 with RX_CTL one
 sample early, plus an RX_ER frame: **4/4 PASS**; `tb_rgmii100.py` (nibble strobe added) still 4/4.
 
+**Linux 6.12 + Ethernet on the A2 (item 3 of the task).** Build `--eth-100m --eth-rx-os --phy-diag-csr`
+(`build/s_a2_e100os`, selfrst, `force_die=1A`, `tools/a2_soc_sr_build.sh`), seeds 1/2 stuck in router2 (2–4 overused
+wires after >1000 iterations, stopped), seed 5 routed: sys 24.9 MHz PASS, usb 59.2 (60), gtx0 45.8 MHz reported
+against 125 (the video/USB/PHY CE paths are multi-cycle by design; see the concern below), CFGRST yes, sha256
+`872d54ee51ce7f762e9c91e1c3fa80c2144e0932ab90c66e99034acc852dd941`. On the Pi:
+`/home/pi/FPGA/A2_CCGM1A2_Linux612_ETH100M_rxos_DVI_USB_selfrst_CFGRST_f1A_s5_T5094.bit`.
+
+| step | time | result |
+|---|---|---|
+| R10 + P10 | 04:01 | Memtest OK, **netboot TFTP works** (7.5 MB `Image` in one go) — but the agent's `~/FPGA/netboot_app.sh` is the old one and had written the 5.14 `boot.json`; run stopped, `boot.json` restored to Goran's 6.12 default with `/home/pi/FPGA/netboot_app.sh linux`, `a2_board_once.sh` now calls that one |
+| R11 + P11 | 04:04 | BIOS memtest OK → TFTP `Image612`, `rv32_k612.dtb`, `rootfs612.cpio`, `opensbi612.bin` → OpenSBI v1.3 → **Linux 6.12.0, `buildroot login:` after 263 s** (A1 TASK-5091: 266 s); `liteeth f0000800.mac eth0`, kernel IP 192.168.10.213 |
+| | | board → Pi `ping -c 5`: **5/5**, 0 % loss; Pi → board `ping -c 20 -s 1400`: **20/20**, avg 24.0 ms |
+| | | USB: `/proc/bus/input/devices`: `usb_pnru boot keyboard/mouse`, `event0`; `/dev/input/event0` |
+| | | DVI: `/dev/fb0`; grabber `:8090/snap.jpg` at 04:11: fbcon with `input: usb_pnru boot keyboard/mouse …` and `buildroot login:` (`docs/linux/a2_t5094/dvi_a2_100M_start.jpg`) |
+
+**30 min stability (as TASK-5091), 04:07–04:40:** SDRAM load loop on the board (`cat` + `md5sum` of an 8 MB file,
+load average 3.1–3.5, 3.73 at the end) and `ping -c 1800 -s 1400 -i 1` from the Pi: **1800/1800, 0 % loss**,
+rtt 13.8 / 18.3 / 36.0 ms (min/avg/max); `uptime` 35 min at the end, no reboot; the sbcdiag line every ~60 s shows
+`vrec 0x00000000` throughout; `dmesg | grep -ciE 'error|fail|oops'` = 0 at the start (the repeat at the end was cut
+off by the capture); DVI grabber after 36 min still the fbcon console (`docs/linux/a2_t5094/dvi_a2_100M_after36min.jpg`).
+Logs: `docs/linux/a2_t5094/P11_linux612_100M_session.log` (Pi side), `P11_linux612_100M_console.txt` (console).
+
+**Concerns (DONE_WITH_CONCERNS):**
+- Ethernet on the A2 runs at **100 Mb/s**, not 1G: the die-1B `CC_IDDR` returns nothing (issue draft §7), and a 1G RX
+  without input DDR does not fit (8 ns cycle, ~12 ns die crossing).
+- The oversampling front end and the nibble enable are single-cycle paths in gtx; nextpnr reports gtx0 45.8 MHz for
+  seed 5 (the PHY core itself is multi-cycle under its enables). It works on the board and over 30 min, but it is
+  not timing-clean: next step is to latch the nibble one cycle after the RXC edge and give the enable 3 cycles
+  (and duplicate its fan-out), then re-seed. Seeds 1/2 did not route (router2 stuck at 2–4 overused wires).
+- yosys reduces `selfrst`'s 16-bit key to one flip-flop (the key only takes 0 or A55A), so the "random start state"
+  protection of §5.7 is not what the netlist has; on the board the FFs start cleared and R! never fired by itself.
+- Nothing is pushed; the upstream drafts §6 (placer overflow) and §7 (IDDR on die 1B) wait for Goran.
+
+
 The Pi's neighbour entry for .213 was not refreshed by any load of this session (`updated` 11 h ago), which weakly
 suggests the Pi did not receive our ARP requests (Linux does not always refresh a STALE entry with the same lladdr,
 so this is not proof). The Pi agent account has no packet capture (tcpdump needs root).
 
 ## 6. Open items
 
-1. **Die-1B CPE flip-flops (D)**: they work on a fresh chip with the local toolchain (§5.6, §5.7 Q1); the open
-   problem is reloading over a running A2 design (H7). A reset of both dies from the stream (`gmpack
-   --reset-all-first`, H8) does not fix it (§5.8, T2.1 silent). Next: the pre-registered self-reset series S1–S6
-   (§5.7), `~/t5095/run_series.sh --control`, after a power cycle; then E, J, L (§5.8). Until one passes, **every A2 session starts with a
-   power cycle and loads one design only.**
-2. **`force_die=1A` is not stable across builds** (s4 works, s5 and the fabric-RX builds do not): diff the die-1B
-   tile configuration of `a2_f1A_s4.txt` and `a2_f1A_s5.txt`.
-3. RX at 1G is not possible with everything on 1A (12 ns crossing in an 8 ns cycle); next practical step is the
-   100 Mb/s mode (option c) on a build of the s4 kind.
-4. Linux 6.12 on the A2 (login, ping, DVI, USB, 30 min stability as in TASK-5091) waits for items 2 and 3; USB
-   (EA bank, die 1B) was not tested.
-5. Upstream (after Goran's review): issue A (timing of mirrored clocks), PRs B and C, issue D (die-1B flip-flops).
-6. `gm_cfgrst_check.py` knows the A2 format now (a run of `d9 01 ed 96` path records before each die's
-   `CMD_CFGRST`, offsets 48 and 77979 in `t5091_A2_f1A_s4.bit`); tests `tools/tests/test_gm_cfgrst_check.py` 5 pass.
+1. **Linux 6.12 + Ethernet on the A2 work at 100 Mb/s** (§5.9: login 263 s, ping, USB, DVI, 30 min 1800/1800 under
+   SDRAM load) with `--eth-100m --eth-rx-os` on a `force_die=1A` build with selfrst; bitstream
+   `/home/pi/FPGA/A2_CCGM1A2_Linux612_ETH100M_rxos_DVI_USB_selfrst_CFGRST_f1A_s5_T5094.bit`.
+2. **Reload without a power cycle:** `R!` (selfrst, `IO_SB_B8` = `RST_N`) resets both dies (§5.9 S1 + 10 further
+   loads). Every A2 design should contain selfrst; before each load run `~/t5095/sr_reset.sh 2`.
+3. **1G on the A2 needs the die-1B input DDR:** `CC_IDDR` in the die-1B IOSEL returns nothing (`rxprobe/`, draft §7).
+   Next: diff the IOSEL/IOES configuration against a working A1 IDDR bit by bit, or ask upstream.
+4. Timing of the 100 Mb/s RX front end in gtx (45.8 MHz reported, §5.9 concerns) — make it multi-cycle, re-seed.
+5. `force_die=1A` s4/s5 differences and the split s3 memtest hang (§5.9 P1) are not chased further: all earlier SoC
+   board results before §5.9 were reloads without a reset (H7) and are not reliable.
+6. Upstream (after Goran's review): issue A, PRs B and C, issue D (§4, now: FFs work, reload needs a reset), E/§6
+   (placer int overflow), §7 (IDDR on die 1B).
+7. `gm_cfgrst_check.py` knows the A2 format (tests `tools/tests/test_gm_cfgrst_check.py` 5 pass).
 
 ## 7. Reproduce
 

@@ -1,0 +1,86 @@
+preflight: probes re-enumerated 00:51:34, after the note 00:25:30
+== P11_e100os_s5 2026-09-30 04:04:45 sha256 872d54ee51ce7f76
+load: Done
+state after 263 s: login
+Local IP: 192.168.10.213
+Memtest at 0x40000000 (2.0MiB)...
+Memtest OK
+Booting from network...
+Local IP: 192.168.10.213
+Remote IP: 192.168.10.14
+Booting from boot.json...
+Copying Image612 to 0x40000000... \.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|.(8994752 bytes)
+Copying rv32_k612.dtb to 0x40ef0000... (3131 bytes)
+Copying rootfs612.cpio to 0x41000000... \.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.(12582912 bytes)
+Copying opensbi612.bin to 0x40f00000... \.|./.-.\.|./.-.(263652 bytes)
+Executing booted program at 0x40f00000
+[    0.000000] Linux version 6.12.0 (klaudio@pai-advanced) (riscv32-buildroot-linux-gnu-gcc.br_real (Buildroot 2026.05.3-dirty) 13.4.0, GNU ld (GNU Binutils) 2.45.1) #1 SMP Sat Sep 26 13:37:44 UTC 2026
+buildroot login: 
+--- Pi -> board
+--- 192.168.10.213 ping statistics ---
+20 packets transmitted, 20 received, 0% packet loss, time 529ms
+rtt min/avg/max/mdev = 21.459/24.040/27.689/2.055 ms
+--- stability 1800 s: SDRAM load loop + ping 1400 B every 1 s
+--- 192.168.10.213 ping statistics ---
+1800 packets transmitted, 1800 received, 0% packet loss, time 2442ms
+rtt min/avg/max/mdev = 13.756/18.334/35.985/3.413 ms
+'
+--- 192.168.10.14 ping statistics ---
+f5 packets transmitted, 5 packets received, 0% packet loss
+bround-trip min/avg/max = 65.134/112.672/150.045 ms
+0|litex|usb|eth0root@buildroot:~# cat /proc/bus/input/devices | grep -E 'Name|Handlers'
+dd if=/dev/N: Name="usb_pnru boot keyboard/mouse"
+uranH: Handlers=kbd event0 
+dom of=/tmp/r bs=1Mroot@buildroot:~# ls /dev/fb* /dev/input/
+> /tmp/c; md5sum /tmp/c > /dev/null; done) &
+/dev/fb0
+/dev/input/:
+event0
+root@buildroot:~# dmesg | grep -ciE 'error|fail|oops'
+0
+root@buildroot:~# diag: up 283.91 load 3.33 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+dmesg | grep -iE 'fb0|litex|usb|eth0' | tail -12
+[    0.000000] Kernel command line: consoleblank=0 usbhostd=-v,-s,60 sbcdiag=0xf0002800 fbcon=font:6x8 logo.nologo console=tty0 console=liteuart earlycon=liteuart,0xf0001000 rootwait root=/dev/ram0 ip=192.168.10.213:192.168.10.14:192.168.10.14:255.255.255.0::eth0:off:::
+[    0.000000] Unknown kernel command line parameters "usbhostd=-v,-s,60 sbcdiag=0xf0002800", will be passed to user space.
+[   12.929301] simple-framebuffer 43f00000.framebuffer: fb0: simplefb registered!
+[   13.069131] LiteX SoC Controller driver initialized
+[   16.937652] liteeth f0000800.mac eth0: irq 13 slots: tx 2 rx 2 size 2048
+[   34.640740]      device=eth0, hwaddr=10:e2:d5:00:00:01, ipaddr=192.168.10.213, mask=255.255.255.0, gw=192.168.10.14
+[   55.637700]     usbhostd=-v,-s,60
+[  173.680947] input: usb_pnru boot keyboard/mouse as /devices/virtual/input/input0
+root@buildroot:~# dd if=/dev/urandom of=/tmp/r bs=1M count=8 2>/dev/null; (while
+ true; do cat /tmp/r > /tmp/c; md5sum /tmp/c > /dev/null; done) &
+[  391.216773] random: crng init done
+diag: up 353.85 load 4.01 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 419.32 load 3.45 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 485.16 load 3.21 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+root@buildroot:~# diag: up 552.30 load 3.40 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 621.24 load 3.32 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 679.57 load 3.15 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 738.11 load 3.12 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 796.98 load 3.11 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 856.73 load 3.14 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 921.21 load 3.13 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 983.35 load 3.05 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 1042.23 load 3.24 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 1100.61 load 3.19 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 1159.93 load 3.13 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 1223.43 load 3.19 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 1288.46 load 3.16 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 1346.07 load 3.20 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 1403.63 load 3.14 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 1461.82 load 3.18 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 1519.77 load 3.24 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 1587.86 load 3.47 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 1647.06 load 3.38 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 1705.87 load 3.19 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 1765.76 load 3.13 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 1827.14 load 3.30 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 1892.57 load 3.22 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 1954.15 load 3.18 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+diag: up 2015.16 load 3.11 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+uptime
+dmesg | grep -ciE 'error|fail|oodiag: up 2074.97 load 3.43 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+ps'
+ 00:35:22 up 35 min,  load average: 3.73, 3.52, 3.13
+root@buildroot:~# dmesg | gr

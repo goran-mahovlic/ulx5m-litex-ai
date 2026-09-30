@@ -4,6 +4,7 @@
 # lease with a power-cycle note and no re-enumeration -> exit 3 without loading.
 H=$(cd "$(dirname "$0")/.." && pwd); W=$(mktemp -d -p "${TMPDIR:-$HOME/.tmp}"); nok=0; nbad=0
 cp $H/a2_board_once.sh $W/; cp $H/../docs/nextpnr_a2_repro/die1b_ff_t5095/preflight.sh $W/
+
 mkdir -p $W/home/FPGA $W/bin; printf '#!/bin/sh\nexit 0\n' > $W/home/FPGA/netboot_app.sh; chmod +x $W/home/FPGA/netboot_app.sh
 printf '#!/bin/sh\necho "3 packets transmitted, 3 received, 0%% packet loss"\n' > $W/bin/ping; chmod +x $W/bin/ping
 printf '#!/bin/sh\necho "[    5.000000] usb 1-1: Product: DirtyJTAG"\n' > $W/bin/dmesg; chmod +x $W/bin/dmesg
@@ -13,7 +14,7 @@ run(){ # $1 canned console text, $2 expected exit, $3 name, $4 lease text
 DJ_UART=$W/uart
 dj_load(){ touch $W/loaded; printf '%b' "$1" >> \$LOG; echo "\${LOADOUT:-Done}"; }   # the console "arrives" in the capture
 EOS
-  (cd $W && HOME=$W/home PATH=$W/bin:$PATH OWNER_FILE=$W/lease MARK_FILE=$W/mark W=0 D=0 SILENT_S=4 HANG_S=6 BOOT_WAIT=20 \
+  (cd $W && HOME=$W/home NETBOOT=$W/home/FPGA/netboot_app.sh PATH=$W/bin:$PATH OWNER_FILE=$W/lease MARK_FILE=$W/mark W=0 D=0 SILENT_S=4 HANG_S=6 BOOT_WAIT=20 \
      ./a2_board_once.sh ${BITARG:-$W/a2_board_once.sh} case >/dev/null 2>&1); rc=$?
   local extra=ok
   [ "$2" = 4 ] && { [ -s $W/mark ] || extra="no-marker"; }

@@ -18,7 +18,8 @@ DJ_LOAD_ARGS="--index-chain 0"; . ./dj_probe.sh; U=$DJ_UART
 fuser $U >/dev/null 2>&1 && { echo "$U BUSY"; exit 2; }
 exec > >(tee $SUM) 2>&1
 echo "== $TAG $(date '+%F %T') sha256 $(sha256sum "$BIT" | cut -c1-16)"
-~/FPGA/netboot_app.sh linux >/dev/null 2>&1 || true
+# boot.json = Linux 6.12 (Goran's default); the pi copy is current, the agent copy in ~/FPGA writes the old 5.14 set
+${NETBOOT:-/home/pi/FPGA/netboot_app.sh} linux >/dev/null 2>&1 || true
 stty -F $U 115200 raw -echo; timeout 2 cat $U >/dev/null 2>&1
 cat $U > $LOG 2>/dev/null & CP=$!      # capture from before the load: the BIOS memtest line comes right after it
 trap 'kill $CP 2>/dev/null' EXIT

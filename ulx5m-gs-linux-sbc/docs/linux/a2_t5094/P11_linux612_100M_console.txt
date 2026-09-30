@@ -1,0 +1,698 @@
+
+
+        __   _ __      _  __
+
+       / /  (_) /____ | |/_/
+
+      / /__/ / __/ -_)>  <
+
+     /____/_/\__/\__/_/|_|
+
+   Build your hardware, easily!
+
+
+
+ (c) Copyright 2012-2026 Enjoy-Digital
+
+ (c) Copyright 2007-2015 M-Labs
+
+
+
+ BIOS built on Sep 30 2026 01:24:21
+
+ BIOS CRC passed (590188b7)
+
+
+
+ LiteX git sha1: b6ae9e0b2
+
+
+
+--================ SoC =================--
+
+CPU:..VexRiscv SMP-LINUX @ 20MHz
+
+BUS:..wishbone 32-bit data/32-bit addr
+
+CSR:..32-bit data big ordering
+
+ROM:..64.0KiB
+
+SRAM:..8.0KiB
+
+SDRAM:..64.0MiB 16-bit @ 20MT/s (CL-2 CWL-2)
+
+MAIN RAM:.64.0MiB
+
+
+
+--=========== Initialization ===========--
+
+Ethernet init...
+
+Local IP: 192.168.10.213
+
+Initializing SDRAM @0x40000000...
+
+Switching SDRAM to software control.
+
+Switching SDRAM to hardware control.
+
+Memtest at 0x40000000 (2.0MiB)...
+
+  Write: 0x40000000-0x40000000 0B   
+  Write: 0x40000000-0x40020000 128.0KiB   
+  Write: 0x40000000-0x40040000 256.0KiB   
+  Write: 0x40000000-0x40060000 384.0KiB   
+  Write: 0x40000000-0x40080000 512.0KiB   
+  Write: 0x40000000-0x400a0000 640.0KiB   
+  Write: 0x40000000-0x400c0000 768.0KiB   
+  Write: 0x40000000-0x400e0000 896.0KiB   
+  Write: 0x40000000-0x40100000 1.0MiB   
+  Write: 0x40000000-0x40120000 1.1MiB   
+  Write: 0x40000000-0x40140000 1.2MiB   
+  Write: 0x40000000-0x40160000 1.3MiB   
+  Write: 0x40000000-0x40180000 1.5MiB   
+  Write: 0x40000000-0x401a0000 1.6MiB   
+  Write: 0x40000000-0x401c0000 1.7MiB   
+  Write: 0x40000000-0x401e0000 1.8MiB   
+  Write: 0x40000000-0x40200000 2.0MiB   
+
+
+   Read: 0x40000000-0x40000000 0B   
+   Read: 0x40000000-0x40020000 128.0KiB   
+   Read: 0x40000000-0x40040000 256.0KiB   
+   Read: 0x40000000-0x40060000 384.0KiB   
+   Read: 0x40000000-0x40080000 512.0KiB   
+   Read: 0x40000000-0x400a0000 640.0KiB   
+   Read: 0x40000000-0x400c0000 768.0KiB   
+   Read: 0x40000000-0x400e0000 896.0KiB   
+   Read: 0x40000000-0x40100000 1.0MiB   
+   Read: 0x40000000-0x40120000 1.1MiB   
+   Read: 0x40000000-0x40140000 1.2MiB   
+   Read: 0x40000000-0x40160000 1.3MiB   
+   Read: 0x40000000-0x40180000 1.5MiB   
+   Read: 0x40000000-0x401a0000 1.6MiB   
+   Read: 0x40000000-0x401c0000 1.7MiB   
+   Read: 0x40000000-0x401e0000 1.8MiB   
+   Read: 0x40000000-0x40200000 2.0MiB   
+
+
+Memtest OK
+
+Memspeed at 0x40000000 (Sequential, 2.0MiB)...
+
+  Write speed: 22.8MiB/s
+
+   Read speed: 10.2MiB/s
+
+--================ Boot ================--
+
+Booting from network...
+
+Local IP: 192.168.10.213
+
+Remote IP: 192.168.10.14
+
+Booting from boot.json...
+
+Copying Image612 to 0x40000000... \.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|.(8994752 bytes)
+
+Copying rv32_k612.dtb to 0x40ef0000... (3131 bytes)
+
+Copying rootfs612.cpio to 0x41000000... \.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.(12582912 bytes)
+
+Copying opensbi612.bin to 0x40f00000... \.|./.-.\.|./.-.(263652 bytes)
+
+Executing booted program at 0x40f00000
+
+
+
+--============== Liftoff! ==============--
+
+
+
+OpenSBI v1.3
+
+   ____                    _____ ____ _____
+
+  / __ \                  / ____|  _ \_   _|
+
+ | |  | |_ __   ___ _ __ | (___ | |_) || |
+
+ | |  | | '_ \ / _ \ '_ \ \___ \|  _ < | |
+
+ | |__| | |_) |  __/ | | |____) | |_) || |_
+
+  \____/| .__/ \___|_| |_|_____/|____/_____|
+
+        | |
+
+        |_|
+
+
+
+Platform Name             : LiteX / VexRiscv-SMP
+
+Platform Features         : medeleg
+
+Platform HART Count       : 8
+
+Platform IPI Device       : aclint-mswi
+
+Platform Timer Device     : aclint-mtimer @ 100000000Hz
+
+Platform Console Device   : litex_uart
+
+Platform HSM Device       : ---
+
+Platform PMU Device       : ---
+
+Platform Reboot Device    : ---
+
+Platform Shutdown Device  : ---
+
+Platform Suspend Device   : ---
+
+Platform CPPC Device      : ---
+
+Firmware Base             : 0x40f00000
+
+Firmware Size             : 376 KB
+
+Firmware RW Offset        : 0x40000
+
+Firmware RW Size          : 120 KB
+
+Firmware Heap Offset      : 0x52000
+
+Firmware Heap Size        : 48 KB (total), 3 KB (reserved), 8 KB (used), 36 KB (free)
+
+Firmware Scratch Size     : 4096 B (total), 452 B (used), 3644 B (free)
+
+Runtime SBI Version       : 1.0
+
+
+
+Domain0 Name              : root
+
+Domain0 Boot HART         : 0
+
+Domain0 HARTs             : 0*,1*,2*,3*,4*,5*,6*,7*
+
+Domain0 Region00          : 0xf0018000-0xf001bfff M: (I,R,W) S/U: ()
+
+Domain0 Region01          : 0xf0010000-0xf0017fff M: (I,R,W) S/U: ()
+
+Domain0 Region02          : 0x40f40000-0x40f5ffff M: (R,W) S/U: ()
+
+Domain0 Region03          : 0x40f00000-0x40f3ffff M: (R,X) S/U: ()
+
+Domain0 Region04          : 0x00000000-0xffffffff M: (R,W,X) S/U: (R,W,X)
+
+Domain0 Next Address      : 0x40000000
+
+Domain0 Next Arg1         : 0x40ef0000
+
+Domain0 Next Mode         : S-mode
+
+Domain0 SysReset          : yes
+
+Domain0 SysSuspend        : yes
+
+
+
+Boot HART ID              : 0
+
+Boot HART Domain          : root
+
+Boot HART Priv Version    : unknown
+
+Boot HART Base ISA        : rv32ima
+
+Boot HART ISA Extensions  : zicntr
+
+Boot HART PMP Count       : 0
+
+Boot HART PMP Granularity : 0
+
+Boot HART PMP Address Bits: 0
+
+Boot HART MHPM Count      : 0
+
+Boot HART MIDELEG         : 0x00000222
+
+Boot HART MEDELEG         : 0x0000b101
+
+[    0.000000] Linux version 6.12.0 (klaudio@pai-advanced) (riscv32-buildroot-linux-gnu-gcc.br_real (Buildroot 2026.05.3-dirty) 13.4.0, GNU ld (GNU Binutils) 2.45.1) #1 SMP Sat Sep 26 13:37:44 UTC 2026
+
+[    0.000000] Machine model: intergalaktik_ulx5m_gs
+
+[    0.000000] SBI specification v1.0 detected
+
+[    0.000000] SBI implementation ID=0x1 Version=0x10003
+
+[    0.000000] SBI TIME extension detected
+
+[    0.000000] SBI IPI extension detected
+
+[    0.000000] SBI RFENCE extension detected
+
+[    0.000000] earlycon: liteuart0 at I/O port 0x0 (options '')
+
+[    0.000000] Malformed early option 'console'
+
+[    0.000000] earlycon: liteuart0 at MMIO 0xf0001000 (options '')
+
+[    0.000000] printk: legacy bootconsole [liteuart0] enabled
+
+[    0.000000] OF: reserved mem: OVERLAP DETECTED!
+
+[    0.000000] mmode_resv1@40f00000 (0x40f00000--0x40f40000) overlaps with opensbi@40f00000 (0x40f00000--0x40f80000)
+
+[    0.000000] OF: reserved mem: OVERLAP DETECTED!
+
+[    0.000000] opensbi@40f00000 (0x40f00000--0x40f80000) overlaps with mmode_resv0@40f40000 (0x40f40000--0x40f60000)
+
+[    0.000000] OF: reserved mem: 0x40f00000..0x40f3ffff (256 KiB) nomap non-reusable mmode_resv1@40f00000
+
+[    0.000000] OF: reserved mem: 0x40f00000..0x40f7ffff (512 KiB) map non-reusable opensbi@40f00000
+
+[    0.000000] OF: reserved mem: 0x40f40000..0x40f5ffff (128 KiB) nomap non-reusable mmode_resv0@40f40000
+
+[    0.000000] OF: reserved mem: 0x43f00000..0x43f25fff (152 KiB) nomap non-reusable framebuffer@43f00000
+
+[    0.000000] Zone ranges:
+
+[    0.000000]   Normal   [mem 0x0000000040000000-0x0000000043ffffff]
+
+[    0.000000] Movable zone start for each node
+
+[    0.000000] Early memory node ranges
+
+[    0.000000]   node   0: [mem 0x0000000040000000-0x0000000040efffff]
+
+[    0.000000]   node   0: [mem 0x0000000040f00000-0x0000000040f5ffff]
+
+[    0.000000]   node   0: [mem 0x0000000040f60000-0x0000000043efffff]
+
+[    0.000000]   node   0: [mem 0x0000000043f00000-0x0000000043f25fff]
+
+[    0.000000]   node   0: [mem 0x0000000043f26000-0x0000000043ffffff]
+
+[    0.000000] Initmem setup node 0 [mem 0x0000000040000000-0x0000000043ffffff]
+
+[    0.000000] SBI HSM extension detected
+
+[    0.000000] riscv: base ISA extensions aim
+
+[    0.000000] riscv: ELF capabilities aim
+
+[    0.000000] percpu: Embedded 11 pages/cpu s22924 r0 d22132 u45056
+
+[    0.000000] Kernel command line: consoleblank=0 usbhostd=-v,-s,60 sbcdiag=0xf0002800 fbcon=font:6x8 logo.nologo console=tty0 console=liteuart earlycon=liteuart,0xf0001000 rootwait root=/dev/ram0 ip=192.168.10.213:192.168.10.14:192.168.10.14:255.255.255.0::eth0:off:::
+
+[    0.000000] Unknown kernel command line parameters "usbhostd=-v,-s,60 sbcdiag=0xf0002800", will be passed to user space.
+
+[    0.000000] Dentry cache hash table entries: 8192 (order: 3, 32768 bytes, linear)
+
+[    0.000000] Inode-cache hash table entries: 4096 (order: 2, 16384 bytes, linear)
+
+[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 16384
+
+[    0.000000] mem auto-init: stack:all(zero), heap alloc:off, heap free:off
+
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=1, Nodes=1
+
+[    0.000000] rcu: Hierarchical RCU implementation.
+
+[    0.000000] rcu: .RCU event tracing is enabled.
+
+[    0.000000] rcu: .RCU restricting CPUs from NR_CPUS=32 to nr_cpu_ids=1.
+
+[    0.000000] rcu: RCU calculated value of scheduler-enlistment delay is 10 jiffies.
+
+[    0.000000] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=1
+
+[    0.000000] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+
+[    0.000000] riscv-intc: 32 local interrupts mapped
+
+[    0.000000] riscv: providing IPIs using SBI IPI extension
+
+[    0.000000] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+
+[    0.000000] clocksource: riscv_clocksource: mask: 0xffffffffffffffff max_cycles: 0x49cd42e20, max_idle_ns: 440795202120 ns
+
+[    0.000323] sched_clock: 64 bits at 20MHz, resolution 50ns, wraps every 4398046511100ns
+
+[    0.033589] Console: colour dummy device 80x25
+
+[    0.045171] printk: legacy console [tty0] enabled
+
+[    0.348074] Calibrating delay loop (skipped), value calculated using timer frequency.. 40.00 BogoMIPS (lpj=200000)
+
+[    0.373162] pid_max: default: 32768 minimum: 301
+
+[    0.421765] Mount-cache hash table entries: 1024 (order: 0, 4096 bytes, linear)
+
+[    0.444808] Mountpoint-cache hash table entries: 1024 (order: 0, 4096 bytes, linear)
+
+[    1.013528] ASID allocator using 9 bits (512 entries)
+
+[    1.092672] rcu: Hierarchical SRCU implementation.
+
+[    1.106642] rcu: .Max phase no-delay instances is 1000.
+
+[    1.349332] smp: Bringing up secondary CPUs ...
+
+[    1.367736] smp: Brought up 1 node, 1 CPU
+
+[    1.399971] Memory: 42436K/65536K available (6842K kernel code, 583K rwdata, 1076K rodata, 278K init, 253K bss, 22680K reserved, 0K cma-reserved)
+
+[    1.531744] devtmpfs: initialized
+
+[    2.130817] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604462750000 ns
+
+[    2.154379] futex hash table entries: 256 (order: 2, 16384 bytes, linear)
+
+[    2.589163] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+
+[    2.745990] DMA: preallocated 128 KiB GFP_KERNEL pool for atomic allocations
+
+[    3.881087] cpu0: Ratio of byte access time to unaligned word access is 0.00, unaligned accesses are slow
+
+[    4.210463] platform soc: Fixed dependency cycle(s) with /soc/interrupt-controller@f0c00000
+
+[    4.375982] platform soc: Fixed dependency cycle(s) with /soc/interrupt-controller@f0c00000
+
+[    4.914138] pps_core: LinuxPPS API ver. 1 registered
+
+[    4.928472] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+
+[    4.955236] PTP clock support registered
+
+[    5.024516] FPGA manager framework
+
+[    5.268389] clocksource: Switched to clocksource riscv_clocksource
+
+[    9.548517] NET: Registered PF_INET protocol family
+
+[    9.620860] IP idents hash table entries: 2048 (order: 2, 16384 bytes, linear)
+
+[    9.771858] tcp_listen_portaddr_hash hash table entries: 512 (order: 0, 4096 bytes, linear)
+
+[    9.800683] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+
+[    9.827379] TCP established hash table entries: 1024 (order: 0, 4096 bytes, linear)
+
+[    9.856192] TCP bind hash table entries: 1024 (order: 2, 16384 bytes, linear)
+
+[    9.880653] TCP: Hash tables configured (established 1024 bind 1024)
+
+[    9.915954] UDP hash table entries: 256 (order: 1, 8192 bytes, linear)
+
+[    9.938920] UDP-Lite hash table entries: 256 (order: 1, 8192 bytes, linear)
+
+[   10.331695] Unpacking initramfs...
+
+[   10.851620] workingset: timestamp_bits=30 max_order=14 bucket_order=0
+
+[   10.971780] io scheduler mq-deadline registered
+
+[   10.990225] io scheduler kyber registered
+
+[   11.010949] io scheduler bfq registered
+
+[   11.470190] riscv-plic: interrupt-controller@f0c00000: mapped 32 interrupts with 1 handlers for 2 contexts.
+
+[   11.638835] simple-framebuffer 43f00000.framebuffer: framebuffer at 0x43f00000, 0x26000 bytes
+
+[   11.666183] simple-framebuffer 43f00000.framebuffer: format=r5g6b5, mode=320x240x16, linelength=640
+
+[   12.276091] Console: switching to colour frame buffer device 53x30
+
+[   12.929301] simple-framebuffer 43f00000.framebuffer: fb0: simplefb registered!
+
+[   13.069131] LiteX SoC Controller driver initialized
+
+[   13.221333] f0001000.serial: ttyLXU0 at MMIO 0x0 (irq = 12, base_baud = 0) is a liteuart
+
+[   13.731651] printk: legacy console [liteuart0] enabled
+
+[   13.731651] printk: legacy console [liteuart0] enabled
+
+[   14.062737] printk: legacy bootconsole [liteuart0] disabled
+
+[   14.062737] printk: legacy bootconsole [liteuart0] disabled
+
+[   16.937652] liteeth f0000800.mac eth0: irq 13 slots: tx 2 rx 2 size 2048
+
+[   17.289519] PPP generic driver version 2.4.2
+
+[   18.762143] i2c_dev: i2c /dev entries driver
+
+[   19.179227] NET: Registered PF_INET6 protocol family
+
+[   20.916147] Segment Routing with IPv6
+
+[   21.107627] In-situ OAM (IOAM) with IPv6
+
+[   21.297262] sit: IPv6, IPv4 and MPLS over IPv4 tunneling driver
+
+[   21.829058] NET: Registered PF_PACKET protocol family
+
+[   34.462504] IP-Config: Complete:
+
+[   34.640740]      device=eth0, hwaddr=10:e2:d5:00:00:01, ipaddr=192.168.10.213, mask=255.255.255.0, gw=192.168.10.14
+
+[   35.151309]      host=192.168.10.213, domain=, nis-domain=(none)
+
+[   35.488483]      bootserver=192.168.10.14, rootserver=192.168.10.14, rootpath=
+
+[   35.530679] clk: Disabling unused clocks
+
+[   54.409784] Freeing initrd memory: 12288K
+
+[   54.717856] Freeing unused kernel image (initmem) memory: 276K
+
+[   55.059812] Kernel memory protection not selected by kernel config.
+
+[   55.429792] Run /init as init process
+
+mount: mounting devpts on /dev/pts failed: No such device
+
+Saving 256 bits of non-creditable seed for next boot
+
+Starting syslogd: OK
+
+Starting klogd: OK
+
+Running sysctl: OK
+
+Starting network: ip: RTNETLINK answers: File exists
+
+FAIL
+
+Starting crond: OK
+
+crond[76]: crond (busybox 1.38.0) started, log level 8
+
+
+
+
+fbperf: fbcon=font:6x8 1000 chars in one write: 1050 ms; 100 single-char writes: 7530 ms (same loop to /dev/null 3340 ms); 40 lines (scrolling): 6100 ms
+
+[  173.680947] input: usb_pnru boot keyboard/mouse as /devices/virtual/input/input0
+
+
+
+
+Welcome to Buildroot
+
+
+buildroot login: root
+
+uname -a
+
+                   __   _
+
+                  / /  (_)__  __ ____ __
+
+                 / /__/ / _ \/ // /\ \ /
+
+                /____/_/_//_/\_,_//_\_\
+
+                      / _ \/ _ \
+
+   __   _ __      _  _\___/_//_/         ___  _
+
+  / /  (_) /____ | |/_/__| | / /____ __ / _ \(_)__ _____  __
+
+ / /__/ / __/ -_)>  </___/ |/ / -_) \ // , _/ (_-</ __/ |/ /
+
+/____/_/\__/\__/_/|_|____|___/\__/_\_\/_/|_/_/___/\__/|___/
+
+                  / __/  |/  / _ \
+
+                 _\ \/ /|_/ / ___/
+
+                /___/_/  /_/_/
+
+  32-bit RISC-V Linux running on LiteX / VexRiscv-SMP.
+
+
+
+login[105]: root login on 'console'
+
+
+ip addr add 192.168.10.213/24 dev eth0; ip link set eth0 up
+
+ping -c 5 192.168.10.14
+
+cat /proc/buroot@buildroot:~# ip addr add 192.168.10.213/24 dev eth0; ip link set eth0 up
+
+ls /dev/fb* /dev/input/
+
+ip: RTNETLINK answers: File exists
+
+root@buildroot:~# ping -c 5 192.168.10.14
+
+'error|fail|oops'
+
+diag: up 217.54 load 3.33 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+PING 192.168.10.14 (192.168.10.14): 56 data bytes
+
+64 bytes from 192.168.10.14: seq=0 ttl=64 time=150.045 ms
+
+64 bytes from 192.168.10.14: seq=1 ttl=64 time=147.072 ms
+
+64 bytes from 192.168.10.14: seq=2 ttl=64 time=65.134 ms
+
+dmesg64 bytes from 192.168.10.14: seq=3 ttl=64 time=89.562 ms
+
+ | grep -iE 64 bytes from 192.168.10.14: seq=4 ttl=64 time=111.551 ms
+
+'
+
+--- 192.168.10.14 ping statistics ---
+
+f5 packets transmitted, 5 packets received, 0% packet loss
+
+bround-trip min/avg/max = 65.134/112.672/150.045 ms
+
+0|litex|usb|eth0root@buildroot:~# cat /proc/bus/input/devices | grep -E 'Name|Handlers'
+
+dd if=/dev/N: Name="usb_pnru boot keyboard/mouse"
+
+uranH: Handlers=kbd event0 
+
+dom of=/tmp/r bs=1Mroot@buildroot:~# ls /dev/fb* /dev/input/
+
+> /tmp/c; md5sum /tmp/c > /dev/null; done) &
+
+/dev/fb0
+
+
+
+/dev/input/:
+
+event0
+
+root@buildroot:~# dmesg | grep -ciE 'error|fail|oops'
+
+0
+
+root@buildroot:~# diag: up 283.91 load 3.33 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+dmesg | grep -iE 'fb0|litex|usb|eth0' | tail -12
+
+[    0.000000] Kernel command line: consoleblank=0 usbhostd=-v,-s,60 sbcdiag=0xf0002800 fbcon=font:6x8 logo.nologo console=tty0 console=liteuart earlycon=liteuart,0xf0001000 rootwait root=/dev/ram0 ip=192.168.10.213:192.168.10.14:192.168.10.14:255.255.255.0::eth0:off:::
+
+[    0.000000] Unknown kernel command line parameters "usbhostd=-v,-s,60 sbcdiag=0xf0002800", will be passed to user space.
+
+[   12.929301] simple-framebuffer 43f00000.framebuffer: fb0: simplefb registered!
+
+[   13.069131] LiteX SoC Controller driver initialized
+
+[   16.937652] liteeth f0000800.mac eth0: irq 13 slots: tx 2 rx 2 size 2048
+
+[   34.640740]      device=eth0, hwaddr=10:e2:d5:00:00:01, ipaddr=192.168.10.213, mask=255.255.255.0, gw=192.168.10.14
+
+[   55.637700]     usbhostd=-v,-s,60
+
+[  173.680947] input: usb_pnru boot keyboard/mouse as /devices/virtual/input/input0
+
+root@buildroot:~# dd if=/dev/urandom of=/tmp/r bs=1M count=8 2>/dev/null; (while
+
+
+ true; do cat /tmp/r > /tmp/c; md5sum /tmp/c > /dev/null; done) &
+
+[  391.216773] random: crng init done
+
+diag: up 353.85 load 4.01 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 419.32 load 3.45 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 485.16 load 3.21 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+root@buildroot:~# diag: up 552.30 load 3.40 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 621.24 load 3.32 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 679.57 load 3.15 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 738.11 load 3.12 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 796.98 load 3.11 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 856.73 load 3.14 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 921.21 load 3.13 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 983.35 load 3.05 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 1042.23 load 3.24 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 1100.61 load 3.19 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 1159.93 load 3.13 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 1223.43 load 3.19 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 1288.46 load 3.16 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 1346.07 load 3.20 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 1403.63 load 3.14 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 1461.82 load 3.18 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 1519.77 load 3.24 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 1587.86 load 3.47 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 1647.06 load 3.38 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 1705.87 load 3.19 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 1765.76 load 3.13 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 1827.14 load 3.30 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 1892.57 load 3.22 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 1954.15 load 3.18 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+diag: up 2015.16 load 3.11 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+uptime
+
+dmesg | grep -ciE 'error|fail|oodiag: up 2074.97 load 3.43 vrec 0x00000000 blank 0 vt tty1 keys 0 event0 0
+
+ps'
+
+ 00:35:22 up 35 min,  load average: 3.73, 3.52, 3.13
+
+root@buildroot:~# dmesg | gr
