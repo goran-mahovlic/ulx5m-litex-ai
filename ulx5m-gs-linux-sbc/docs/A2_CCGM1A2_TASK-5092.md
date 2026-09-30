@@ -801,3 +801,20 @@ SRC=build/s_a2_e100os OUT=~/.tmp/a2/t5094e100os SEEDS=5 tools/a2_soc_sr_build.sh
 # on the Pi (preflight, one load, login, ping, USB/DVI, STAB = stability seconds); before a reload: ~/t5095/sr_reset.sh 2
 STAB=1800 ~/t5094/a2_board_once.sh A2_f1A_eth100M_rxos_diag_selfrst_s5.bit P11_e100os_s5
 ```
+
+### 5.11 Second A2 board on `gs` (30.09. 11:22–11:40, REGOČ) — chip OK, MDIO dead
+
+Goran swapped in a second CCGM1A2 board (JTAG: two dies `0x20000001`).
+
+| step | bitstream | result |
+|---|---|---|
+| 1 (first load, board as delivered) | Linux T5094 `872d54ee` | UART silent 43 s (probably loaded over a design started from flash, H7) |
+| 2 | `A2_rxprobe_fab.bit` | runs, `R` = RXC 25 MHz (link from before), selfrst available |
+| 3 (`R!` first) | Linux T5094 `872d54ee` (f1A s5) | BIOS, memtest OK 22.8/10.2 MiB/s, **ARP failed**, `phy_status0 = 0xffffffff`, RXC counter `0x6400` = 125 MHz |
+| 4 (`R!` first) | `A2_f1A_eth100M_selfrst_s1.bit` (MDIO worked on board 1) | same: memtest OK, ARP failed, `0xffffffff` / `0x6400` |
+
+MDIOCore reads reg 2 at PHYAD 0..7 and gets no answer on either placement, so the PHY never gets the 100FD-only
+advertisement and autonegotiates 1000 Mb/s (RXC 125 MHz); the 100 Mb/s core cannot receive that. Both bitstreams
+read `R1 = 0x796D`, `R1F = 0x0328` on board 1, so the cause is on board 2 (MDC/MDIO net, pull-up, PHY, or the die-1B
+pads `IO_EB_A6`/`IO_EB_B6` on this chip), not placement. Needs the board revision and a scope on MDC/MDIO.
+The Pi shows recurring `Under-voltage detected!` in dmesg (469 since uptime 102 208 s, i.e. already before this board).
