@@ -1,0 +1,129 @@
+preflight: no power-cycle note
+== R5_np1817_sram 2026-10-04 13:17:53 sha256 dcf82c64a44db1f3
+load: Done
+state after 261 s: login
+Local IP: 192.168.10.213
+Memtest at 0x40000000 (2.0MiB)...
+Memtest OK
+Booting from network...
+Local IP: 192.168.10.213
+Remote IP: 192.168.10.14
+Booting from boot.json...
+Copying Image612 to 0x40000000... \.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|.(8994752 bytes)
+Copying rv32_k612.dtb to 0x40ef0000... (3131 bytes)
+Copying rootfs612.cpio to 0x41000000... \.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.#-.(12582912 bytes)
+Copying opensbi612.bin to 0x40f00000... \.|./.-.\.|./.-.(263652 bytes)
+Executing booted program at 0x40f00000
+[    0.000000] Linux version 6.12.0 (klaudio@pai-advanced) (riscv32-buildroot-linux-gnu-gcc.br_real (Buildroot 2026.05.3-dirty) 13.4.0, GNU ld (GNU Binutils) 2.45.1) #1 SMP Sat Sep 26 13:37:44 UTC 2026
+buildroot login: 
+--- Pi -> board
+--- 192.168.10.213 ping statistics ---
+20 packets transmitted, 20 received, 0% packet loss, time 529ms
+rtt min/avg/max/mdev = 21.078/23.731/29.450/2.218 ms
+--- stability 300 s: SDRAM load loop + ping 1400 B every 1 s
+--- 192.168.10.213 ping statistics ---
+300 packets transmitted, 188 received, +35 errors, 37.3333% packet loss, time 386ms
+rtt min/avg/max/mdev = 4.731/22.416/1045.267/78.460 ms, pipe 4
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+./board_once.sh: line 29: /dev/serial/by-id/usb-Jean_THOMAS_DirtyJTAG_E660583883501E2C-if01: Device or resource busy
+[    0.422085] Mount-cache hastable entries: 1024 (order: 0, 4096 bytes, linear)
+[    0.44519-cache hash table entries: 1024 (order: 0, 4096 bytes, linear)
+[    1.015707] ASID allocator using 9 bits (512 entries)
+[    14593] rcu: Hierarchical SRCU implementation.
+[    1.098911] rcu .Max phase no-delay instances is 1000.
+[    1.328558] smp: Bringing up secondary CPUs ...
+[    1.343557] smp: Brought up 1 node, 1 CPU
+[    1.374665] Memory: 42436K/5536K available (6842K kernel code, 583K rwdata, 1076K rodata, 2 init, 253K bss, 22680K reserved, 0K cma-reserved)
+[    1.50702[    2.106489] clocksource: jiffies: mask: 0xffffffff max_cycles max_idle_ns: 19112604462750000 ns
+[    2.129799] futex hash ta entries: 256 (order: 2, 16384 bytes, linear)
+[    2.564280] NET: Registered PF_NETLINK/PF_ROUTE protocol fami[    2.722134] DMA: preallocated 128 KiB GFP_KERNEL pool for atomic allocations
+[    3.856170] cpu0: Ratio of byte access time to unaligned wordaccess is 0.00, unaligned accesses are slow
+[    4.184442] platform soc: Fixed dependency cycle(s) with /socroller@f0c00000
+[    4.345254] platform soc: Fixed dependency ch /soc/interrupt-controller@f0c00000
+[    4.886639] pps_core: LinuxPPS API ver. 1 registered
+[    4.900943] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodoometti <giometti@linux.it>
+[    4.932085] PTP clock support reg[    5.000380] FPGA manager framework
+[    5.245870] clocksource: Switched to clocksource riscv_clocksource
+[    9.545501] NET: Registered PF_INET protocol family
+[    9.615600] IP idents hash table entries: 2048 (order: 2, 16384 bytes, linear)
+[    9.765459] tcp_listen_portaddr_hash hash table entries: 512 (order: 0, 4096 bytes, linear)
+[    9.793719] Table-able entries: 65536 (order: 6, 262144 bytes, linear)
+[    9.817] TCP established hash table entries: 1024 (order: 0, 4096 bytesear)
+[    9.845564] TCP bind hash table entries: 1024 (order: 2, 16384 bytes, linear)
+[    9.874171] TCP: Hash tables configurd (established 1024 bind 1024)
+[    9.905358] UDP hash table entries: 256 (order: 1, 8192 bytes, linear)
+[    9.928702] UDP-Lite hash table entries: 256 (order: 1, 8192 bytes, linear)
+[   10.325368] Unpacking initramfs...
+[   10.879003] workingset: timestamp_bits=30 max_order=14 bucket_order=0
+[   10.998407] io scheduler mq-deadline registered
+[   11.015908] io scheduler kyber registered
+[   11.035750] io scr bfq registered
+[   11.496384] riscv-plic: interrupt-controller@f0c00000: mapped 32 interrupts with 1 handlers for 2 contexts.
+[   11.664631] simple-framebuffer 43f00000.framebuffer: framebuffer at 0x43f000026000 bytes
+[   11.688743] simple-framebuffer 43f00000.framebuffer: format=r5g6b5, mode=320x240x16, linelength=640
+[   12.309133] Console: switching to colour frame buffer device [   12.959202] simple-framebuffer 43f00000.framebuffer: fb0: simplefb registered!
+[   13.098447] LiteX SoC Controller driver initialized
+[   13.253167] f0001000.serial: ttyLXU0 at MMIO 0x0 (irq = 12, base_baud 0) is a liteuart
+[   13.757303] printk: legacy console [liteuart0] enabled
+[   1rintk: legacy console [liteuart0] enabled
+[   14.088264] printk: legacy bootconsole [liteuart0] disabled
+[   14.088264] printk: legacy bootconsole [liteuart0] disabled
+[   16.953313] liteeth f0000800.mac eth0: irq 13 slots: tx 2 rx 2 size 2048
+[   17.303411] PPP generic driver version 2.4.2
+[   18.769005] i2c_dev: i2c /dev entries driver
+[   19.184328] NET: Registered PF_INET6 protocol family
+[   20.887898] Segment Routing with IPv6
+[   21.077690] In-situ(IOAM) with IPv6
+[   21.266295] sit: IPv6, IPv4 and MPLS over Ineling driver
+[   21.803356] NET: Registered PF_PACKET protocol family
+[   34.479278] IP-Config: Complete:
+[   34.667582]      device=hwaddr=10:e2:d5:00:00:01, ipaddr=192.168.10.213, mask=255.255.25gw=192.168.10.14
+[   35.188396]      host=192.168.10.213, domain=, nis-domain=(noe)
+[   35.536975]      bootserver=192.168.10.14, rootserver=192.168h=
+[   35.577287] clk: Disabling unused clocks
+[   55.144962] Freeing initrd memory: 12288K
+[   55.453133] Freeing unused kernel image (initmem) memory: 276[   55.818201] Kernel memory protection not selected by kernel c[   56.187454] Run /init as init process
+mount: mounting devpts on /dev/pts failed: No such device
+Saving 256 bits of non-creditable seed for next boot
+Starting syslogd: OK

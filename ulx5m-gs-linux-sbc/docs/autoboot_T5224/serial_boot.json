@@ -1,0 +1,6 @@
+{
+  "/srv/tftp/Image612":       "0x40000000",
+  "/srv/tftp/rv32_k612.dtb":  "0x40ef0000",
+  "/srv/tftp/rootfs612.cpio": "0x41000000",
+  "/srv/tftp/opensbi612.bin": "0x40f00000"
+}

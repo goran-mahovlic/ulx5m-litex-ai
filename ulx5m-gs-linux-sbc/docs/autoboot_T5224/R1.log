@@ -1,0 +1,74 @@
+preflight: no power-cycle note
+== R1_np1817_sram 2026-10-04 12:36:16 sha256 dcf82c64a44db1f3
+load: Done
+state after 21 s: bios
+SRAM:..8.0KiB
+SDRAM:..64.0MiB 16-bit @ 20MT/s (CL-2 CWL-2)
+MAIN RAM:.64.0MiB
+--=========== Initialization ===========--
+Ethernet init...
+Local IP: 192.168.10.213
+Initializing SDRAM @0x40000000...
+Switching SDRAM to software control.
+Switching SDRAM to hardware control.
+Memtest at 0x40000000 (2.0MiB)...
+  Write: 0x40000000-0x40000000 0B   
+  Write: 0x40000000-0x40020000 128.0KiB   
+  Write: 0x40000000-0x40040000 256.0KiB   
+  Write: 0x40000000-0x40060000 384.0KiB   
+  Write: 0x40000000-0x40080000 512.0KiB   
+  Write: 0x40000000-0x400a0000 640.0KiB   
+  Write: 0x40000000-0x400c0000 768.0KiB   
+  Write: 0x40000000-0x400e0000 896.0KiB   
+  Write: 0x40000000-0x40100000 1.0MiB   
+  Write: 0x40000000-0x40120000 1.1MiB   
+  Write: 0x40000000-0x40140000 1.2MiB   
+  Write: 0x40000000-0x40160000 1.3MiB   
+  Write: 0x40000000-0x40180000 1.5MiB   
+  Write: 0x40000000-0x401a0000 1.6MiB   
+  Write: 0x40000000-0x401c0000 1.7MiB   
+  Write: 0x40000000-0x401e0000 1.8MiB   
+  Write: 0x40000000-0x40200000 2.0MiB   
+   Read: 0x40000000-0x40000000 0B   
+   Read: 0x40000000-0x40020000 128.0KiB   
+   Read: 0x40000000-0x40040000 256.0KiB   
+   Read: 0x40000000-0x40060000 384.0KiB   
+   Read: 0x40000000-0x40080000 512.0KiB   
+   Read: 0x40000000-0x400a0000 640.0KiB   
+   Read: 0x40000000-0x400c0000 768.0KiB   
+   Read: 0x40000000-0x400e0000 896.0KiB   
+   Read: 0x40000000-0x40100000 1.0MiB   
+   Read: 0x40000000-0x40120000 1.1MiB   
+   Read: 0x40000000-0x40140000 1.2MiB   
+   Read: 0x40000000-0x40160000 1.3MiB   
+   Read: 0x40000000-0x40180000 1.5MiB   
+   Read: 0x40000000-0x401a0000 1.6MiB   
+   Read: 0x40000000-0x401c0000 1.7MiB   
+   Read: 0x40000000-0x401e0000 1.8MiB   
+   Read: 0x40000000-0x40200000 2.0MiB   
+Memtest OK
+Memspeed at 0x40000000 (Sequential, 2.0MiB)...
+  Write speed: 22.8MiB/s
+   Read speed: 10.2MiB/s
+--================ Boot ================--
+Booting from network...
+Local IP: 192.168.10.213
+Remote IP: 192.168.10.14
+Booting from boot.json...
+ARP failed
+Booting from boot.bin...
+Copying boot.bin to 0x40000000... ARP failed
+Network boot failed.
+Booting from serial...
+Press Q or ESC to abort boot completely.
+sL5DdSMmkekro
+Timeout
+No boot medium found
+--============== Console ===============--
+litex> 
+litex> mem_read 0xf0002804 8
+Memory dump:
+0xf0002804  ff ff ff ff 00 00 ff ff                          ........        
+litex> ident
+Ident: -
+litex> 

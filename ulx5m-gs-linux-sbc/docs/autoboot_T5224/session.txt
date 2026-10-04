@@ -1,0 +1,16 @@
+== 13:46:01 session start, bit dcf82c64a44db1f3
+== 13:46:01 SKIP_FLASH: flash already written + verified (F3c.txt, flash_after_T5224.bin = bit)
+== 13:46:01 S1 reset: fpga-jtag gs <np1817> -r (CFGRST), no input afterwards
+Done
+== 13:50:28 S1 login after: 260 s
+   DVI S1 luma min/max (0, 251)
+   S1 Pi -> board: 20 packets transmitted, 20 received, 0% packet loss, time 531ms rtt min/avg/max/mdev = 21.049/25.464/40.258/4.916 ms 
+== 13:50:58 S2 reset: fpga-jtag gs <np1817> -r (CFGRST), no input afterwards
+Done
+== 13:55:27 S2 login after: 262 s
+   DVI S2 luma min/max (0, 251)
+   S2 Pi -> board: 20 packets transmitted, 20 received, 0% packet loss, time 529ms rtt min/avg/max/mdev = 21.662/25.359/43.022/4.506 ms 
+== 13:55:57 ST stability 300 s (ping 1400 B every 1 s, no input)
+   300 packets transmitted, 300 received, 0% packet loss, time 716ms rtt min/avg/max/mdev = 14.336/23.519/33.479/3.024 ms 
+== 14:00:57 W1 flash proof needs a second power cycle (no JTAG load after it)
+== 14:00:57 PC2: waiting for a board power cycle (.213 stops answering)

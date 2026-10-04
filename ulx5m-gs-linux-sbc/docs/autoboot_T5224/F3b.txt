@@ -1,0 +1,8 @@
+JEDEC ID: 0x1f4216
+Detected: Renesas AT25QL321 64 sectors size: 32Mb
+start addr: 00000000, end_addr: 00140000
+Done
+Done
+Verifying write (May take time)
+Fail
+Verification failed at 1052084

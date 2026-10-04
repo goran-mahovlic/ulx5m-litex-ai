@@ -1,0 +1,11 @@
+etboot
+Booting from network...
+Local IP: 192.168.10.213
+Remote IP: 192.168.10.14
+Booting from boot.json...
+ARP failed
+Booting from boot.bin...
+Copying boot.bin to 0x40000000... ARP failed
+
+Network boot failed.
+[92;1mlitex[0m> 

@@ -1,0 +1,30 @@
+== 13:39:24 session start, bit dcf82c64a44db1f3
+== 13:39:24 PC1: waiting until the JTAG chain answers (board power cycle)
+== 13:39:24 PC1: JTAG answers, busdev 1:33
+== 13:39:24 F0 old flash: 90 s UART + ping
+   UART bytes since power-on: 3251
+Local IP: 192.168.10.213
+Remote IP: 192.168.10.14
+Booting from boot.json...
+Copying Image612 to 0x40000000... \|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/#-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/#-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/#-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/#-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/#-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/#-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/#-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/#-\|/-\|/-\|/-\|/-\|(8994752 bytes)
+Copying rv32_k612.dtb to 0x40ef0000... 
+3 packets transmitted, 3 received, 0% packet loss, time 4ms rtt min/avg/max/mdev = 0.873/1.683/2.422/0.636 ms 
+== 13:40:56 F1 detect
+	idcode 0x20000001
+	model  GM1Ax
+== 13:40:56 F2 flash backup
+Detected: Renesas AT25QL321 64 sectors size: 32Mb
+dump flash (May take time)
+Open dump file DONE
+Done
+cd3517473707d59c3d915b52a3e16213cadce80d9ffb2b4371958fb7acb51a08  flash_before_T5224.bin
+== 13:41:39 F3 write np1817 to flash (--verify)
+JEDEC ID: 0x1f4216
+Detected: Renesas AT25QL321 64 sectors size: 32Mb
+start addr: 00000000, end_addr: 00140000
+Done
+Done
+Verifying write (May take time)
+Fail
+Verification failed at 418802
+== 13:42:22 STOP F3: write/verify error
