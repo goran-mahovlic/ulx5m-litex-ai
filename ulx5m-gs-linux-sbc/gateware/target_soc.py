@@ -146,7 +146,7 @@ class SoCCRG(LiteXModule):
 
 class ULX5MSoC(SoCCore):
     def __init__(self, sys_clk_freq=20e6, perf_mode="economy", pnr_mode="speed",
-                 with_gbe=False, with_sdcard=False, sdcard="none",
+                 with_gbe=False, with_sdcard=False, sdcard="none", sd_pins="slot",
                  sdram_cl=2, l2_size=0, boot="none", cpu_mac_address=0x10e2d5000001,
                  local_ip="192.168.10.213", remote_ip="192.168.10.14", with_video=False,
                  fb_base=0x43f00000, video_ce_rep=False, video_neg_sync=False,
@@ -332,10 +332,36 @@ class ULX5MSoC(SoCCore):
         if with_sdcard:
             sdcard = "native"
         assert sdcard in SDCARD_MODES, sdcard
+        assert sd_pins in SD_PIN_SETS, sd_pins
+        # --sd-pins j8 (TASK-5234): the same cores on the 40-pin header J8 of the carrier (Pi SPI0 GPIO8..11,
+        #         + GPIO7/GPIO25 for 4-bit, gateware/sd_pins.py) for an external microSD module behind a
+        #         1.8 V <-> 3.3 V translator; the slot itself has no translator (TASK-5039). Internal pull-ups on
+        #         CMD/DAT, none on CLK. The CSR names stay spisdcard / sdcard, so BIOS, DTS and Linux are unchanged.
+        if sdcard != "none" and sd_pins == "j8":
+            from sd_pins import SD_PINS
+            j8, pu = SD_PINS["j8"], Misc("PULLUP=true")
+            platform.add_extension([
+                ("spisdcard_j8", 0,
+                    Subsignal("clk",  Pins(j8["clk"])),
+                    Subsignal("mosi", Pins(j8["mosi"]), pu),
+                    Subsignal("cs_n", Pins(j8["cs_n"]), pu),
+                    Subsignal("miso", Pins(j8["miso"]), pu)),
+                ("sdcard_j8", 0,
+                    Subsignal("clk",  Pins(j8["clk"])),
+                    Subsignal("cmd",  Pins(j8["mosi"]), pu),
+                    Subsignal("data", Pins(" ".join(j8[k] for k in ("miso", "dat1", "dat2", "cs_n"))), pu)),
+            ])
         if sdcard == "native":
-            self.add_sdcard()
-        if sdcard == "spi":
+            self.add_sdcard(sdcard_name="sdcard" if sd_pins == "slot" else "sdcard_j8")
+        if sdcard == "spi" and sd_pins == "slot":
             self.add_spi_sdcard()
+        if sdcard == "spi" and sd_pins == "j8":
+            # add_spi_sdcard() names the CSR after the resource; the BIOS driver needs "spisdcard".
+            from litex.soc.cores.spi import SPIMaster
+            spisdcard = SPIMaster(pads=platform.request("spisdcard_j8"), data_width=8,
+                                  sys_clk_freq=sys_clk_freq, spi_clk_freq=400e3)
+            spisdcard.add_clk_divider()
+            self.add_module(name="spisdcard", module=spisdcard)
 
         # BIOS boot source (--boot) ------------------------------------------------------------------
         # none:    console only (BIOS_NO_BOOT). With no card the SD boot hangs at "Booting from boot.json..."
@@ -431,6 +457,7 @@ class ULX5MSoC(SoCCore):
 BOOT_MODES     = ["none", "serial", "sdcard", "netboot", "sdnet"]
 USB_PNRU_CLKS  = ["pll48", "gtx125", "bufg48"]
 SDCARD_MODES   = ["none", "native", "spi"]
+SD_PIN_SETS    = ["slot", "j8"]
 
 
 def main():
@@ -449,6 +476,8 @@ def main():
     p.add_argument("--eth-mode",     default="mac", choices=["mac"], help="LiteEth MAC for the CPU (BIOS netboot, Linux)")
     p.add_argument("--with-sdcard",  action="store_true", help="= --sdcard native")
     p.add_argument("--sdcard",       default="none", choices=SDCARD_MODES, help="SD card core (see ULX5MSoC)")
+    p.add_argument("--sd-pins",      default="slot", choices=SD_PIN_SETS,
+                   help="slot: carrier microSD slot (no translator); j8: 40-pin header for an external module (TASK-5234)")
     p.add_argument("--seed",         default=None, type=int)
     p.add_argument("--placer-timeout", default=None, type=int,
                    help="nextpnr --placer-heap-cell-placement-timeout (netboot SoC: 77%% LT, placer gives up)")
@@ -482,7 +511,7 @@ def main():
 
     soc = ULX5MSoC(sys_clk_freq=args.sys_clk_freq, perf_mode=args.perf_mode, pnr_mode=args.pnr_mode,
                    sdram_cl=args.sdram_cl, with_gbe=args.with_gbe,
-                   with_sdcard=args.with_sdcard, sdcard=args.sdcard, boot=args.boot, local_ip=args.local_ip,
+                   with_sdcard=args.with_sdcard, sdcard=args.sdcard, sd_pins=args.sd_pins, boot=args.boot, local_ip=args.local_ip,
                    remote_ip=args.remote_ip, with_video=args.with_video, fb_base=args.fb_base,
                    video_ce_rep=args.video_ce_rep, video_neg_sync=args.video_neg_sync, pll_lock_req=args.pll_lock_req,
                    video_640x240=args.video_640x240, with_usb_hid=args.with_usb_hid, video_recover=args.video_recover,
