@@ -14,3 +14,12 @@ Done
    300 packets transmitted, 300 received, 0% packet loss, time 716ms rtt min/avg/max/mdev = 14.336/23.519/33.479/3.024 ms 
 == 14:00:57 W1 flash proof needs a second power cycle (no JTAG load after it)
 == 14:00:57 PC2: waiting for a board power cycle (.213 stops answering)
+== 14:26:28 PC2: board went down
+== 14:30:44 P1 power-on from flash, login after: 250 s
+   DVI P1 luma min/max (0, 251)
+   P1 Pi -> board: 20 packets transmitted, 20 received, 0% packet loss, time 528ms rtt min/avg/max/mdev = 21.537/25.504/43.496/4.853 ms 
+[    0.000000] Linux version 6.12.0 (klaudio@pai-advanced) (riscv32-buildroot-linux-gnu-gcc.br_real (Buildroot 2026.05.3-dirty) 13.4.0, GNU ld (GNU Binutils) 2.45.1) #1 SMP Sat Sep 26 13:37:44 UTC 2026
+[   12.945756] simple-framebuffer 43f00000.framebuffer: fb0: simplefb registered!
+[   34.457939] IP-Config: Complete:
+buildroot login: 
+== 14:31:14 SESSION_OK

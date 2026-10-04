@@ -14,7 +14,7 @@ the flash + proof session, `F3b/F3c.txt` = flash writes, `dvi_*.jpg` = grabber).
 | SPI flash | AT25QL321 (JEDEC `0x1f4216`, 4 MiB): **np1817 at offset 0, verified** (§5). CFG_MD = 0 → the A1 configures from flash at power-on |
 | Linux images | `/srv/tftp` on the Pi: `Image612`, `rv32_k612.dtb`, `rootfs612.cpio`, `opensbi612.bin` (§4) — the set that belongs to np1817 |
 | Autoboot chain | power-on → FPGA from flash → BIOS memtest → BIOS netboot from `boot.json` (no input) → OpenSBI → Linux 6.12, `ip=` on the kernel command line brings eth0 up → `buildroot login:` on UART and DVI |
-| Proof | reset ×2 (`fpga-jtag gs <bit> -r`, CFGRST): login after **260 s / 262 s** with no input, Pi → board 20/20 × 1400 B both times, DVI login screen; 300/300 pings × 1400 B (0 %); power-on from flash: §6 |
+| Proof | reset ×2 (`fpga-jtag gs <bit> -r`, CFGRST): login after **260 s / 262 s** with no input, Pi → board 20/20 × 1400 B both times, DVI login screen; 300/300 pings × 1400 B (0 %); **power-on from flash (P1, no JTAG load): login after 250 s**, 20/20 × 1400 B, DVI login screen (§6) — `session.txt` ends with `SESSION_OK` (14:31:14) |
 
 ## 2. Which chip — measured, not taken from a note
 
@@ -71,10 +71,10 @@ the same images. `linux514`/`linuxdvi` sets in `netboot_app.sh` belong to the 25
 
 | Step | Command (on the Pi) | Result |
 |---|---|---|
-| Backup | `sudo fpga-jtag gs --dump-flash --file-size 4194304 flash_before_T5224.bin` | 4 MiB, sha256 `cd3517473707d59c…`, **all 0xFF** (the flash was empty) |
+| Backup | `sudo fpga-jtag gs --dump-flash --file-size 4194304 flash_before_T5224.bin` | 4 MiB, sha256 `cd3517473707d59c3d915b52a3e16213cadce80d9ffb2b4371958fb7acb51a08`, **all 0xFF** (the flash was empty); file `~/t5224/flash_before_T5224.bin` on the Pi |
 | Write ×2 at 6 MHz | `sudo fpga-jtag gs -f --verify <np1817.bit>` | `Verification failed at 418802`, then `at 1052084` — different places, Pi under-voltage in the same seconds → transient |
 | Write at 1 MHz | `sudo fpga-jtag gs -f --verify --freq 1000000 <np1817.bit>` | `Verifying write … Done` (83 s) |
-| Independent check | `--dump-flash --freq 1000000 --file-size 1286336 flash_after_T5224.bin`; `cmp` with the bit | identical, sha256 `dcf82c64…` |
+| Independent check | `--dump-flash --freq 1000000 --file-size 1286336 flash_after_T5224.bin`; `cmp` with the bit | identical, sha256 `dcf82c64a44db1f307feda950e9d8ed991162fdad036b63578af823b345dac75` = np1817 (`F3c.txt`: `Verifying write … Done`) |
 
 **Undo:** `sudo fpga-jtag gs -f --verify --freq 1000000 ~/t5224/flash_before_T5224.bin` (empty flash) or write
 another bitstream the same way. CFG_MD: MD0/MD1 10 k to GND, MD2/MD3 10 k to GND or high through SW1 (SW1 open
@@ -88,7 +88,9 @@ another bitstream the same way. CFG_MD: MD0/MD1 10 k to GND, MD2/MD3 10 k to GND
 | S2 13:51 | same | 262 s | 20/20 × 1400 B, avg 25.4 ms | `dvi_S2.jpg`: `input: usb_pnru boot keyboard/mouse … input0`, `buildroot login:` |
 | ST 13:56 | — | — | **300/300 × 1400 B, 1/s, 0 % loss** | — |
 | KB 14:0x | Goran types `root` on the board's USB keyboard | — | — | `dvi_usb_keyboard_root_login.jpg`: `buildroot login: root` + Linux banner on tty1; UART: `login[105]: root login on 'tty1'`, diag `event0 0 → 320` |
-| P1 | board power cycle, no JTAG load | see `session.txt` | | `dvi_P1.jpg` |
+| P1 14:26→14:30 | board power cycle by Goran (board stopped answering 14:26:28), **no JTAG load** — FPGA configured from SPI flash | **250 s** (14:30:44) | 20/20 × 1400 B, avg 25.5 ms | `dvi_P1.jpg`: `[174.314686] input: usb_pnru boot keyboard/mouse … input0`, `Welcome to Buildroot`, `buildroot login: _`, luma 0–251 |
+
+P1 UART (`session.uart` from l. 735): BIOS init → `Local IP: 192.168.10.213` → Memtest → `Copying … rv32_k612.dtb / rootfs612.cpio / opensbi612.bin` → `Liftoff!` → OpenSBI v1.3 → `Linux version 6.12.0 … Sat Sep 26` → `fb0: simplefb registered` (12.9 s) → `IP-Config: Complete` (34.5 s) → `usb_pnru … input0` (174.3 s) → `buildroot login:`. The first BIOS lines after power-on are partly garbled (the DirtyJTAG UART re-enumerates while the board powers up); the reader recovers before Memtest. `grep -ci 'oops|panic' session.uart` = 0 over S1, S2, ST and P1. Session ended `== 14:31:14 SESSION_OK`.
 
 ## 7. Probe (`litex-eth-ulx5m-gs/gateware/phy_probe.py`)
 
@@ -103,5 +105,5 @@ mismatch at each edge, same on both banks) → bank EA (+3V3) is powered.
 ## 8. Open
 
 - JTAG flash writes need `--freq 1000000` while the Pi reports under-voltage (`vcgencmd get_throttled` 0xd0005).
-- Reset without a power cycle reloads from SRAM only: np1817 (A1) has no `selfrst` (R! is in the A2 builds), and
+- Power-on from flash is proven (P1). Reset without a power cycle reloads from SRAM only: np1817 (A1) has no `selfrst` (R! is in the A2 builds), and
   DirtyJTAG SRST does not reach RST_N.
