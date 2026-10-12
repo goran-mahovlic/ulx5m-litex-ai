@@ -347,6 +347,8 @@ Načelo je da se pomiče **podatkovni** uzorkivač, ne monitor, a BER mjeri post
 
 ## 5. Što s ovim napraviti
 
+(Dopuna 12.10. navečer: potraga po forkovima i alatima je u §6 — javnog eye viewera nema; `tools/eyeprobe.py` i H8 su novi.)
+
 1. Jelena, kad ploče budu slobodne: redoslijed testova iz §2 (H7 → H2 → H1 → H3 → H4), ≈ 30 min na M2, bez rebuilda.
 2. Ako neki test pokaže brojače ≠ 0: ispraviti `eyescan.measure()`, uz test u `tools/tests/test_eyescan.py`, i
    ponoviti E7 na 2,5 G i 5 G.
@@ -357,3 +359,100 @@ Načelo je da se pomiče **podatkovni** uzorkivač, ne monitor, a BER mjeri post
    - značenje `RX_EQA_CONFIG` i `RX_DBG_SEL`;
    - broj kodova `PHASE_ACC` po UI;
    - mV po kodu za `RX_AFE_OFFSET` i `RX_TH_MON2`.
+
+---
+
+## 6. Forkovi i postojeći alati (TASK-5488, 12.10.2026.)
+
+Goran je 12.10. u 21:35 pitao ima li u nekom forku ili negdje drugdje eye viewer. Pregledano je bez hardvera, preko
+`git clone`/`git fetch` svih grana i PR refova (`refs/pull/*`), GitHub API-ja i weba. Radne kopije su u
+`app/tmp/zadaci/TASK-5488_…/`.
+
+### 6.1 Presuda
+
+**Javna implementacija pokretanja eye mjerenja na GateMateu ne postoji.** Nema je ni u jednom forku, grani ni PR-u.
+`tc_eyemeas` je u svakoj kopiji `gm_serdes_lb` ili prazan, ili samo ispiše „Starting SerDes eye measurement” i provjeri
+0x5C. Jedini javni alat za oko i dalje je Patrickov `eyetools.py`, a on je samo crtač (`EyeData`/`EyePlot`, ISC-stil
+licenca, Cologne Chip 2026.) bez akvizicije. To smo već preuzeli (`tools/eyetools.py`, `eyescan.py plot`).
+
+Novo je samo **dokaz da je blok u siliciju i da ga vendor koristi**. Na FPGAconf 2025 (sl. 10 i 13) „Eye Scan” je
+nacrtan u RX PMA između „EQ DFE” i CDR-a, a uz to piše „Receiver margin analysis with eye measurement”. Na sl. 14
+(„SerDes Wizard”) je `serdestool.py` u curses načinu, koji ima samo popis registara i nema prikaz oka. Brojači dakle
+postoje i rade kod vendora, ali slijed pokretanja i dalje zna samo Patrick (§4).
+
+### 6.2 Što je pregledano (repo @ commit, datum, nalaz)
+
+| Repo / izvor | Grane / commit | Eye / `tc_eyemeas` | Napomena |
+|---|---|---|---|
+| pu-cc/gm_serdes_lb | `main` @56aa48b (18.09.2026.), `refs/pull/1` | stub (r. 1285–1291: samo provjera 0x5C) | 74 commita; `git log -S tc_eyemeas` → samo e5ba63a (stub) i 2043840 (potpis s argumentima, tijelo i dalje prazno) |
+| **Mimil25/gm_serdes_lb** (jedini fork, = PR #1, nije spojen) | `main` @63fca9e (05.06.2026., edecoux, univ-fcomte) | nema | 3 commita: **„fix rx_reset bitfield order”** (336874e) mijenja raspored 0x2B u karti `serdestool.py`, vidi §6.3/H8 |
+| colognechip/gatemate-pipe | `main` 63ba8b1, `dll_test` fc1f5d4 (11.10.2026.), `hailuong`, `pcievhost_test`, PR 1–3 | nema | samo `.RX_EYE_MEAS_EN(1'h0)`, `RX_EYE_MEAS_CFG=0`; `tb_ccfpga_serdes.v` ima regfile taskove, ali piše samo 8'h0 |
+| chili-chips-ba/openCologne-PCIE + 7 forkova (saxaboomcc, wdcysl-sys, liujianyu20021122, zmn0731, wt641496728, max9004, mfkiwl) | `main` @642c932 (11.10.2026.); forkovi imaju 0 vlastitih commita | nema | |
+| YosysHQ/prjpeppercorn + 6 forkova (Sigil-Logic, sylefeb, HaiLuong01, sid115, pu-cc, mfkiwl) | `main` @b1eb52f (16.06.2026.); pu-cc grane `serdes-rxreset-fix`, `gatemate-fix-serdes-cdr`, `fix-pll-nop`, `bootaddr`, `cfgmode` | samo mapa polja (`TileBitDatabase.cpp:488–498`) | **b1eb52f „Fix SERDES RX parameter ordering (#20)”**: Patrick je 0x2B vratio na raspored iz DS-a (§6.3) |
+| YosysHQ/prjpeppercorn-test-cases + 9 forkova (Sigil-Logic, gatecat, mrcmry, sid115, goran-mahovlic, KrystalDelusion, pu-cc, giovannipozzobon, playduck) | `main` @12207df (29.09.2026.) + sve grane | nema | jedinstveni commiti forkova: a2 skew, multi-dff, bram-ecc, VGA; SerDes je samo `084-serdes-loopback` i `109-blinky-serdes` |
+| YosysHQ/nextpnr `himbaechel/uarch/gatemate` | @837d0ee (10.10.2026.) | `pack_serdes.cc:94–104` | prosljeđuje samo `RX_EYE_MEAS_EN/CFG`; brojači su zakomentirani (read-only) |
+| colognechip/gatemate_ila @aad3ebc, pu-cc/ulx5m-gh @0cccb75, YuetangLiang/cc_serdes @bf0d2b5 | sve grane | nema | cc_serdes nije SerDes, to je C++ serializer |
+| pu-cc/* (23 repoa, popis preko API-ja) | — | nema | jedini SerDes repo je gm_serdes_lb; `gm_gpio_ringosc` i `ulx5m_gpiocheck` nisu SerDes |
+| Web: GitHub repo-search („gatemate serdes/eye”, „cologne chip serdes”, „cc_serdes”), awesome-gatemate, FPGAconf 2025 SerDes slajdovi, FDF 2025 (CERN) slajdovi | — | nema alata | samo blok-dijagram „Eye Scan” (§6.1) |
+
+**Nije pregledano** (nema pristupa): GitHub code search (traži prijavu, `gh` nije instaliran), Cologne Chip Discord
+i forum (zahtijevaju prijavu) i Mastodon (nema rezultata preko web pretrage). Ako Goran ima pristup Discordu,
+pretraga „eye” u kanalu #serdes je jedini preostali javni izvor. Inače ostaje pitanje iz §4.
+
+### 6.3 Što nalaz mijenja — H8 (raspored reseta 0x2B)
+
+Postoje dva suprotna rasporeda bitova 0x2B[11:0]:
+
+| bit | DS1001 t.2.59 str. 93 + PP b1eb52f (Patrick, 16.06.) + PU karta 56aa48b + naš `serdestool.py` | Mimil25 PR #1 + PP prije b1eb52f + komentar u PU `reset_serdes_rx` (r. 1086) |
+|---|---|---|
+| [1:0] | `RX_PMA_RESET`/`_OVR` | `RX_RESET`/`_OVR` |
+| [3:2] | `RX_EQA_RESET`/`_OVR` | `RX_PMA_RESET`/`_OVR` |
+| [5:4] | `RX_CDR_RESET`/`_OVR` | `RX_EQA_RESET`/`_OVR` |
+| [7:6] | `RX_PCS_RESET`/`_OVR` | `RX_CDR_RESET`/`_OVR` |
+| [9:8] | `RX_BUF_RESET`/`_OVR` | `RX_PCS_RESET`/`_OVR` |
+| [11:10] | `RX_RESET`/`_OVR` | `RX_BUF_RESET`/`_OVR` |
+
+- **Lijevi stupac je gotovo sigurno točan.** PR #1 je od 05.06. Patrick je 11 dana kasnije (b1eb52f) svjesno
+  premjestio prjpeppercorn **na raspored iz DS-a**, a oss-cad-suite 2026-09-23, s kojim gradimo bitove, to već
+  sadrži. Komentar `# RX_RESET_OVR=1, RX_RESET=1` u `reset_serdes_rx` kopiran je iz TX reseta: drugi upis ide čak
+  na 0x3F, gdje su [1:0] `TX_PMA_RESET_TIME` (DS str. 95). Nije dakle dokaz.
+- **Zašto je to ipak hipoteza H8 (niska vjerojatnost, 1 min):** `eyescan.py recal` i H6 pišu 0x2B[3:2] kao „DFE
+  reset”. Kad bi PR #1 bio u pravu, to bi bio PMA reset, a H6 bi „overrideao” krivu domenu.
+  **Test (M2, 1 min):** `W(0x2B, 0x0C00, 0x0C00)`, odmah `get RX_CDR_LOCKED RX_EQA_LOCKED`, zatim
+  `W(0x2B, 0, 0x0400)` i `eyescan.py health`. Prema DS-u je to puni RX reset: `RX_CDR_LOCKED` padne i vrati se. Prema
+  PR #1 to je samo reset elastičnog buffera i CDR ostaje zaključan. Ako CDR ne padne, H6 i `recal` treba prepisati
+  na raspored iz PR #1.
+- Za naše bitove nema posljedica u bitstreamu: svi `RX_*_RESET_OVR` su 0 (`cc_serdes_params.vh:75–85`), pa se pomak
+  nigdje ne vidi.
+- Usput iz PP d6a8239 (27.10.2025.): `RX_CDR_LOCK_CFG` je 0x0B[7:0], a `RX_CDR_TRANS_TH` je 0x0B[14:8], 7 b. Naš
+  `cc_serdes_params.vh:32` to već uzima u obzir.
+
+Uz to ništa drugo ne mijenja H1–H7: nijedan izvor ne daje bitove za 0x14[3:1], 0x08 ni jedinicu prozora.
+
+### 6.4 „Probajte ga sami dobiti da radi” — što je spremno za Pi
+
+Za Pi postoje **dva skripta s istim testovima**, pa nije potrebno oba:
+
+1. **Jelenin `docs/data_20261012/t5483/eye_tests.py`** (19:39, necommitan, uputa #308): `h7 h2 h3 h4 h1rx phase`.
+   Već je u lancu nakon snimke rasipanja (lab19). `h1rx` traži da **druga ploča šalje PRBS-7**.
+2. **`tools/eyeprobe.py`** (TASK-5488, 8 testova s lažnim regfileom, sintaksa za Python 3.7 provjerena):
+   `H7 → H2 → H3 → H1` u jednom pokretanju. Razlike prema (1):
+   - H1 radi **na jednoj ploči** (near-end PMA loopback: `TX_LOOPBACK_OVR=1 TX_PMA_LOOPBACK=1`, TX/RX PRBS-7);
+   - na kraju **vraća svaku dirnutu riječ** (0x04/05/06/14/15, PRBS i loopback bitove 0x2A/0x40, bez w/c bitova) i
+     poziva `eyescan.do_recal`;
+   - piše JSON.
+
+   H4 i `phase` nema, za njih ostaje (1).
+
+Naredbe za Jelenu (bitstream `ber_*` s `EYE_EN=0`, prvo M2; na Piju `cd /home/pi/ulx5m-serdes/tools`, nakon kopiranja
+`tools/eyeprobe.py` tamo):
+
+```
+fpga-jtag m2 run python3 eyeprobe.py --skip h1 --out /home/pi/ulx5m-serdes/t5483/probe_m2_noh1.json   # ~1 min, link netaknut
+fpga-jtag m2 run python3 eyeprobe.py --skip h7,h2,h3 --out /home/pi/ulx5m-serdes/t5483/probe_m2_h1.json  # ~1 min, H1 na jednoj ploči
+fpga-jtag m2 run python3 eyescan.py health                                                              # link opet zaključan?
+# isto za gs kad je njegov PLL zaključan; H8 ručno (§6.3)
+```
+
+Izlaz ima jedan redak po testu. `!!` i `COUNTERS!=0` znače pogodak, i tada treba ispraviti `eyescan.measure()` po
+§5 t.2. **Trajanje:** oko 2 min po ploči za H7/H2/H3/H1, uz H4, `phase` i H8 ručno ≤ 15 min, dakle ≤ 30 min po ploči.
