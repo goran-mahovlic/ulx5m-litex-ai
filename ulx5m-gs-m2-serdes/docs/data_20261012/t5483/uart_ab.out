@@ -1,0 +1,22 @@
+Done
+Done
+A1 19:15:29 no JTAG: UART bytes 10442 lines 69 b'a17d 0000087a 00003a4e 0000117a 81 00 00 00 b3 16 03a9a8c0\r\n'
+A2 19:16:29 no JTAG: UART bytes 9120 lines 60 b'111d 000008a8 00003af0 000011e4 81 00 00 00 b3 16 0727bbb1\r\n'
+A3 19:17:30 no JTAG: UART bytes 0 lines 0 b''
+B1 19:18:30 with JTAG: UART bytes 0 lines 0 b''
+B2 19:19:30 with JTAG: UART bytes 11128 lines 74 b'371d 00000931 00003c98 00001317 81 00 00 00 b3 16 11b0db3e\r\n'
+Traceback (most recent call last):
+  File "/usr/lib/python3/dist-packages/serial/serialposix.py", line 501, in read
+    'device reports readiness to read but returned no data '
+serial.serialutil.SerialException: device reports readiness to read but returned no data (device disconnected or multiple access on port?)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/pi/ulx5m-serdes/t5483/uartprobe.py", line 7, in <module>
+    b += s.read(512)
+  File "/usr/lib/python3/dist-packages/serial/serialposix.py", line 509, in read
+    raise SerialException('read failed: {}'.format(e))
+serial.serialutil.SerialException: read failed: device reports readiness to read but returned no data (device disconnected or multiple access on port?)
+B3 19:20:33 with JTAG: 
+UART_AB DONE 19:21:31

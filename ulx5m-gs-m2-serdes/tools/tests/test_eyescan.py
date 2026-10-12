@@ -68,6 +68,14 @@ class Health(unittest.TestCase):
         # RX_CDR_FREQ_ACC_VAL is 15 bit two's complement: 0x7FFF = -1, so -1..+1 is a span of 2, not 32766
         self.assertEqual(E.health_verdict(self.GOOD, [0x7FFF, 1])['freq_acc_span'], 2)
 
+    def test_raw_snapshot_covers_cal_eqa_cdr_pll_regs(self):
+        # TASK-5487 (uputa #308): raw regs after SET_ACC: 0x04/0x07 EQA/offset, 0x0B-0x0D CDR, 0x02/0x3C cal, 0x55 PLL
+        class R:
+            def rd_regfile(self, a): return a * 3
+        raw = E.raw_snapshot(R())
+        for a in (0x02, 0x04, 0x07, 0x0B, 0x0C, 0x0D, 0x3C, 0x55):
+            self.assertEqual(raw['0x%02X' % a], a * 3)
+
 
 class FakeRegfile:
     # 0x14[0] reads back as EYE_MEAS_DONE (DS1001 Table 2.59: "RX_EYE_MEAS_EN / EYE_MEAS_DONE", w/c)

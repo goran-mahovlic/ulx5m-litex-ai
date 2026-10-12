@@ -983,3 +983,150 @@ DS1001 p.155 min 1.00 V), or less likely an open on the GS-side SER_CLK_P/N into
 the six bits in `/home/pi/fpga` stay unchanged. **What Goran should measure (GS, under load with `gs_2g5.bit` loaded):** VDD_SER_PLL at
 TP8 (SerDes side of R105) and VDD_SER at TP10 (R106), both ≥ 1.00 V; continuity of the new filter parts. Then re-run step 1:
 `fpga-jtag gs /home/pi/fpga/gs_2g5.bit -r; fpga-jtag gs run python3 eyescan.py get PLL_LOCKED PLL_CAP_FT PLL_CAP_STATE` → expect 1 / ~440–500 / 2.
+
+### 13.1 TASK-5483 retry (12.10. 18:00–19:15): the gs PLL locks again — lab17 sweep stopped at 12/17
+
+After Goran's second look at the filter the gs ADPLL locks (CAP_FT 502 at 2.5 G; 106/495/503 at 0.3/1.25/5 G, `snap2.out`, commit
+`675dba9`). lab17 (2.5 G, one load per point, 60 s `ber_mon sparse`, `ber_jtag_check` 200) ran 12 of 17 points before the boards were
+switched off (~19:21); raw `data_20261012/t5483/lab17.out`. Numbers are in the §14.2 table.
+
+## 14. TASK-5487 (dorada 5483): A/B UART, 2.5 G sweep + confirmation, 5 G P2/P3, load-to-load scatter, eye (12.10.2026 19:36–)
+
+**Order:** Goran 12.10. 19:31 (boards on again) and uputa #308 (21:35). **Done by:** Jelena, gs lease `TASK-5487`, loading only
+`fpga-jtag gs|m2 <bit> -r`, the six CFGRST bits in `/home/pi/fpga` (sha256 unchanged), `RX_CDR_SET_ACC_CONFIG` 2→0 on both after every
+load. **Raw data:** `data_20261012/t5483/` — `uart_ab2.out`, `lab18*.sh/.out`, `log18/`, `lab19.*`, `log19/`, `eye20.*`.
+Scripts: `lab18.sh` = `lab17.sh` + per-board fields (`gs:F=V`, `m2:F=V`) + one JTAG retry + `SER=1` option.
+**Metrics:** BER = `ber_mon.py sparse` (gs UART read only at the start and end of the window); `ber_jtag_check` = share of raw RX words
+that are valid peer words (only resolves word error rates > ~1/N).
+
+### 14.1 A/B: is the gs UART dropout caused by JTAG traffic on the same probe? — **No**
+
+| Run | Windows without JTAG (bytes / lines per 60 s) | Windows with back-to-back JTAG reads |
+|---|---|---|
+| 19:15–19:21 (before the power-off, `uart_ab.out`) | 10442/69, 9120/60, **0/0** | **0/0**, 11128/74, port error (boards switched off) |
+| 19:36–19:42 (fresh boards, `uart_ab2.out`) | 9475/60, 9120/60, 9272/61 | 9120/60, 9728/64, 9576/63 |
+
+A dropout happened with no JTAG at all (A3), and with JTAG 3/3 windows were full → concurrency is not the cause; the lab scripts stay
+parallel (`SER=0`). The dropout remains intermittent (whole windows, both modes); the Pi showed `throttled=0xd0005` (under-voltage now)
+at 19:36 — a USB/supply cause on the Pi side is still open. In the series below 6 of 52 windows were `NOUART`.
+
+### 14.2 2.5 G search (one load per point, 60 s; PROFILE 1 defaults PRE 5, POST 5, AMP 31, CKP 62, TRANS_TH 8, PEAK 24, GAIN 0)
+
+TX fields act on the far RX: gs TX → gs→m2, m2 TX → m2→gs. `ber_jtag_check` 200/200 PEER on both boards at **every** 2.5 G point.
+
+| Point | gs→m2 | m2→gs | Point | gs→m2 | m2→gs |
+|---|---|---|---|---|---|
+| base (lab17 18:40) | 2.0·10⁻⁸ | 4.7·10⁻⁷ | base (lab18 19:45) | 1.2·10⁻⁶ | 4.4·10⁻⁷ |
+| POST 0 | 1.5·10⁻⁶ | 2.5·10⁻⁷ | base2 (20:20) | NOUART | NOUART |
+| POST 10 | 5.7·10⁻⁸ | 3.8·10⁻⁹ | CKP 126 | 1.8·10⁻⁶ (19:14 NOUART) | 3.1·10⁻⁶ |
+| POST 12 | 6.7·10⁻⁸ | 8.3·10⁻⁹ | CKP 30 | 4.3·10⁻⁶ | 1.1·10⁻⁷ |
+| POST 15 | 1.1·10⁻⁶ | **3.5·10⁻¹⁰** | CKP 248 | 1.3·10⁻⁵ | 5.9·10⁻⁶ |
+| m2 POST 15 only | 1.4·10⁻⁷ | 6.3·10⁻⁹ | TRANS_TH 16 | 7.1·10⁻⁸ | 4.4·10⁻⁸ |
+| gs 10 / m2 15 | NOUART | NOUART | VCMSEL 4 (AFE+RTERM) | 5.0·10⁻⁵ | 4.7·10⁻⁶ |
+| gs 12 / m2 20 | 1.7·10⁻⁶ | 3.8·10⁻⁹ | PEAK 16 / 8 / 31 | 6.9·10⁻⁸ / 1.7·10⁻⁷ / 8.8·10⁻⁷ | 4.0·10⁻⁷ / 1.2·10⁻⁸ / 1.1·10⁻⁷ |
+| gs 10 / m2 12 | 1.2·10⁻⁵ | 1.2·10⁻⁷ | GAIN 1 / 2 | 1.0·10⁻⁷ / NOUART | 1.5·10⁻⁵ / NOUART |
+| PRE 0, AMP 24 | NOUART | NOUART | | | |
+
+Only one pattern looked like a direction-specific gain: m2 TX POST ≥ 10 gave m2→gs 3.5·10⁻¹⁰…8.3·10⁻⁹ vs 4.4–4.7·10⁻⁷ at POST 5. CKP and
+VCMSEL away from the default are worse in both directions. gs→m2 had no clear winner (the base itself spread 2·10⁻⁸…1.2·10⁻⁶).
+
+### 14.3 2.5 G confirmation: base vs m2 POST 15 vs m2 POST 15 + TRANS_TH 16, 3 loads interleaved, 240 s, `ber_jtag_check` 1000
+
+| Point | gs→m2 r1 / r2 / r3 | m2→gs r1 / r2 / r3 | JTAG PEER m2 / gs |
+|---|---|---|---|
+| **base** | **3.7·10⁻⁷** / NOUART / **3.0·10⁻⁸** | **6.3·10⁻¹⁰** / NOUART / **6.2·10⁻⁹** | 1000/1000 ×3 |
+| m2 POST 15 | 1.9·10⁻⁷ / 1.5·10⁻⁴ / 3.2·10⁻⁶ | 4.0·10⁻⁹ / 2.5·10⁻⁸ / 2.4·10⁻⁶ | 1000/1000 ×3 |
+| m2 POST 15 + TH 16 | 1.8·10⁻⁶ / 4.6·10⁻⁵ / NOUART | 1.9·10⁻⁸ / 9.2·10⁻⁷ / NOUART | 1000/1000 ×3 |
+
+**Reading:** the search winner does not survive repeated loads — the baseline is the best of the three in both directions. The sweep
+"gain" was load-to-load scatter, which after the rework spans ~4 decades with identical settings (gs→m2 3·10⁻⁸…1.5·10⁻⁴). **No new 2.5 G
+recipe; the bits in `/home/pi/fpga` stay.** A candidate `m2_e1_2g5p1_txneg_post15_s2.bit` (OV_TX_SEL_POST 15, sha256 3bfe186f…) was built
+to check the flow: it differs from `m2_2g5.bit` in 4 bytes only (same placement/routing, same Fmax) and is NOT deployed.
+Compared with before the rework: lab13 28.09. median 1.0·10⁻⁹ / 0, lab15 12.10. 16:48 r1 1.0·10⁻¹⁰ / 4.5·10⁻⁸ → **2.5 G is 1–3 decades
+worse after the 17:08–17:20 supply-filter rework**, and the spread grew.
+
+### 14.4 5 G, recipes P2 / P3 × (base, m2 POST 15), 3 loads interleaved, 60 s, `ber_jtag_check` 1000
+
+| Point | gs→m2 BER r1 / r2 / r3 | m2→gs BER r1 / r2 / r3 | JTAG PEER m2 RX (gs→m2) median | gs RX (m2→gs) median |
+|---|---|---|---|---|
+| **P2 base** | 8.2·10⁻² / **4.2·10⁻⁸** / 0.5 | 3.0·10⁻² / 6.4·10⁻³ / 3.6·10⁻³ | 881/1000 | 895/1000 |
+| P2 m2 POST 15 | 1.0·10⁻¹ / 9.0·10⁻² / 5.7·10⁻² | 1.8·10⁻² / 7.0·10⁻³ / 8.8·10⁻² | 863 | 839 |
+| P3 base | 0.5 / 0.5 / NOUART | 2.6·10⁻¹ / 2.7·10⁻¹ / NOUART | 557 | 618 |
+| P3 m2 POST 15 | 2.6·10⁻¹ / 3.3·10⁻¹ / 2.3·10⁻¹ | 2.1·10⁻² / 4.6·10⁻² / 4.7·10⁻² | 572 | 730 |
+| *lab14 12.10. 16:00 (before rework), of 200* | | | *P2 190/200 = 95 %, P3 172/200* | *P2 191/200, P3 111/200* |
+
+**Reading:** 5 G is still unusable. P2 stays the better recipe (88–90 % valid words vs 56–62 % for P3); m2 POST 15 does not help P2 and moves
+only P3 m2→gs (618 → 730), not enough to matter. One P2 load had gs→m2 at 4.2·10⁻⁸ for the whole 60 s — the first 5 G window close to
+usable in this direction, again load-dependent. P2/P3 are worse than lab14 before the rework (P2 95 % → 88 %). **No new 5 G recipe.**
+
+### 14.5 Load-to-load scatter at 2.5 G (uputa #308): 10 loads × 240 s, baseline bits, standard procedure (no recal), lab19 23:10–00:18
+
+Per load: `eyescan.py health --raw` on both boards right after SET_ACC (new option: RX_AFE_OFFSET + raw words 0x02/0x04–0x07/0x0B–0x0D/
+0x3C/0x55/0x5A/0x5B), `ber_mon sparse` 240 s, the same snapshot at the end of the window, `ber_jtag_check` 200 (PEER 200/200 every load).
+Table and correlation: `tools/lab/scatter_table.py docs/data_20261012/t5483/log19` (Spearman ρ of every state value vs log10 BER).
+**All 10 windows had UART** (no dropout in this series).
+
+| Load | gs→m2 | m2→gs | gs RX_OFFSET start→end | gs CAP_FT | m2 CAP_FT |
+|---|---|---|---|---|---|
+| r1 | 8.6·10⁻⁷ | 7.7·10⁻⁸ | 3→2 | 502 | 509 |
+| r2 | 3.6·10⁻⁷ | 2.7·10⁻⁸ | 3 | 499 | 510 |
+| r3 | 2.7·10⁻⁶ | 1.2·10⁻⁷ | 3→2 | 499 | 509 |
+| r4 | 3.7·10⁻⁷ | 3.8·10⁻⁷ | 2→3 | 502 | 512 |
+| r5 | 1.6·10⁻⁶ | 3.6·10⁻⁷ | 3 (gs CDR 0 at start, 1 at end) | 502 | 509 |
+| r6 | 1.7·10⁻⁷ | **5.0·10⁻⁹** | **4**→3 | 499 | 510 |
+| r7 | 6.8·10⁻⁸ | 2.8·10⁻⁷ | 4 | 502 | 513 |
+| r8 | 7.5·10⁻⁷ | **1.7·10⁻⁶** | **2** | 501 | 513 |
+| r9 | 1.2·10⁻⁵ | **1.0·10⁻⁶** | **2**→3 | 502 | 513 |
+| r10 | 1.0·10⁻⁵ | 2.7·10⁻⁷ | 3 | 499 | 510 |
+
+Constant in all 10 loads on both boards: RX_CALIB_CAL 9, TX_CALIB_CAL 7, RX_EQA_TAPW 0, RX_TH_MON 15 (rail), RX_AFE_OFFSET 8,
+RX_EQA_LOCKED 1, FREQ_ACC_VAL 0; **m2 RX_OFFSET 7 in every load**. PHASE_ACC_VAL moves ±200 codes inside a snapshot (live).
+
+**Reading:**
+- Same bits, same procedure, 3 h of lab: gs→m2 spans 6.8·10⁻⁸…1.2·10⁻⁵ (×175), m2→gs 5.0·10⁻⁹…1.7·10⁻⁶ (×340). No time trend that
+  explains it (ρ vs load index +0.28 / +0.52).
+- **The only state that varies with the BER is gs RX_OFFSET** (data-sampler offset calibration of the gs receiver = the m2→gs direction):
+  ρ = −0.74 vs log10 BER m2→gs. Loads with offset 2: 3.8·10⁻⁷, 1.0·10⁻⁶, 1.7·10⁻⁶ (the three worst); offset 4: 5.0·10⁻⁹ (the best), 2.8·10⁻⁷.
+  gs RX_OFFSET also **changes inside a window** (5 of 10 loads, ±1), so the offset loop is live and sits on a code boundary; m2's
+  never moves. With ~80 state/direction pairs a |ρ| ≥ 0.65 can appear by chance (~4 expected), so this is a lead, not proof — the
+  direct test is §14.6 (vertical bathtub = forced RX_AFE_OFFSET on gs). gs.PLL_BISC_CO ρ −0.78 is also listed but varies over the
+  whole 16-bit range (64179..65458 = a counter, not a setting).
+- gs→m2 (received by m2, RX_OFFSET constant 7) has no state that follows it (best |ρ| 0.47) → its spread comes from something the
+  registers do not show (TX side of gs, channel, supply noise).
+
+### 14.6 Eye scan: Manda's hypotheses (TASK-5486/5488) tested on m2 — **counters stay 0; no bathtub either**
+
+Bits: 2.5 G baseline pair, fresh load + SET_ACC. Scripts: `tools/eyeprobe.py` (TASK-5488) and `data_20261012/t5483/eye_tests.py`
+(`h7 h2 h3 h4 h8 phase`). Raw: `eye20.out`, `probe_m2_*.json`, `eye21.out`, `log21/`.
+
+| Test (order of uputa #308) | What was done | Result |
+|---|---|---|
+| H7 W/C strobes over JTAG | `RX_CALIB_EN=1`, read at 0 / 50 / 500 ms | `RX_CALIB_EN` reads 1 **before and after** the write (never self-clears); eyeprobe: `W/C STUCK`. Plain R/W writes work (TX_SEL_POST, SET_ACC have measurable effect) |
+| H2 EN edge/level, read later | 0x14 write 0 → reads 0x2000, write 1 → 0x2001 (= a level, readable); fresh 0→1 edge, wait 0 / 0.01 / 0.1 / 1 / 5 s, then EN=0 | counters 0x16–0x1D = 0 at every step |
+| H1 PRBS-7 reference | eyeprobe: near-end PMA loopback + TX/RX PRBS-7 on m2, H2 sequence, control without PRBS | 0 |
+| H3 0x14[3:1] | the bits ARE writable (0x200E); H2 sequence for m = 1…7 | 0 for every m |
+| H4 TH_MON2 override bit | TH_MON2 = 3 with 0x05[11] (DS) and with 0x06[11] (PU), H2 sequence | `RX_TH_MON` stays 15 with both bits; counters 0 |
+| H8 0x2B reset order | `W(0x2B, 0x0C00, 0x0C00)` | CDR/EQA stay locked; 0x2B reads **0x0100** after the write (0x0400 before) → inconclusive; the next recal needed 3 s for EQA lock. Note: eye20's `h4` restored 0x05/0x06 to 0x00C8/0x01C8 (TH_MON2 3, AFE_OFFSET 7) instead of 0x0208/0x0208 — test bug, no lasting effect (every later test reloads the bits) |
+| Bathtub, horizontal (§3.1) | `RX_CDR_PHASE_ACC`=VAL+4096, `SET_ACC_CONFIG=1`, `FORCE_LOCK=1`, then CKP=CKI=0 | `PHASE_ACC_VAL` does not follow (frozen 52934 after H8; on a fresh load reads 0); no effect → **not feasible** with the documented fields |
+| Bathtub, vertical (§3.2) on gs RX | `RX_EN_EQA_EXT_VALUE[3]=1` + `RX_AFE_OFFSET` = 0…31 (16 points, 30 s each) | override is active (`RX_OFFSET` reads 0 instead of 3) but **m2→gs stays 2.5·10⁻⁸…9.7·10⁻⁸ over the whole range** (base 1.1·10⁻⁷; 2 points NOUART); gs→m2 (control) 4.0–5.4·10⁻⁶ unchanged → no BER edge, **no eye height** |
+
+**Reading:** the eye counters cannot be started with anything documented or guessed so far; the one new fact is H7 — a W/C bit written
+over JTAG reads back as 1 and does not clear, which would also explain a start strobe that never fires (`RX_EYE_MEAS_EN` is W/C in the
+DS). The phase override does nothing visible, and the forced data-sampler offset changes nothing over its full range: either the field
+does not reach the data sampler, or the errors are not threshold-limited. The vertical result also **weakens the §14.5 lead**: forcing
+the gs offset to any of 0…31 did not change m2→gs, so gs RX_OFFSET 2 vs 4 is not shown to be the cause. Next step is Patrick Urban
+(question in `EYE_SCAN_ISTRAZIVANJE.md` §4, add: "W/C bits written over the regfile read back 1 and never clear — is a regfile clock
+needed?").
+
+### 14.7 Result of TASK-5483/5487
+
+- **No new recipe and no new bitstreams.** Every search "winner" (m2 POST 10–15 at 2.5 G, m2 POST 15 at 5 G) lost to the baseline on
+  repeated loads. The six bits in `/home/pi/fpga` stay; `README.txt` there got a 12.10. note.
+- **After the 12.10. supply-filter rework the link is worse than before:** 2.5 G baseline over 13 loads (§14.3 + §14.5) gs→m2
+  3.0·10⁻⁸…1.2·10⁻⁵ (median ~8·10⁻⁷), m2→gs 5.0·10⁻⁹…1.7·10⁻⁶ (median ~2·10⁻⁷) vs lab13 (28.09.) median 1.0·10⁻⁹ / 0 and lab15
+  (12.10. 16:48, before the rework) 1.0·10⁻¹⁰ / 4.5·10⁻⁸. The spread is in the hardware state (load-to-load), not in any register we can read.
+  5 G P2 valid words 88 % (lab14 95 %).
+- **For the long serial test TASK-5482:** `m2_2g5.bit` (sha256 b1b98a5d…) + `gs_2g5.bit` (36f09752…), load m2 then gs with `-r`, SET_ACC
+  2→0 on both. 5 G is not usable (P2 `gs_5g.bit`/`m2_5g.bit` only if a 5 G run is wanted for comparison).
+- **Hardware first:** measure VDD_SER / VDD_SER_PLL on GS (TP8/TP10) under load and compare with 28.09.; the BER loss coincides with the
+  rework, and no setting recovers it.

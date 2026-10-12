@@ -1,0 +1,101 @@
+-- r1 23:10:41 throttled=0xd0000
+HEALTH board=m2 r1 start problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+  RAW AFE_OFFSET=8 0x02=1C82 0x04=3901 0x05=0208 0x06=0208 0x07=1DE0 0x0B=88D5 0x0C=0000 0x0D=CF7E 0x3C=0382 0x55=5001 0x5A=0060 0x5B=FD09
+HEALTH board=gs r1 start problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+  RAW AFE_OFFSET=8 0x02=1C82 0x04=3901 0x05=0208 0x06=0208 0x07=09E0 0x0B=88D5 0x0C=0000 0x0D=B441 0x3C=0382 0x55=4F99 0x5A=0060 0x5B=FC51
+HEALTH board=m2 r1 end problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+HEALTH board=gs r1 end problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+JTAG r1 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG r1 gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+== r1 23:17:27: UART gs->m2 8.64e-07  m2->gs 7.65e-08  fabric_s 225.8
+-- r2 23:17:27 throttled=0xd0005
+HEALTH board=m2 r2 start problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+  RAW AFE_OFFSET=8 0x02=1C82 0x04=3901 0x05=0208 0x06=0208 0x07=1DE0 0x0B=88D5 0x0C=0000 0x0D=4EE4 0x3C=0382 0x55=4FF1 0x5A=0060 0x5B=FFDC
+HEALTH board=gs r2 start problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+  RAW AFE_OFFSET=8 0x02=1C82 0x04=3901 0x05=0208 0x06=0208 0x07=09E0 0x0B=88D5 0x0C=0000 0x0D=B2AE 0x3C=0382 0x55=4F99 0x5A=0060 0x5B=F867
+HEALTH board=m2 r2 end problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+HEALTH board=gs r2 end problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+JTAG r2 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG r2 gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+== r2 23:24:03: UART gs->m2 3.60e-07  m2->gs 2.70e-08  fabric_s 222.95
+-- r3 23:24:03 throttled=0xd0000
+HEALTH board=m2 r3 start problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+  RAW AFE_OFFSET=8 0x02=1C82 0x04=3901 0x05=0208 0x06=0208 0x07=1DE0 0x0B=88D5 0x0C=0000 0x0D=501A 0x3C=0382 0x55=4FE9 0x5A=0060 0x5B=FE6F
+HEALTH board=gs r3 start problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+  RAW AFE_OFFSET=8 0x02=1C82 0x04=3901 0x05=0208 0x06=0208 0x07=09E0 0x0B=88D5 0x0C=0000 0x0D=B223 0x3C=0382 0x55=4F99 0x5A=0060 0x5B=FE4C
+HEALTH board=m2 r3 end problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+HEALTH board=gs r3 end problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+JTAG r3 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG r3 gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+== r3 23:30:45: UART gs->m2 2.68e-06  m2->gs 1.16e-07  fabric_s 222.87
+-- r4 23:30:45 throttled=0xd0000
+HEALTH board=m2 r4 start problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+  RAW AFE_OFFSET=8 0x02=1C82 0x04=3901 0x05=0208 0x06=0208 0x07=1DE0 0x0B=88D5 0x0C=0000 0x0D=501A 0x3C=0382 0x55=4FF1 0x5A=0060 0x5B=FF45
+HEALTH board=gs r4 start problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+  RAW AFE_OFFSET=8 0x02=1C82 0x04=3901 0x05=0208 0x06=0208 0x07=0DE0 0x0B=88D5 0x0C=0000 0x0D=B3F4 0x3C=0382 0x55=4F99 0x5A=0060 0x5B=FFEE
+HEALTH board=m2 r4 end problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+HEALTH board=gs r4 end problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+JTAG r4 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG r4 gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+== r4 23:37:32: UART gs->m2 3.71e-07  m2->gs 3.75e-07  fabric_s 222.89
+-- r5 23:37:32 throttled=0xd0000
+HEALTH board=m2 r5 start problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+  RAW AFE_OFFSET=8 0x02=1C82 0x04=3901 0x05=0208 0x06=0208 0x07=1DE0 0x0B=88D5 0x0C=0000 0x0D=4F8F 0x3C=0382 0x55=4FF1 0x5A=0060 0x5B=FF3D
+HEALTH board=gs r5 start problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0, 0, 0] span=0
+  RAW AFE_OFFSET=8 0x02=1C82 0x04=3901 0x05=0208 0x06=0208 0x07=0DE0 0x0B=88D5 0x0C=0000 0x0D=B31B 0x3C=0382 0x55=4FB1 0x5A=0060 0x5B=FD4E
+HEALTH board=m2 r5 end problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+HEALTH board=gs r5 end problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+JTAG r5 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG r5 gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+== r5 23:44:20: UART gs->m2 1.58e-06  m2->gs 3.64e-07  fabric_s 222.86
+-- r6 23:44:20 throttled=0xd0000
+HEALTH board=m2 r6 start problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+  RAW AFE_OFFSET=8 0x02=1C82 0x04=3901 0x05=0208 0x06=0208 0x07=1DE0 0x0B=88D5 0x0C=0000 0x0D=4F9E 0x3C=0382 0x55=5001 0x5A=0060 0x5B=FC9A
+HEALTH board=gs r6 start problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+  RAW AFE_OFFSET=8 0x02=1C82 0x04=3901 0x05=0208 0x06=0208 0x07=11E0 0x0B=88D5 0x0C=0000 0x0D=B3A6 0x3C=0382 0x55=4F99 0x5A=0060 0x5B=FAD4
+HEALTH board=m2 r6 end problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+HEALTH board=gs r6 end problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+JTAG r6 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG r6 gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+== r6 23:51:10: UART gs->m2 1.66e-07  m2->gs 5.01e-09  fabric_s 222.89
+-- r7 23:51:10 throttled=0xd0000
+HEALTH board=m2 r7 start problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+  RAW AFE_OFFSET=8 0x02=1C82 0x04=3901 0x05=0208 0x06=0208 0x07=1DE0 0x0B=88D5 0x0C=0000 0x0D=4FEC 0x3C=0382 0x55=5001 0x5A=0060 0x5B=FFB3
+HEALTH board=gs r7 start problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+  RAW AFE_OFFSET=8 0x02=1C82 0x04=3901 0x05=0208 0x06=0208 0x07=11E0 0x0B=88D5 0x0C=0000 0x0D=B31B 0x3C=0382 0x55=4F99 0x5A=0060 0x5B=FE87
+HEALTH board=m2 r7 end problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+HEALTH board=gs r7 end problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+JTAG r7 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG r7 gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+== r7 23:57:55: UART gs->m2 6.81e-08  m2->gs 2.80e-07  fabric_s 222.87
+-- r8 23:57:55 throttled=0xd0005
+HEALTH board=m2 r8 start problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+  RAW AFE_OFFSET=8 0x02=1C82 0x04=3901 0x05=0208 0x06=0208 0x07=1DE0 0x0B=88D5 0x0C=0000 0x0D=4F8F 0x3C=0382 0x55=5009 0x5A=0060 0x5B=FFF0
+HEALTH board=gs r8 start problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+  RAW AFE_OFFSET=8 0x02=1C82 0x04=3901 0x05=0208 0x06=0208 0x07=09E0 0x0B=88D5 0x0C=0000 0x0D=B3F4 0x3C=0382 0x55=4FB1 0x5A=0060 0x5B=FDB1
+HEALTH board=m2 r8 end problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+HEALTH board=gs r8 end problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+JTAG r8 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG r8 gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+== r8 00:04:38: UART gs->m2 7.49e-07  m2->gs 1.69e-06  fabric_s 222.92
+-- r9 00:04:38 throttled=0xd0000
+HEALTH board=m2 r9 start problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+  RAW AFE_OFFSET=8 0x02=1C82 0x04=3901 0x05=0208 0x06=0208 0x07=1DE0 0x0B=88D5 0x0C=0000 0x0D=500B 0x3C=0382 0x55=5001 0x5A=0060 0x5B=FC48
+HEALTH board=gs r9 start problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+  RAW AFE_OFFSET=8 0x02=1C82 0x04=3901 0x05=0208 0x06=0208 0x07=09E0 0x0B=88D5 0x0C=0000 0x0D=B359 0x3C=0382 0x55=4F99 0x5A=0060 0x5B=FF3E
+HEALTH board=m2 r9 end problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+HEALTH board=gs r9 end problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+JTAG r9 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG r9 gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+== r9 00:11:24: UART gs->m2 1.19e-05  m2->gs 1.01e-06  fabric_s 222.82
+-- r10 00:11:25 throttled=0xd0000
+HEALTH board=m2 r10 start problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+  RAW AFE_OFFSET=8 0x02=1C82 0x04=3901 0x05=0208 0x06=0208 0x07=1DE0 0x0B=88D5 0x0C=0000 0x0D=4F7F 0x3C=0382 0x55=5001 0x5A=0060 0x5B=FF14
+HEALTH board=gs r10 start problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+  RAW AFE_OFFSET=8 0x02=1C82 0x04=3901 0x05=0208 0x06=0208 0x07=09E0 0x0B=88D5 0x0C=0000 0x0D=B47F 0x3C=0382 0x55=4FB1 0x5A=0060 0x5B=FFD1
+HEALTH board=m2 r10 end problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+HEALTH board=gs r10 end problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0, 0, 0] span=0
+JTAG r10 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG r10 gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+== r10 00:18:18: UART gs->m2 1.04e-05  m2->gs 2.71e-07  fabric_s 222.81
+LAB19 DONE 00:18:18

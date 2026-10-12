@@ -251,6 +251,14 @@ HEALTH_FIELDS = ['PLL_LOCKED', 'PLL_CAP_FT_OF', 'PLL_CAP_FT_UF', 'PLL_CAP_FT', '
                  'TX_AMP', 'TX_SEL_PRE', 'TX_SEL_POST', 'PLL_REF_RTERM']
 
 
+# raw regfile words for the scatter snapshot (TASK-5487, uputa #308): cal 0x02/0x3C, EQA/AFE 0x04-0x07, CDR 0x0B-0x0D, PLL 0x55/0x5A/0x5B
+RAW_REGS = (0x02, 0x04, 0x05, 0x06, 0x07, 0x0B, 0x0C, 0x0D, 0x3C, 0x55, 0x5A, 0x5B)
+
+
+def raw_snapshot(s, regs=RAW_REGS):
+    return {'0x%02X' % a: int(s.rd_regfile(a)) for a in regs}
+
+
 def s15_value(c):
     c &= 0x7FFF
     return c - 0x8000 if c & 0x4000 else c
@@ -314,11 +322,16 @@ def cmd_health(a):
             time.sleep(a.interval)
     v = health_verdict(f, acc)
     out = dict(board=sd.board, label=a.label, time=time.strftime('%F %T'), fields=f, phase_acc=ph, **v)
+    if a.raw:
+        out['afe_offset'] = sd.s.rd_fields(['RX_AFE_OFFSET'])['RX_AFE_OFFSET']
+        out['raw'] = raw_snapshot(sd.s)
     if a.out:
         json.dump(out, open(a.out, 'w'))
     print('HEALTH board=%s %s problems=%s freq_acc=%s span=%d' % (sd.board, a.label, ','.join(v['problems']) or 'none',
                                                               v['freq_acc'], v['freq_acc_span']))
     print('  ' + ' '.join('%s=%s' % kv for kv in f.items()))
+    if a.raw:
+        print('  RAW AFE_OFFSET=%s %s' % (out['afe_offset'], ' '.join('%s=%04X' % kv for kv in out['raw'].items())))
     sd.close()
     return 0
 
@@ -336,6 +349,7 @@ def main(argv=None):
     rc = sp.add_parser('recal'); rc.add_argument('--rx', action='store_true', help='reset the whole RX, not only the DFE')
     h = sp.add_parser('health'); h.add_argument('-n', type=int, default=10); h.add_argument('--interval', type=float, default=1.0)
     h.add_argument('--label', default=''); h.add_argument('--out')
+    h.add_argument('--raw', action='store_true', help='also RX_AFE_OFFSET + raw regfile words RAW_REGS into --out')
     a = p.parse_args(argv)
     fn = {'scan': cmd_scan, 'margin': cmd_margin, 'plot': cmd_plot, 'set': cmd_set, 'get': cmd_get, 'recal': cmd_recal,
           'health': cmd_health}.get(a.cmd)

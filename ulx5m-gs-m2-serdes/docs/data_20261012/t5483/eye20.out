@@ -1,0 +1,115 @@
+Done
+Done
+### eyeprobe H7/H2/H3 (link untouched)
+INFO:  Found 1 device in JTAG chain.
+   board=m2 H7  W/C STUCK (strobes not executed?)  (0.1s)
+   board=m2 H2  counters 0  (9.9s)
+   board=m2 H3  counters 0  (10.7s)
+### eyeprobe H1 (near-end PMA loopback + PRBS-7)
+INFO:  Found 1 device in JTAG chain.
+   board=m2 H1  counters 0  (4.2s)
+HEALTH board=m2  problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0] span=0
+### eye_tests h7
+INFO:  Found 1 device in JTAG chain.
+board=m2 test=h7 0x14=0x2000 cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+before {'RX_CALIB_EN': 1, 'RX_CALIB_DONE': 1}
+after RX_CALIB_EN=1 +0s {'RX_CALIB_EN': 1, 'RX_CALIB_DONE': 1}
+after RX_CALIB_EN=1 +0.05s {'RX_CALIB_EN': 1, 'RX_CALIB_DONE': 1}
+after RX_CALIB_EN=1 +0.5s {'RX_CALIB_EN': 1, 'RX_CALIB_DONE': 1}
+after EYE_MEAS_EN=1 0x14=0x2001
+  +0.5 s 0x14=0x2001
+### eye_tests h2
+INFO:  Found 1 device in JTAG chain.
+board=m2 test=h2 0x14=0x2001 cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+after write 0: 0x14=0x2000
+after write 1: 0x14=0x2001
+H2 edge0->1 wait=0 0x14=0x2001 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H2 edge0->1 wait=0.01 0x14=0x2001 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H2 edge0->1 wait=0.1 0x14=0x2001 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H2 edge0->1 wait=1 0x14=0x2001 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H2 edge0->1 wait=5 0x14=0x2001 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H2 after EN=0 0x14=0x2000 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+### eye_tests h3
+INFO:  Found 1 device in JTAG chain.
+board=m2 test=h3 0x14=0x2000 cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+write [3:1]=7 -> 0x14=0x200e writable=True
+H3 m=1 edge0->1 wait=0 0x14=0x2003 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=1 edge0->1 wait=0.01 0x14=0x2003 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=1 edge0->1 wait=0.1 0x14=0x2003 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=1 edge0->1 wait=1 0x14=0x2003 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=1 edge0->1 wait=5 0x14=0x2003 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=1 after EN=0 0x14=0x2002 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=2 edge0->1 wait=0 0x14=0x2005 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=2 edge0->1 wait=0.01 0x14=0x2005 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=2 edge0->1 wait=0.1 0x14=0x2005 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=2 edge0->1 wait=1 0x14=0x2005 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=2 edge0->1 wait=5 0x14=0x2005 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=2 after EN=0 0x14=0x2004 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=3 edge0->1 wait=0 0x14=0x2007 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=3 edge0->1 wait=0.01 0x14=0x2007 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=3 edge0->1 wait=0.1 0x14=0x2007 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=3 edge0->1 wait=1 0x14=0x2007 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=3 edge0->1 wait=5 0x14=0x2007 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=3 after EN=0 0x14=0x2006 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=4 edge0->1 wait=0 0x14=0x2009 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=4 edge0->1 wait=0.01 0x14=0x2009 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=4 edge0->1 wait=0.1 0x14=0x2009 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=4 edge0->1 wait=1 0x14=0x2009 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=4 edge0->1 wait=5 0x14=0x2009 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=4 after EN=0 0x14=0x2008 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=5 edge0->1 wait=0 0x14=0x200b cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=5 edge0->1 wait=0.01 0x14=0x200b cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=5 edge0->1 wait=0.1 0x14=0x200b cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=5 edge0->1 wait=1 0x14=0x200b cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=5 edge0->1 wait=5 0x14=0x200b cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=5 after EN=0 0x14=0x200a cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=6 edge0->1 wait=0 0x14=0x200d cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=6 edge0->1 wait=0.01 0x14=0x200d cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=6 edge0->1 wait=0.1 0x14=0x200d cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=6 edge0->1 wait=1 0x14=0x200d cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=6 edge0->1 wait=5 0x14=0x200d cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=6 after EN=0 0x14=0x200c cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=7 edge0->1 wait=0 0x14=0x200f cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=7 edge0->1 wait=0.01 0x14=0x200f cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=7 edge0->1 wait=0.1 0x14=0x200f cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=7 edge0->1 wait=1 0x14=0x200f cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=7 edge0->1 wait=5 0x14=0x200f cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H3 m=7 after EN=0 0x14=0x200e cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+### eye_tests h4
+INFO:  Found 1 device in JTAG chain.
+board=m2 test=h4 0x14=0x2000 cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+start {'RX_TH_MON': 15, 'RX_TH_MON2': 8, 'RX_OFFSET': 7, 'RX_AFE_OFFSET': 8} 0x05=0x208 0x06=0x208
+DS 0x05[11] set TH_MON2=3 -> {'RX_TH_MON': 15, 'RX_TH_MON2': 3, 'RX_OFFSET': 7}
+H4 DS 0x05[11] edge0->1 wait=0 0x14=0x2001 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H4 DS 0x05[11] edge0->1 wait=0.01 0x14=0x2001 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H4 DS 0x05[11] edge0->1 wait=0.1 0x14=0x2001 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H4 DS 0x05[11] edge0->1 wait=1 0x14=0x2001 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H4 DS 0x05[11] edge0->1 wait=5 0x14=0x2001 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H4 DS 0x05[11] after EN=0 0x14=0x2000 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+PU 0x06[11] set TH_MON2=3 -> {'RX_TH_MON': 15, 'RX_TH_MON2': 3, 'RX_OFFSET': 7}
+H4 PU 0x06[11] edge0->1 wait=0 0x14=0x2001 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H4 PU 0x06[11] edge0->1 wait=0.01 0x14=0x2001 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H4 PU 0x06[11] edge0->1 wait=0.1 0x14=0x2001 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H4 PU 0x06[11] edge0->1 wait=1 0x14=0x2001 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H4 PU 0x06[11] edge0->1 wait=5 0x14=0x2001 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+H4 PU 0x06[11] after EN=0 0x14=0x2000 cnt=[0, 0, 0, 0, 0, 0, 0, 0] zero
+restored 0x05=0xc8 0x06=0x1c8
+### eye_tests h8
+INFO:  Found 1 device in JTAG chain.
+board=m2 test=h8 0x14=0x2000 cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+before {'RX_CDR_LOCKED': 1, 'RX_EQA_LOCKED': 1} 0x2B=0x400
+0x2B[11:10]=11 -> {'RX_CDR_LOCKED': 1, 'RX_EQA_LOCKED': 1} 0x2B=0x100
+released +0.5 s -> {'RX_CDR_LOCKED': 1, 'RX_EQA_LOCKED': 1}
+board=m2 recal RX_EN_EQA=1 RX_EQA_LOCKED=0 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=3.04
+HEALTH board=m2  problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0] span=0
+### eye_tests phase (bathtub feasibility)
+INFO:  Found 1 device in JTAG chain.
+board=m2 test=phase 0x14=0x2000 cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+free-running PHASE_ACC_VAL [52934, 52934, 52934, 52934, 52934]
+override to 57030 -> [{'RX_CDR_PHASE_ACC_VAL': 52934, 'RX_CDR_LOCKED': 1}, {'RX_CDR_PHASE_ACC_VAL': 52934, 'RX_CDR_LOCKED': 1}, {'RX_CDR_PHASE_ACC_VAL': 52934, 'RX_CDR_LOCKED': 1}, {'RX_CDR_PHASE_ACC_VAL': 52934, 'RX_CDR_LOCKED': 1}, {'RX_CDR_PHASE_ACC_VAL': 52934, 'RX_CDR_LOCKED': 1}]
+CKP=CKI=0 -> [{'RX_CDR_PHASE_ACC_VAL': 52934, 'RX_CDR_LOCKED': 1}, {'RX_CDR_PHASE_ACC_VAL': 52934, 'RX_CDR_LOCKED': 1}, {'RX_CDR_PHASE_ACC_VAL': 52934, 'RX_CDR_LOCKED': 1}, {'RX_CDR_PHASE_ACC_VAL': 52934, 'RX_CDR_LOCKED': 1}, {'RX_CDR_PHASE_ACC_VAL': 52934, 'RX_CDR_LOCKED': 1}]
+restored {'RX_CDR_PHASE_ACC_VAL': 52934, 'RX_CDR_LOCKED': 1, 'RX_CDR_CKP': 62, 'RX_CDR_CKI': 0}
+board=m2 recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.83
+HEALTH board=m2  problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0] span=0
+JTAG m2: rx: PEER 50/50 distinct=50  expect=peer -> PASS
+EYE20 DONE 00:23:02

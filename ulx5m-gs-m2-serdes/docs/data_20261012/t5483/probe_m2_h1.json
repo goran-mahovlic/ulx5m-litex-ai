@@ -1,0 +1,66 @@
+{
+ "keep": {
+  "4": 14593,
+  "5": 520,
+  "6": 520,
+  "20": 0,
+  "21": 0,
+  "42": 10252,
+  "64": 4120
+ },
+ "tests": {
+  "h1": {
+   "loopback": true,
+   "link_prbs": {
+    "RX_PRBS_LOCKED": 1,
+    "RX_PRBS_ERR_CNT": 32767,
+    "RX_CDR_LOCKED": 1,
+    "RX_EQA_LOCKED": 1
+   },
+   "prbs": {
+    "mode": 0,
+    "wait_s": 1.0,
+    "reg14": 8193,
+    "cnt": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "control": {
+    "mode": 0,
+    "wait_s": 1.0,
+    "reg14": 8193,
+    "cnt": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "verdict": "counters 0",
+   "secs": 4.19
+  }
+ },
+ "found": [],
+ "recal": {
+  "RX_EN_EQA": 1,
+  "RX_EQA_LOCKED": 1,
+  "RX_CDR_LOCKED": 1,
+  "TX_CALIB_DONE": 1,
+  "RX_CALIB_DONE": 1,
+  "wait_s": 1.14
+ },
+ "board": "m2",
+ "time": "2026-10-13 00:19:45",
+ "window": 512
+}

@@ -1,0 +1,95 @@
+board=m2 recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.38
+board=gs recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.13
+HEALTH board=m2 s2g5 base problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs s2g5 base problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+JTAG s2g5 base m2: CDR=1  rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG s2g5 base gs: CDR=1  rx: PEER 200/200 distinct=200  expect=peer -> PASS
+== s2g5 base 18:40:27 []: UART gs->m2 2.01e-08  m2->gs 4.72e-07  fabric_s 61.81 m2short True
+board=m2 set TX_SEL_POST=0 board=gs set TX_SEL_POST=0 
+board=m2 recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.13
+board=gs recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.13
+HEALTH board=m2 s2g5 post0 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs s2g5 post0 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+JTAG s2g5 post0 m2: CDR=1  rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG s2g5 post0 gs: CDR=1  rx: PEER 200/200 distinct=200  expect=peer -> PASS
+== s2g5 post0 18:43:17 [TX_SEL_POST=0]: UART gs->m2 1.48e-06  m2->gs 2.48e-07  fabric_s 61.81 m2short False
+board=m2 set TX_SEL_POST=10 board=gs set TX_SEL_POST=10 
+board=m2 recal RX_EN_EQA=1 RX_EQA_LOCKED=0 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=3.17
+board=gs recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.21
+HEALTH board=m2 s2g5 post10 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs s2g5 post10 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+JTAG s2g5 post10 m2: CDR=1  rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG s2g5 post10 gs: CDR=1  rx: PEER 200/200 distinct=200  expect=peer -> PASS
+== s2g5 post10 18:46:20 [TX_SEL_POST=10]: UART gs->m2 5.72e-08  m2->gs 3.81e-09  fabric_s 61.93 m2short False
+board=m2 set TX_SEL_POST=15 board=gs set TX_SEL_POST=15 
+board=m2 recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.13
+board=gs recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.13
+HEALTH board=m2 s2g5 post15 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_CDR_LOCKED=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs s2g5 post15 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+JTAG s2g5 post15 m2: CDR=1  rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG s2g5 post15 gs: CDR=1  rx: PEER 200/200 distinct=200  expect=peer -> PASS
+== s2g5 post15 18:49:20 [TX_SEL_POST=15]: UART gs->m2 1.07e-06  m2->gs 3.49e-10  fabric_s 61.84 m2short True
+board=m2 set TX_SEL_PRE=0 board=gs set TX_SEL_PRE=0 
+board=m2 recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.13
+board=gs recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.21
+HEALTH board=m2 s2g5 pre0 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs s2g5 pre0 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+JTAG s2g5 pre0 m2: CDR=1  rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG s2g5 pre0 gs: CDR=1  rx: PEER 200/200 distinct=200  expect=peer -> PASS
+== s2g5 pre0 18:52:24 [TX_SEL_PRE=0]: UART NOUART
+board=m2 set TX_AMP=24 board=gs set TX_AMP=24 
+board=m2 recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.13
+board=gs recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.13
+HEALTH board=m2 s2g5 amp24 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs s2g5 amp24 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+JTAG s2g5 amp24 m2: CDR=1  rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG s2g5 amp24 gs: CDR=1  rx: PEER 200/200 distinct=200  expect=peer -> PASS
+== s2g5 amp24 18:56:24 [TX_AMP=24]: UART NOUART
+board=m2 set RX_AFE_PEAK=16 board=gs set RX_AFE_PEAK=16 
+board=m2 recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.35
+board=gs recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.13
+HEALTH board=m2 s2g5 pk16 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs s2g5 pk16 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+JTAG s2g5 pk16 m2: CDR=1  rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG s2g5 pk16 gs: CDR=1  rx: PEER 200/200 distinct=200  expect=peer -> PASS
+== s2g5 pk16 18:59:16 [RX_AFE_PEAK=16]: UART gs->m2 6.85e-08  m2->gs 3.95e-07  fabric_s 61.97 m2short False
+board=m2 set RX_AFE_PEAK=8 board=gs set RX_AFE_PEAK=8 
+board=m2 recal RX_EN_EQA=1 RX_EQA_LOCKED=0 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=3.13
+board=gs recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.13
+HEALTH board=m2 s2g5 pk8 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_EQA_LOCKED=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs s2g5 pk8 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+JTAG s2g5 pk8 m2: CDR=1  rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG s2g5 pk8 gs: CDR=1  rx: PEER 200/200 distinct=200  expect=peer -> PASS
+== s2g5 pk8 19:02:19 [RX_AFE_PEAK=8]: UART gs->m2 1.69e-07  m2->gs 1.18e-08  fabric_s 61.89 m2short True
+board=m2 set RX_AFE_PEAK=31 board=gs set RX_AFE_PEAK=31 
+board=m2 recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.6
+board=gs recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.16
+HEALTH board=m2 s2g5 pk31 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs s2g5 pk31 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+JTAG s2g5 pk31 m2: CDR=1  rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG s2g5 pk31 gs: CDR=1  rx: PEER 200/200 distinct=200  expect=peer -> PASS
+== s2g5 pk31 19:05:06 [RX_AFE_PEAK=31]: UART gs->m2 8.79e-07  m2->gs 1.10e-07  fabric_s 61.93 m2short False
+board=m2 set RX_AFE_GAIN=1 board=gs set RX_AFE_GAIN=1 
+board=m2 recal RX_EN_EQA=1 RX_EQA_LOCKED=0 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=3.19
+board=gs recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.13
+HEALTH board=m2 s2g5 g1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0,RX_EQA_LOCKED=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs s2g5 g1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+JTAG s2g5 g1 m2: CDR=1  rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG s2g5 g1 gs: CDR=1  rx: PEER 200/200 distinct=200  expect=peer -> PASS
+== s2g5 g1 19:07:55 [RX_AFE_GAIN=1]: UART gs->m2 1.04e-07  m2->gs 1.54e-05  fabric_s 61.87 m2short True
+board=m2 set RX_AFE_GAIN=2 board=gs set RX_AFE_GAIN=2 
+board=m2 recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.13
+board=gs recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.13
+HEALTH board=m2 s2g5 g2 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs s2g5 g2 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+JTAG s2g5 g2 m2: KeyError: '?'
+JTAG s2g5 g2 gs: CDR=1  rx: PEER 200/200 distinct=200  expect=peer -> PASS
+== s2g5 g2 19:12:03 [RX_AFE_GAIN=2]: UART NOUART
+board=m2 set RX_CDR_CKP=126 board=gs set RX_CDR_CKP=126 
+board=m2 recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.13
+board=gs recal RX_EN_EQA=1 RX_EQA_LOCKED=1 RX_CDR_LOCKED=1 TX_CALIB_DONE=1 RX_CALIB_DONE=1 wait_s=0.13
+HEALTH board=m2 s2g5 ckp126 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs s2g5 ckp126 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+JTAG s2g5 ckp126 m2: CDR=1  rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG s2g5 ckp126 gs: CDR=1  rx: PEER 200/200 distinct=200  expect=peer -> PASS
+== s2g5 ckp126 19:14:57 [RX_CDR_CKP=126]: UART NOUART
