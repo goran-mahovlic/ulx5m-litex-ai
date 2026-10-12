@@ -942,3 +942,44 @@ Reading:
 
 **To finish this retest:** get the gs UART back (UART wire IO_NB_B5 → DirtyJTAG E660583883501E2C RX and the 25 MHz clock on IO_SB_A8),
 then run `lab14.sh` → `lab13.sh` protocol unchanged (2.5 G 3 × 300 s, 5 G P2/P3 3 × 300 s) for the BER table.
+
+## 13. TASK-5483: re-characterisation after Goran's supply-filter rework (12.10.2026 17:20) — **gs SerDes PLL does not start**
+
+**Order:** Goran 17:20 (uputa #303): first set-up/tuning (snapshot of both boards, FFE/AFE/CDR sweep 2.5 G m2→gs then 5 G), eye scan,
+then BER **over JTAG only** (no UART). **Done by:** Jelena, gs lease `TASK-5483`, `fpga-jtag … -r` only, CFGRST bits from `/home/pi/fpga`
+(sha256 unchanged, see `snap.out`). **Raw data:** `data_20261012/t5483/log/` (`snap.out`, health JSONs); the lab15 input (2.5 G × 3,
+stopped by Goran at 17:08) is in `data_20261012/t5482b/` (`lab15.out`, `log15/`).
+
+**Timeline (same bits, same procedure: m2 then gs, `-r`, SET_ACC 2→0 pulse on both):**
+
+| Time | State | gs PLL lock / CAP_FT | m2 PLL lock / CAP_FT | `ber_jtag_check` PEER gs RX / m2 RX | BER (gs UART) gs→m2 ; m2→gs |
+|---|---|---|---|---|---|
+| 28.09. 16:23–16:49 (lab13) | 5.1 Ω / 4.7 Ω feeds | 1 / 442–450 | 1 / 504–515 | 191 / 197 of 200 (P3) | 1.0·10⁻⁹ ; 0 (2.5 G median) |
+| 12.10. 16:00–16:32 (lab14) | after the first filter change | 1 / 491–498 | 1 / 505–516 | 2.5 G 200/200 both | UART silent |
+| 12.10. 16:48–17:08 (lab15) | same | 1 / 490–494 (2.5 G), 500 (5 G P2) | 1 / 505–508, 514 | 2.5 G 50/50 both | r1 9.97·10⁻¹¹ ; 4.45·10⁻⁸, r2 3.40·10⁻⁸ ; 3.38·10⁻⁹, r3 1.15·10⁻¹⁰ ; 4.22·10⁻⁹ |
+| 12.10. 17:08–17:20 | **Goran reworks the filter again** | | | | |
+| **12.10. 17:24–17:31 (this task)** | after the rework | **0 / 0, CAP_STATE 0, BISC_CO 0** | 1 / 503–507 | **ZERO 50/50 both** | — |
+
+**What the agent checked before calling it hardware (rule 4: "what worked in the last bitstream works now"):**
+
+| Check | Result |
+|---|---|
+| gs 2.5 G bit loaded 4× (`fpga-jtag gs /home/pi/fpga/gs_2g5.bit -r`) | `PLL_LOCKED=0`, `PLL_CAP_FT=0`, `PLL_CAP_STATE=0`, `PLL_BISC_CO=0`, `PLL_BISC_CP=0` every time |
+| other rates on gs: 0.3 G, 1.25 G (`t5066/ber_gs_0g3/1g25_CFGRST.bit`), 5 G P2 | the same — **rate-independent** |
+| ADPLL restart over the regfile (`PLL_EN_ADPLL_CTRL` 1→0→1), then `PLL_REF_RTERM` 0 | still 0 / 0 / CAP_STATE 0 / `PLL_SYNC_VALUE` 0 |
+| PLL configuration registers gs vs m2 | **identical**: CP 80, CI 3, FILTER_SHIFT 2, BISC_MODE 5, CONFIG_SEL 1, CP_MIN/MAX/START 6/30/6, FT 512, FCNTRL 58, MAIN_DIVSEL 27, OUT_DIVSEL 1, EN_ADPLL_CTRL 1, REF_SEL 1, REF_RTERM 1 |
+| m2 (refclk comes from the GS oscillator over the cable) | PLL locks, CAP_FT 503–507 (= 505–508 before) → **the shared 100 MHz refclk source is alive** |
+| gs JTAG / fabric | `--detect` OK, bits load (`Done`), TX/RX termination calibration done (`TX/RX_CALIB_DONE=1`) |
+| gs RX analog (same bit, vs lab14/15) | `RX_CALIB_CAL` 0 → **8**, `RX_OFFSET` 3 → **6**, `RX_TH_MON` 15 → 8 — the RX analog calibration also lands elsewhere |
+| link | m2 RX `ZERO` 50/50 (gs TX silent without its PLL), m2 CDR 0; gs RX `ZERO` |
+| Pi supply | `throttled=0xd0000` (past under-voltage, not current) — the probes stay enumerated |
+
+**Reading.** The gs SerDes ADPLL never leaves state 0 (no capacitor search, `BISC_CO` 0), at every rate and after a regfile restart, with
+the same registers as the working m2 and with bits that locked at 17:08. The refclk source is alive (m2 locks on it). Between 17:08 and
+17:24 only the GS supply filter was reworked. The most likely cause is **no or too low VDD_SER_PLL on GS** (the feed R105 + the new filter;
+DS1001 p.155 min 1.00 V), or less likely an open on the GS-side SER_CLK_P/N into the FPGA. This cannot be fixed or separated over JTAG.
+
+**Consequence for the order of #303:** steps 1–5 (sweep, eye, JTAG BER, new bits) need a working gs PLL — **not done**; no new bitstreams,
+the six bits in `/home/pi/fpga` stay unchanged. **What Goran should measure (GS, under load with `gs_2g5.bit` loaded):** VDD_SER_PLL at
+TP8 (SerDes side of R105) and VDD_SER at TP10 (R106), both ≥ 1.00 V; continuity of the new filter parts. Then re-run step 1:
+`fpga-jtag gs /home/pi/fpga/gs_2g5.bit -r; fpga-jtag gs run python3 eyescan.py get PLL_LOCKED PLL_CAP_FT PLL_CAP_STATE` → expect 1 / ~440–500 / 2.
