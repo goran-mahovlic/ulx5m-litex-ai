@@ -5,6 +5,8 @@
     python3 ber_mon.py cmd z|Z|e|E                z clear gs, Z clear gs+m2, e inject 1 error on gs TX,
                                                   E m2 injects 1 error on its TX
     python3 ber_mon.py run --secs 300 [--clear] [--json]   BER run (both directions) + line rates
+    python3 ber_mon.py sparse --secs 300 [--json]  BER run for a gs UART that drops out (TASK-5483): clear, close the
+                                                  port for the whole window, then read the cumulative counters once
     python3 ber_mon.py inject e|E [--n 3]         negative control: send N injections, check the
                                                   far checker counted exactly N more error words
     python3 ber_mon.py state [--secs 3]           one-line state, used by verify_external_link.sh:
@@ -98,6 +100,63 @@ def summary(a, b, L=None):
     return r
 
 
+CLEAR_MAX_WORDS = 62_500_000 * 10    # a line right after 'Z' holds at most ~10 s of words at 5 Gb/s (62.5 M words/s)
+
+
+def clear_confirmed(d):
+    """True if a status line was read soon after the clear (both counters small), i.e. 'Z' reached the fabric."""
+    return d is not None and d['words'] <= CLEAR_MAX_WORDS and d['pwords'] <= CLEAR_MAX_WORDS
+
+
+def sparse_summary(first, tail, wall_secs):
+    """BER from a line right after the clear and 1..n consecutive lines at the end. The fabric counters are cumulative
+    since the clear, so the end line alone gives words/errb; secs is wall clock (t25 wraps every 171.8 s);
+    rates need >= 2 consecutive end lines, else 0."""
+    r = summary(first, tail[-1], tail if len(tail) > 1 else [tail[-1]])
+    r['secs'] = round(wall_secs, 2)
+    r['mode'] = 'sparse'
+    r['uart_end_lines'] = len(tail)
+    # both checkers count the same 1 s windows; an m2 total far below gs = the m2 counters restarted mid-window
+    r['gs_to_m2']['words_short'] = r['gs_to_m2']['words'] < 0.9 * r['m2_to_gs']['words']
+    r['end_after_clear'] = tail[-1]['words'] >= first['words'] and tail[-1]['pwords'] >= first['pwords']
+    # the gs UART arrives late in bursts: the real window is the words counted since the clear, at the gs TX word rate
+    r['fabric_secs'] = round(r['m2_to_gs']['words'] * 80.0 / r['gs_tx_rate_bps'], 2) if r['gs_tx_rate_bps'] else None
+    return r
+
+
+def read_until(s, n, deadline_s):
+    """Up to n consecutive parsed lines, retrying until deadline_s (the gs UART goes silent for seconds)."""
+    t0 = time.time()
+    while time.time() - t0 < deadline_s:
+        L = lines(s, n, timeout=n * 1.5 + 2)
+        if L:
+            return L
+    return []
+
+
+def sparse_run(secs, tries=5):
+    """Clear (retried until confirmed), port closed for the window, then read the counters. -> result dict or None."""
+    first = None
+    for _ in range(tries):
+        s = open_port(); send(s, 'Z'); time.sleep(0.5)
+        L = read_until(s, 1, 15); s.close()
+        if L and clear_confirmed(L[0]):
+            first = L[0]
+            break
+    if first is None:
+        return None
+    t0 = time.time()
+    time.sleep(secs)
+    s = open_port(); tail = read_until(s, 3, 90); wall = time.time() - t0; s.close()
+    if not tail:
+        return None
+    r = sparse_summary(first, tail, wall)
+    if not r['end_after_clear']:
+        return None
+    r['lines'] = 1 + len(tail)
+    return r
+
+
 def fmt(r):
     def side(n, s):
         b = ('BER=%.3g' % s['ber']) if s['ber'] else 'BER=0'
@@ -114,13 +173,20 @@ def fmt(r):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('mode', choices=('watch', 'cmd', 'run', 'state', 'inject'))
+    ap.add_argument('mode', choices=('watch', 'cmd', 'run', 'state', 'inject', 'sparse'))
     ap.add_argument('arg', nargs='?')
     ap.add_argument('--secs', type=int, default=None)
     ap.add_argument('--clear', action='store_true')
     ap.add_argument('--n', type=int, default=3)
     ap.add_argument('--json', action='store_true')
     a = ap.parse_args()
+    if a.mode == 'sparse':
+        r = sparse_run(a.secs or 60)
+        if r is None:
+            print(json.dumps({'error': 'no gs UART line (clear not confirmed or no end line)'}) if a.json else 'NOUART')
+            return 2
+        print(json.dumps(r, indent=1) if a.json else fmt(r))
+        return 0
     s = open_port()
     if a.mode == 'cmd':
         send(s, a.arg); time.sleep(0.2); print('sent %r' % a.arg); return 0

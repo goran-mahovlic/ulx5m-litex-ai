@@ -19,8 +19,13 @@ module ber_top #(
     parameter TX_DET_RX = 0,               // TX_DETECT_RX_I: 0 = upstream since pu-cc dda07f7 (TASK-5066 E1); bits before 5066 had 1
     parameter TX_CALIB = 1,                // TX_CALIB_EN in every profile (TASK-5066 E1); bits before 5066: PROFILE 0 had 0
     parameter PLL_RTERM = 1,               // PLL_REF_RTERM (refclk LVDS termination; E6: 0 on gs, TUNING_5G.md §2.4)
-    parameter [7:0] CDR_CKI = 8'h00      // RX_CDR_CKI (CDR frequency integrator, DS1001 t. 2.48; 0 = off). 0 with the shared
+    parameter [7:0] CDR_CKI = 8'h00,     // RX_CDR_CKI (CDR frequency integrator, DS1001 t. 2.48; 0 = off). 0 with the shared
                                            // refclk; != 0 for a local X2 on M2 (own refclk per board = ppm offset, TASK-5087)
+    // Per-field overrides of the PROFILE set (TASK-5483: bake a JTAG sweep winner without a new PROFILE). -1 = keep the
+    // PROFILE value, so every bit built before 5483 is rebuilt byte-identical (checked: gs_sd_2g5p1_txneg_s7 36f09752).
+    parameter integer OV_AFE_PEAK = -1, parameter integer OV_AFE_GAIN = -1, parameter integer OV_AFE_VCMSEL = -1,
+    parameter integer OV_RTERM_VCMSEL = -1, parameter integer OV_CDR_CKP = -1, parameter integer OV_CDR_TRANS_TH = -1,
+    parameter integer OV_TX_SEL_PRE = -1, parameter integer OV_TX_SEL_POST = -1, parameter integer OV_TX_AMP = -1
 ) (
     input  wire clk_i,          // IO_SB_A8 (GS: 25 MHz)
     output wire uart_tx,
@@ -49,18 +54,18 @@ module ber_top #(
     localparam P2 = (PROFILE == 2);
     localparam P3 = (PROFILE == 3);
     localparam [4:0] A_TIMER_PRESC  = P1 ? 5'h4  : 5'h0;
-    localparam [2:0] A_RTERM_VCMSEL = P1 ? 3'h3  : 3'h4;
+    localparam [2:0] A_RTERM_VCMSEL = (OV_RTERM_VCMSEL >= 0) ? OV_RTERM_VCMSEL : P1 ? 3'h3  : 3'h4;
     localparam [0:0] A_EN_EQA       = P1 ? 1'h1  : 1'h0;
     localparam [3:0] A_EQA_LOCK_CFG = P1 ? 4'hC  : 4'h0;
-    localparam [4:0] A_AFE_PEAK     = P2 ? 5'hC  : P1 ? 5'h18 : 5'hF;
-    localparam [3:0] A_AFE_GAIN     = P1 ? 4'h0  : 4'h8;
-    localparam [2:0] A_AFE_VCMSEL   = P1 ? 3'h3  : 3'h4;
-    localparam [7:0] A_CDR_CKP      = (P2 || P3) ? 8'h1E : P1 ? 8'h3E : 8'hF8;
-    localparam [8:0] A_CDR_TRANS_TH = (P2 || P3) ? 9'h10 : P1 ? 9'h08 : 9'h80;   // the primitive field is 7 bits (default 7'h08)
+    localparam [4:0] A_AFE_PEAK     = (OV_AFE_PEAK >= 0) ? OV_AFE_PEAK : P2 ? 5'hC  : P1 ? 5'h18 : 5'hF;
+    localparam [3:0] A_AFE_GAIN     = (OV_AFE_GAIN >= 0) ? OV_AFE_GAIN : P1 ? 4'h0  : 4'h8;
+    localparam [2:0] A_AFE_VCMSEL   = (OV_AFE_VCMSEL >= 0) ? OV_AFE_VCMSEL : P1 ? 3'h3  : 3'h4;
+    localparam [7:0] A_CDR_CKP      = (OV_CDR_CKP >= 0) ? OV_CDR_CKP : (P2 || P3) ? 8'h1E : P1 ? 8'h3E : 8'hF8;
+    localparam [8:0] A_CDR_TRANS_TH = (OV_CDR_TRANS_TH >= 0) ? OV_CDR_TRANS_TH : (P2 || P3) ? 9'h10 : P1 ? 9'h08 : 9'h80;   // the primitive field is 7 bits (default 7'h08)
     localparam [7:0] A_CDR_LOCK_CFG = P1 ? 8'hD5 : 8'h0B;
-    localparam [4:0] A_TX_SEL_PRE   = P2 ? 5'h0  : P1 ? 5'h5  : 5'h0;
-    localparam [4:0] A_TX_SEL_POST  = P2 ? 5'hC  : P1 ? 5'h5  : 5'h0;
-    localparam [4:0] A_TX_AMP       = P1 ? 5'h1F : 5'hF;
+    localparam [4:0] A_TX_SEL_PRE   = (OV_TX_SEL_PRE >= 0) ? OV_TX_SEL_PRE : P2 ? 5'h0  : P1 ? 5'h5  : 5'h0;
+    localparam [4:0] A_TX_SEL_POST  = (OV_TX_SEL_POST >= 0) ? OV_TX_SEL_POST : P2 ? 5'hC  : P1 ? 5'h5  : 5'h0;
+    localparam [4:0] A_TX_AMP       = (OV_TX_AMP >= 0) ? OV_TX_AMP : P1 ? 5'h1F : 5'hF;
     localparam [4:0] A_TX_BR_PRE    = P2 ? 5'h0  : P1 ? 5'hC  : 5'h0;
     localparam [4:0] A_TX_BR_POST   = P2 ? 5'h1F : P1 ? 5'hC  : 5'h0;
     localparam [6:0] A_TX_DC_ENABLE = P2 ? 7'h2F : P1 ? 7'h2B : 7'h3F;   // P1: (12+63+12)/2 = 43 as in ab7ce94
@@ -224,18 +229,28 @@ endmodule
 
 module top_gs #(parameter N1 = 1, N2 = 2, N3 = 3, OUTDIV = 4, parameter [5:0] FCNTRL = 6'h3A,
                 parameter RX_POL = 1'b1, parameter [2:0] LOOPBACK_SEL = 3'b000, parameter CLK_DIRECT = 0, parameter TX_NEG = 0, parameter RX_NEG = 0, parameter PROFILE = 0, parameter EYE_EN = 0,
-                parameter TX_DET_RX = 0, parameter TX_CALIB = 1, parameter PLL_RTERM = 1, parameter [7:0] CDR_CKI = 8'h00)
+                parameter TX_DET_RX = 0, parameter TX_CALIB = 1, parameter PLL_RTERM = 1, parameter [7:0] CDR_CKI = 8'h00,
+                parameter integer OV_AFE_PEAK = -1, OV_AFE_GAIN = -1, OV_AFE_VCMSEL = -1, OV_RTERM_VCMSEL = -1, OV_CDR_CKP = -1,
+                parameter integer OV_CDR_TRANS_TH = -1, OV_TX_SEL_PRE = -1, OV_TX_SEL_POST = -1, OV_TX_AMP = -1)
                (input wire clk_i, output wire uart_tx, input wire uart_rx);
     ber_top #(.ROLE(0), .N1(N1), .N2(N2), .N3(N3), .OUTDIV(OUTDIV), .FCNTRL(FCNTRL), .RX_POL(RX_POL),
               .LOOPBACK_SEL(LOOPBACK_SEL), .CLK_DIRECT(CLK_DIRECT), .TX_NEG(TX_NEG), .RX_NEG(RX_NEG), .PROFILE(PROFILE), .EYE_EN(EYE_EN),
-              .TX_DET_RX(TX_DET_RX), .TX_CALIB(TX_CALIB), .PLL_RTERM(PLL_RTERM), .CDR_CKI(CDR_CKI)) u (.clk_i(clk_i), .uart_tx(uart_tx), .uart_rx(uart_rx));
+              .TX_DET_RX(TX_DET_RX), .TX_CALIB(TX_CALIB), .PLL_RTERM(PLL_RTERM), .CDR_CKI(CDR_CKI),
+              .OV_AFE_PEAK(OV_AFE_PEAK), .OV_AFE_GAIN(OV_AFE_GAIN), .OV_AFE_VCMSEL(OV_AFE_VCMSEL), .OV_RTERM_VCMSEL(OV_RTERM_VCMSEL),
+              .OV_CDR_CKP(OV_CDR_CKP), .OV_CDR_TRANS_TH(OV_CDR_TRANS_TH), .OV_TX_SEL_PRE(OV_TX_SEL_PRE), .OV_TX_SEL_POST(OV_TX_SEL_POST),
+              .OV_TX_AMP(OV_TX_AMP)) u (.clk_i(clk_i), .uart_tx(uart_tx), .uart_rx(uart_rx));
 endmodule
 
 module top_m2 #(parameter N1 = 1, N2 = 2, N3 = 3, OUTDIV = 4, parameter [5:0] FCNTRL = 6'h3A,
                 parameter RX_POL = 1'b1, parameter [2:0] LOOPBACK_SEL = 3'b000, parameter CLK_DIRECT = 0, parameter TX_NEG = 0, parameter RX_NEG = 0, parameter PROFILE = 0, parameter EYE_EN = 0,
-                parameter TX_DET_RX = 0, parameter TX_CALIB = 1, parameter PLL_RTERM = 1, parameter [7:0] CDR_CKI = 8'h00)
+                parameter TX_DET_RX = 0, parameter TX_CALIB = 1, parameter PLL_RTERM = 1, parameter [7:0] CDR_CKI = 8'h00,
+                parameter integer OV_AFE_PEAK = -1, OV_AFE_GAIN = -1, OV_AFE_VCMSEL = -1, OV_RTERM_VCMSEL = -1, OV_CDR_CKP = -1,
+                parameter integer OV_CDR_TRANS_TH = -1, OV_TX_SEL_PRE = -1, OV_TX_SEL_POST = -1, OV_TX_AMP = -1)
                (input wire clk_i);
     ber_top #(.ROLE(1), .N1(N1), .N2(N2), .N3(N3), .OUTDIV(OUTDIV), .FCNTRL(FCNTRL), .RX_POL(RX_POL),
               .LOOPBACK_SEL(LOOPBACK_SEL), .CLK_DIRECT(CLK_DIRECT), .TX_NEG(TX_NEG), .RX_NEG(RX_NEG), .PROFILE(PROFILE), .EYE_EN(EYE_EN),
-              .TX_DET_RX(TX_DET_RX), .TX_CALIB(TX_CALIB), .PLL_RTERM(PLL_RTERM), .CDR_CKI(CDR_CKI)) u (.clk_i(clk_i), .uart_tx(), .uart_rx(1'b1));
+              .TX_DET_RX(TX_DET_RX), .TX_CALIB(TX_CALIB), .PLL_RTERM(PLL_RTERM), .CDR_CKI(CDR_CKI),
+              .OV_AFE_PEAK(OV_AFE_PEAK), .OV_AFE_GAIN(OV_AFE_GAIN), .OV_AFE_VCMSEL(OV_AFE_VCMSEL), .OV_RTERM_VCMSEL(OV_RTERM_VCMSEL),
+              .OV_CDR_CKP(OV_CDR_CKP), .OV_CDR_TRANS_TH(OV_CDR_TRANS_TH), .OV_TX_SEL_PRE(OV_TX_SEL_PRE), .OV_TX_SEL_POST(OV_TX_SEL_POST),
+              .OV_TX_AMP(OV_TX_AMP)) u (.clk_i(clk_i), .uart_tx(), .uart_rx(1'b1));
 endmodule
