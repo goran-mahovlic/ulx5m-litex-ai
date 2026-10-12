@@ -904,3 +904,41 @@ Reading:
 **Next (hardware, Goran):** terminate or remove the stub (100 Ω P–N on the SER_CLK pads of C136/C137 plus `PLL_RTERM 0` on M2, or cut the
 line right after C129/C130), add 100 nF from X2 pin 6 to pin 3, then run `lab11.sh` unchanged. If the shared-clock numbers do not come
 back, the separate-clock penalty is the CDR tracking, and the shared refclk stays the better design for this link.
+
+## 12. TASK-5482: retest 2.5 / 5 Gb/s after the M2 JTAG fix (12.10.2026 16:00–16:32) — BER counters NOT readable
+
+**State:** both boards answer on JTAG (`fpga-jtag gs|m2 --detect`, idcode 0x20000001; Goran fixed the M2 `TDO is stuck at 0` before 15:59).
+Same boards on the same probes as 28.09. (fingerprint: RX_OFFSET gs 3 / m2 7, RX_DETECT_DONE gs 0 / m2 1, = `log13`).
+Same six bits as lab9/lab13 (sha256 in `lab14.out`). Loading only `fpga-jtag gs|m2 <bit> -r`; after every load the
+`RX_CDR_SET_ACC_CONFIG` 2→0 pulse on both (`LOCAL_REFCLK_M2.md` §4C). Raw data `data_20261012/t5482/` (`lab14.sh/.out`, `log/`).
+
+**Blocker — the gs UART is silent, so `ber_mon.py` gets no lines and no BER can be computed.** Checked by the agent:
+0 bytes on all four DirtyJTAG ACM ports (gs if01/if03, m2 if01/if03) for 3.5 s each with `ber_top` loaded, at 9600/57600/115200/230400/1 M
+baud; also 0 bytes with the LiteX SoC `ETH_GateMateA1_0410_..._np1817s1.bit` (same UART pins IO_NB_B5/IO_NA_B6, same clock IO_SB_A8),
+whose BIOS printed on this port on 07.10. (TASK-5224). No process holds the port. The gs probe was re-enumerated at 16:01:41
+(`port4 disabled by hub (EMI?)`, Pi under-voltage `throttled=0xd0005`). Both designs need `clk_i` (IO_SB_A8) and the UART wire;
+the SerDes does not, which is why the link works below. Which of the two is missing (25 MHz clock on IO_SB_A8 or the
+IO_NB_B5 → probe RX wire) cannot be separated over JTAG with the existing tools (`gatemate_ila`/`lab_watch` do not exist).
+
+**What JTAG shows (lab14, 3 loads per point; `ber_jtag_check` 200 RX words per board per load):**
+
+| Point | PLL lock gs/m2 | CAP_FT gs / m2 | CDR lock gs / m2 (health) | PEER words gs RX (m2→gs) r1/r2/r3 | PEER words m2 RX (gs→m2) r1/r2/r3 | BER |
+|---|---|---|---|---|---|---|
+| 2.5 G best pair (RTERM 1) | 3/3 / 3/3 | 491–494 / 505–508 | 2/3 / 3/3 | **200 / 200 / 200** | **200 / 200 / 200** | not readable (UART) |
+| 5 G P2 | 3/3 / 3/3 | 497–498 / 513–516 | 0/3 / 0/3 | 191 / 186 / 197 | 195 / 188 / 190 | not readable |
+| 5 G P3 | 3/3 / 3/3 | 494–497 / 515–516 | 2/3 / 3/3 | 111 / 104 / 154 | 181 / 172 / 172 | not readable |
+| *lab13 28.09. P3 (ref.)* | | *442–450 / 512–515* | | *191* | *197* | *3.2·10⁻² / 6.1·10⁻²* |
+
+Reading:
+- **2.5 G: the link is up in both directions in every load** (PLL, CDR at the BER-sample time, K28.5 alignment, data from the peer:
+  1200/1200 words). With ≤ 1200 sampled words this only says the word error rate is < ~1·10⁻³; the 28.09. figures
+  (lab12 separate clocks 1.5·10⁻⁸ / 4.7·10⁻⁸, lab13 shared clock 1.0·10⁻⁹ / 0) can be neither confirmed nor refuted today.
+- **5 G: reaches PLL lock and word alignment in every load; the step that fails is bit-clean data** — 2–14 % (P2) and 9–48 % (P3) of
+  sampled words are not valid peer words, and the CDR lock bit drops out (P2 0/3 in the health snapshot). P3 on gs RX is worse
+  than lab13 (111–154/200 vs 191/200). Still unusable, as on 28.09.
+- **New: gs `PLL_CAP_FT` 491–498** (28.09.: 442–450 with 5.1 Ω, 434–437 with 1 Ω; same bits). The gs SerDes PLL needs a different DCO
+  setting than on 28.09., consistent with a changed VDD_SER_PLL feed (R105/R106) — hardware state since 28.09. not recorded.
+  m2 unchanged (505–516).
+
+**To finish this retest:** get the gs UART back (UART wire IO_NB_B5 → DirtyJTAG E660583883501E2C RX and the 25 MHz clock on IO_SB_A8),
+then run `lab14.sh` → `lab13.sh` protocol unchanged (2.5 G 3 × 300 s, 5 G P2/P3 3 × 300 s) for the BER table.
