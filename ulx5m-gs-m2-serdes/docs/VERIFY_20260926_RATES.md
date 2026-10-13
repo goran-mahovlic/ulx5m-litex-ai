@@ -1130,3 +1130,37 @@ needed?").
   2→0 on both. 5 G is not usable (P2 `gs_5g.bit`/`m2_5g.bit` only if a 5 G run is wanted for comparison).
 - **Hardware first:** measure VDD_SER / VDD_SER_PLL on GS (TP8/TP10) under load and compare with 28.09.; the BER loss coincides with the
   rework, and no setting recovers it.
+
+## 15. TASK-5482: long serial BER run 2.5 G (3 loads × 3600 s) + 5 G P2 (1 × 300 s), lab22 13.10.2026 00:52–04:22
+
+Bits per §14.7: `m2_2g5.bit` + `gs_2g5.bit` (5 G: `m2_5g.bit` + `gs_5g.bit`, recipe P2). Per load: `fpga-jtag m2 … -r`, `fpga-jtag gs … -r`,
+SET_ACC 2→0 on both, `eyescan.py health`, `ber_jtag_check`, then `tools/lab/ber_long.py` over the gs UART (snapshot every 60 s,
+**no `Z`** — see the finding below; BER = sum of the intervals since the baseline), health + `ber_jtag_check` again at the end.
+Raw: `docs/data_20261013/t5482/` (`lab22.sh`, `lab22.out`, `log22/*.jsonl`, `*.start_/end_*.json`).
+
+| Rate | Load | Time | gs→m2 BER | m2→gs BER | synced gs→m2 / m2→gs | 60 s intervals gs→m2 (min…max) | JTAG PEER start/end |
+|---|---|---|---|---|---|---|---|
+| 2.5 G | r1 | 3602 s | 2.0·10⁻⁷ | 3.3·10⁻⁸ | 1.00 / 1.00 | 7.3·10⁻⁸ … 1.9·10⁻⁶ | 200/200 both |
+| 2.5 G | r2 | 3601 s | 7.6·10⁻⁷ | 1.1·10⁻⁷ | 1.00 / 1.00 | 5.7·10⁻⁷ … 1.0·10⁻⁶ | 200/200 both |
+| 2.5 G | r3 | 3604 s | 4.2·10⁻⁶ | 2.8·10⁻⁷ | 1.00 / 1.00 | 3.1·10⁻⁶ … 5.3·10⁻⁶ | 200/200 both |
+| **2.5 G** | **median of 3** | 3 h | **7.6·10⁻⁷** | **1.1·10⁻⁷** | 1.00 / 1.00 | | |
+| 5 G P2 | r1 | 300 s | 5.5·10⁻³ | 2.0·10⁻² | 0.83 / 1.00 | gs→m2 checker restarted 3× | 826–873/1000 → FAIL |
+
+Bits per 2.5 G load and direction: 4.5·10¹² (≥ 1.5·10⁵ errors in each, so these are measured BERs, not upper bounds).
+Health at every 2.5 G start: PLL_LOCKED 1, FT_OF/UF 0, CAP_FT m2 512–513 / gs 499–502, CDR/EQA lock 1 (r3 end: gs RX_CDR_LOCKED 0 in the
+snapshot, counters synced throughout). 5 G P2: PLLs lock (CAP_FT m2 517 / gs 503), RX_CDR_LOCKED 0 on both boards at start and end,
+JTAG PEER 83–87 % → it reaches PLL lock and partial word alignment, not CDR lock / a usable BER.
+
+Comparison (2.5 G, median gs→m2 / m2→gs): 28.09. lab12 separate refclks + RTERM 1.5·10⁻⁸ / 4.7·10⁻⁸; 28.09. lab13 shared refclk
+1.0·10⁻⁹ / 0; 12.10. §14.5 scatter (after the supply-filter rework) ~8·10⁻⁷ / ~2·10⁻⁷; **now 7.6·10⁻⁷ / 1.1·10⁻⁷**.
+
+**Reading:**
+- **2.5 G is not better than before; it equals the post-rework state of §14.5** and is ×50 (gs→m2) / ×2 (m2→gs) worse than lab12
+  and ×760 / ≫ than lab13 on 28.09. The link never loses sync in 3 h (synced 1.00, no checker restart in either direction).
+- **Inside a load the BER is constant for an hour** (first vs second half within ×1.4); **between loads it moves ×21** (gs→m2
+  2.0·10⁻⁷ → 4.2·10⁻⁶). The error rate is fixed at load/calibration time, not drifting thermally — consistent with §14.5.
+- gs→m2 (m2 receiver) stays the worse direction in every load (×6–15 over m2→gs).
+- **5 G did not work** (one load, P2): 1–2 % bit errors, CDR not locked; no improvement over §14.4.
+- Finding (tooling, not hardware): after a UART `Z` the m2 checker re-clears its counters every ~10–20 s, because `ber_top.v` r.146
+  executes a command whenever the aux-frame command byte changes and that frame has no check; a corrupted-then-restored byte counts as
+  a new `Z`. `ber_long.py` therefore never sends `Z`. Gateware fix (accept a command only after two identical frames) not done.
