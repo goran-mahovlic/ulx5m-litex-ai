@@ -65,6 +65,11 @@ class FakeST(ST.SerdesTool):
             return                                              # frozen while adaptation runs: silently dropped
         if addr == 0x05 and self.r[0x06] & (1 << 11):
             mask &= ~0x07C0                                     # TH_MON2 protected by EXT_VALUE[3]
+        if self.r[0x06] & (1 << 5):                             # EXT_VALUE[2] protects TH_MON1 and (lab26b, HW) RX_TAPW
+            if addr == 0x05:
+                mask &= ~0x001F
+            if addr == 0x06:
+                mask &= ~0x001F
         new = (old & ~mask) | (data & mask)
         if addr == 0x14 and data & mask & 1:
             self.started += 1
@@ -184,6 +189,13 @@ class Scan(unittest.TestCase):
         e = f.eye_scan(phases=range(-32, 32), thresholds=[0], window=64, line_rate=2.5e9)
         self.assertEqual(ST.eye_codes_per_ui(e), (64, 1))
 
+    def test_upstream_tapw_sweep_write_is_blocked(self):
+        # tc_eyemeas(tapw_sweep=True) writes RX_TAPW after eye_freeze (EXT_VALUE 0b0111): dropped (lab26b readback TAPW 0)
+        f = fake()
+        f.eye_freeze(f.eye_capture_op(), monitor=2)
+        f.wr_field('RX_TAPW', -8)
+        self.assertEqual(f.rd_field('RX_TAPW'), 4)
+
     def test_tapw_pick(self):
         self.assertEqual(E.tapw_pick([(0, 5), (1, 9), (2, 9), (3, 1)]), 1)
 
@@ -213,6 +225,51 @@ class Diagnose(unittest.TestCase):
         self.assertIn("rb['RX_EN_EQA_EXT_VALUE'] == 0b1111", src)
         self.assertIn('ext_value = 0b0111 if monitor == 2', src)
         self.assertNotIn("== 0b1111", inspect.getsource(ST.SerdesTool.eye_diagnose))
+
+
+class Commands(unittest.TestCase):
+    """CLI commands against the fake (serdes_jtag.Serdes swapped for a wrapper around FakeST)."""
+    def setUp(self):
+        self.f = fake()
+        f = self.f
+
+        class SD:
+            board = 'fake'
+            def __init__(self): self.s = f
+            def field(self, n): return 1
+            def close(self): pass
+        self._orig, sj.Serdes = sj.Serdes, SD
+
+    def tearDown(self):
+        sj.Serdes = self._orig
+
+    def run_cmd(self, argv):
+        import contextlib, io
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            rc = E.main(argv)
+        return rc, out.getvalue()
+
+    def test_freeze_pins_tapw_and_prints(self):
+        rc, out = self.run_cmd(['freeze', 'RX_TAPW=-4'])
+        self.assertEqual(rc, 0, out)
+        self.assertIn('ext=0b0111', out)
+        self.assertEqual(self.f.rd_field('RX_TAPW'), -4)
+        self.assertEqual(self.f.rd_field('RX_EN_EQA'), 0)
+
+    def test_freeze_ext_1111_enables_afe_override_last(self):
+        rc, out = self.run_cmd(['freeze', 'RX_AFE_OFFSET=5', '--ext', '0b1111'])
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(self.f.rd_fields(['RX_EN_EQA_EXT_VALUE'])['RX_EN_EQA_EXT_VALUE'], 0b1111)
+
+    def test_restore(self):
+        self.run_cmd(['freeze', 'RX_TAPW=2'])
+        rc, out = self.run_cmd(['restore'])
+        self.assertEqual(self.f.rd_field('RX_EN_EQA'), 1)
+        self.assertEqual(self.f.rd_fields(['RX_EN_EQA_EXT_VALUE'])['RX_EN_EQA_EXT_VALUE'], 0)
+
+    def test_capture_cmd(self):
+        rc, out = self.run_cmd(['capture', '-n', '2', '--interval', '0'])
+        self.assertIn('CAPSTAT board=fake', out)
 
 
 if __name__ == '__main__':

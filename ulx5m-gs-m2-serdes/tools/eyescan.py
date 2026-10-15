@@ -487,12 +487,12 @@ def cmd_eye(a):
         s.eye_freeze(op, monitor=2)
         if a.tapw_sweep:
             for tw in range(-15, 16) if a.tapw_signed else range(0, 16):
-                s.wr_field('RX_TAPW', tw)
+                pin_fields(s, {'RX_TAPW': tw})
                 pr = s.eye_scan(phases=range(-32, 32, 8), thresholds=range(-15, 16, 3), window=a.window,
                                 line_rate=a.rate)
                 sweep.append((tw, pr.open_area(a.target)))
                 print('  TAPW %+3d open area %d' % sweep[-1], flush=True)
-            s.wr_field('RX_TAPW', tapw_pick(sweep))
+            pin_fields(s, {'RX_TAPW': tapw_pick(sweep)})
         e = s.eye_scan(phases=phs, thresholds=ths, window=a.window, repeats=a.repeats, line_rate=a.rate,
                        on_point=progress)
         try:
@@ -518,6 +518,16 @@ def cmd_eye(a):
     return 0
 
 
+def pin_fields(s, vals, ext=0b0111):
+    """Write override values while frozen. EXT_VALUE[2] write-protects RX_TAPW and RX_TH_MON1, EXT_VALUE[3] RX_TH_MON2
+    (lab26b: RX_TAPW read back 0 after a write with EXT 0b0111, so upstream tc_eyemeas tapw_sweep pins nothing). Clear the
+    overrides (adaptation is already off), write, then enable them last."""
+    s.wr_fields({'RX_EN_EQA_EXT_VALUE': 0})
+    if vals:
+        s.wr_fields(vals)
+    s.wr_fields({'RX_EN_EQA_EXT_VALUE': ext})
+
+
 def parse_ext(v):
     return int(v, 0)
 
@@ -531,13 +541,10 @@ def cmd_freeze(a):
     op = capture_op_kept(s)
     s.eye_freeze(op, monitor=2)                      # 0b0111: eye_freeze refuses bit 3 for monitor 2
     vals = {kv.split('=')[0]: int(kv.split('=')[1], 0) for kv in a.fields}
-    if vals:
-        s.wr_fields(vals)                            # values first, with EXT_VALUE[3] still clear (TH_MON2 writable)
-    if a.ext != 0b0111:
-        s.wr_fields({'RX_EN_EQA_EXT_VALUE': a.ext})  # e.g. 0b1111: RX_AFE_OFFSET override on, enabled last
+    pin_fields(s, vals, a.ext)                       # e.g. --ext 0b1111: RX_AFE_OFFSET override on as well
     got = s.rd_fields(['RX_EN_EQA', 'RX_EN_EQA_EXT_VALUE', 'RX_TAPW', 'RX_TH_MON1', 'RX_TH_MON2', 'RX_AFE_OFFSET',
                        'RX_CDR_LOCKED'] + list(vals))
-    print('FREEZE board=%s op=%s ext=0b%04b now %s' % (sd.board, op, a.ext, got))
+    print('FREEZE board=%s op=%s ext=0b%s now %s' % (sd.board, op, format(a.ext, '04b'), got))
     sd.close()
     return 0 if all(got[k] == v for k, v in vals.items()) else 1
 
