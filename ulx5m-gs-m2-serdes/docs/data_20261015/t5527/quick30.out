@@ -1,0 +1,11 @@
+-- quick30 18:51:04 throttled=0xd0000
+Done
+Done
+HEALTH board=m2 q30 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs q30 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+CAPSTAT board=m2  op={"tapw": [0], "th_mon1": [15], "th_mon2": [15], "offset": [7]} split={"tapw": [0], "th_mon": [15], "offset": [7]}
+CAPSTAT board=gs  op={"tapw": [0], "th_mon1": [15], "th_mon2": [15], "offset": [1]} split={"tapw": [0], "th_mon": [15], "offset": [1, 2]}
+JTAG m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+TOTAL secs=54.6 gs->m2 BER=8.948094867877196e-09 (<None) m2->gs BER=8.88883601940911e-11 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=3
+QUICK30 DONE 18:54:42

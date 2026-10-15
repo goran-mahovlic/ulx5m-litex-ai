@@ -1,0 +1,64 @@
+-- load r1 17:48:48 throttled=0xd0005
+Done
+Done
+HEALTH board=m2 r1_start problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+  PLL_LOCKED=1 PLL_CAP_FT_OF=0 PLL_CAP_FT_UF=0 PLL_CAP_FT=510 PLL_CAP_STATE=2 PLL_BISC_TIMER_DONE=0 PLL_BISC_CP_VALID=0 PLL_BISC_CP=24 PLL_BISC_OPT_DET=0 PLL_BISC_CO=65181 RX_CALIB_DONE=1 RX_CALIB_CAL=0 TX_CALIB_DONE=1 TX_CALIB_CAL=0 RX_EN_EQA=1 RX_EQA_LOCK_CF
+CAP m2  0 op tapw=+0 th1=+15 th2=+15 off=+7 locked=1 | split tapw=+0 th=+15 off=+7
+CAP m2  1 op tapw=+0 th1=+15 th2=+15 off=+7 locked=1 | split tapw=+0 th=+15 off=+7
+CAP m2  2 op tapw=+0 th1=+15 th2=+15 off=+7 locked=1 | split tapw=+0 th=+15 off=+7
+CAP m2  3 op tapw=+0 th1=+15 th2=+15 off=+7 locked=1 | split tapw=+0 th=+15 off=+7
+CAP m2  4 op tapw=+0 th1=+15 th2=+15 off=+7 locked=1 | split tapw=+0 th=+15 off=+7
+CAP m2  5 op tapw=+0 th1=+15 th2=+15 off=+7 locked=1 | split tapw=+0 th=+15 off=+7
+CAP m2  6 op tapw=+0 th1=+15 th2=+15 off=+7 locked=1 | split tapw=+0 th=+15 off=+7
+CAP m2  7 op tapw=+0 th1=+15 th2=+15 off=+7 locked=1 | split tapw=+0 th=+15 off=+7
+CAP m2  8 op tapw=+0 th1=+15 th2=+15 off=+7 locked=1 | split tapw=+0 th=+15 off=+7
+CAP m2  9 op tapw=+0 th1=+15 th2=+15 off=+7 locked=1 | split tapw=+0 th=+15 off=+7
+CAPSTAT board=m2 r1_start op={"tapw": [0], "th_mon1": [15], "th_mon2": [15], "offset": [7]} split={"tapw": [0], "th_mon": [15], "offset": [7]}
+HEALTH board=gs r1_start problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+  PLL_LOCKED=1 PLL_CAP_FT_OF=0 PLL_CAP_FT_UF=0 PLL_CAP_FT=496 PLL_CAP_STATE=2 PLL_BISC_TIMER_DONE=0 PLL_BISC_CP_VALID=0 PLL_BISC_CP=24 PLL_BISC_OPT_DET=0 PLL_BISC_CO=63723 RX_CALIB_DONE=1 RX_CALIB_CAL=0 TX_CALIB_DONE=1 TX_CALIB_CAL=0 RX_EN_EQA=1 RX_EQA_LOCK_CF
+CAP gs  0 op tapw=+0 th1=+10 th2=+10 off=+3 locked=1 | split tapw=+0 th=+10 off=+3
+CAP gs  1 op tapw=+1 th1=+10 th2=+11 off=+3 locked=1 | split tapw=+1 th=+11 off=+3
+CAP gs  2 op tapw=+0 th1=+10 th2=+10 off=+3 locked=1 | split tapw=+0 th=+10 off=+4
+CAP gs  3 op tapw=+1 th1=+10 th2=+11 off=+3 locked=1 | split tapw=+0 th=+11 off=+3
+CAP gs  4 op tapw=+0 th1=+11 th2=+10 off=+3 locked=1 | split tapw=+0 th=+10 off=+3
+CAP gs  5 op tapw=+0 th1=+11 th2=+11 off=+3 locked=1 | split tapw=+1 th=+11 off=+3
+CAP gs  6 op tapw=+0 th1=+10 th2=+10 off=+2 locked=1 | split tapw=+0 th=+10 off=+3
+CAP gs  7 op tapw=+0 th1=+10 th2=+11 off=+3 locked=1 | split tapw=+0 th=+10 off=+3
+CAP gs  8 op tapw=+0 th1=+11 th2=+10 off=+3 locked=1 | split tapw=+0 th=+10 off=+3
+CAP gs  9 op tapw=+0 th1=+10 th2=+10 off=+3 locked=1 | split tapw=+1 th=+11 off=+3
+CAPSTAT board=gs r1_start op={"tapw": [0, 1], "th_mon1": [10, 11], "th_mon2": [10, 11], "offset": [2, 3]} split={"tapw": [0, 1], "th_mon": [10, 11], "offset": [3, 4]}
+JTAG r1_start m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG r1_start gs: rx: OTHER 44/200 PEER 156/200 distinct=200  expect=peer -> FAIL
+BER r1_A1 TOTAL secs=294.4 gs->m2 BER=0.012046889473136858 (<None) m2->gs BER=0.01304290538018551 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=4
+FREEZE board=gs op={'th_mon1': 10, 'tapw': 0, 'offset': 3, 'th_mon2': 11, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE': 7, 'RX_TAPW': 2, 'RX_TH_MON1': 10, 'RX_TH_MON2': 11, 'RX_AFE_OFFSET': 8, 'RX_CDR_LOCKED': 1}
+JTAG r1_B m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG r1_B gs: rx: OTHER 43/200 PEER 157/200 distinct=200  expect=peer -> FAIL
+BER r1_B_gs_tapw2 TOTAL secs=304.1 gs->m2 BER=0.010284685246699872 (<None) m2->gs BER=0.04106184949615832 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=5
+RESTORE board=gs {'RX_EN_EQA': 1, 'RX_EN_EQA_EXT_VALUE': 0, 'RX_EQA_CONFIG': 448, 'RX_EQA_LOCKED': 1, 'RX_CDR_LOCKED': 1}
+BER r1_A2 TOTAL secs=299.90000000000003 gs->m2 BER=0.0113865107993563 (<None) m2->gs BER=0.013220158617466324 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=4
+HEALTH board=m2 r1_end problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+  PLL_LOCKED=1 PLL_CAP_FT_OF=0 PLL_CAP_FT_UF=0 PLL_CAP_FT=508 PLL_CAP_STATE=2 PLL_BISC_TIMER_DONE=0 PLL_BISC_CP_VALID=0 PLL_BISC_CP=24 PLL_BISC_OPT_DET=0 PLL_BISC_CO=65017 RX_CALIB_DONE=1 RX_CALIB_CAL=0 TX_CALIB_DONE=1 TX_CALIB_CAL=0 RX_EN_EQA=1 RX_EQA_LOCK_CF
+CAP m2  0 op tapw=+0 th1=+15 th2=+15 off=+7 locked=1 | split tapw=+0 th=+15 off=+7
+CAP m2  1 op tapw=+0 th1=+15 th2=+15 off=+7 locked=1 | split tapw=+0 th=+15 off=+7
+CAP m2  2 op tapw=+0 th1=+15 th2=+15 off=+7 locked=1 | split tapw=+0 th=+15 off=+7
+CAP m2  3 op tapw=+0 th1=+15 th2=+15 off=+7 locked=1 | split tapw=+0 th=+15 off=+7
+CAP m2  4 op tapw=+0 th1=+15 th2=+15 off=+7 locked=1 | split tapw=+0 th=+15 off=+7
+CAP m2  5 op tapw=+0 th1=+15 th2=+15 off=+7 locked=1 | split tapw=+0 th=+15 off=+7
+CAP m2  6 op tapw=+0 th1=+15 th2=+15 off=+7 locked=1 | split tapw=+0 th=+15 off=+7
+CAP m2  7 op tapw=+0 th1=+15 th2=+15 off=+7 locked=1 | split tapw=+0 th=+15 off=+7
+CAP m2  8 op tapw=+0 th1=+15 th2=+15 off=+7 locked=1 | split tapw=+0 th=+15 off=+7
+CAP m2  9 op tapw=+0 th1=+15 th2=+15 off=+7 locked=1 | split tapw=+0 th=+15 off=+7
+CAPSTAT board=m2 r1_end op={"tapw": [0], "th_mon1": [15], "th_mon2": [15], "offset": [7]} split={"tapw": [0], "th_mon": [15], "offset": [7]}
+HEALTH board=gs r1_end problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+  PLL_LOCKED=1 PLL_CAP_FT_OF=0 PLL_CAP_FT_UF=0 PLL_CAP_FT=497 PLL_CAP_STATE=2 PLL_BISC_TIMER_DONE=0 PLL_BISC_CP_VALID=0 PLL_BISC_CP=24 PLL_BISC_OPT_DET=0 PLL_BISC_CO=33 RX_CALIB_DONE=1 RX_CALIB_CAL=0 TX_CALIB_DONE=1 TX_CALIB_CAL=0 RX_EN_EQA=1 RX_EQA_LOCK_CFG=1
+CAP gs  0 op tapw=+0 th1=+11 th2=+10 off=+3 locked=1 | split tapw=+0 th=+10 off=+3
+CAP gs  1 op tapw=+0 th1=+10 th2=+10 off=+4 locked=1 | split tapw=+0 th=+11 off=+3
+CAP gs  2 op tapw=+0 th1=+10 th2=+10 off=+4 locked=1 | split tapw=+0 th=+11 off=+4
+CAP gs  3 op tapw=+0 th1=+10 th2=+11 off=+3 locked=1 | split tapw=+0 th=+11 off=+3
+CAP gs  4 op tapw=+0 th1=+10 th2=+11 off=+3 locked=1 | split tapw=+0 th=+10 off=+4
+CAP gs  5 op tapw=+0 th1=+10 th2=+11 off=+3 locked=1 | split tapw=+0 th=+10 off=+4
+CAP gs  6 op tapw=+0 th1=+10 th2=+11 off=+3 locked=1 | split tapw=+0 th=+11 off=+3
+CAP gs  7 op tapw=+0 th1=+10 th2=+10 off=+4 locked=1 | split tapw=+0 th=+11 off=+3
+CAP gs  8 op tapw=+0 th1=+11 th2=+10 off=+3 locked=1 | split tapw=+1 th=+11 off=+4
+CAP gs  9 op tapw=+0 th1=+10 th2=+11 off=+3 locked=1 | split tapw=+0 th=+10 off=+3
+CAPSTAT board=gs r1_end op={"tapw": [0], "th_mon1": [10, 11], "th_mon2": [10, 11], "offset": [3, 4]} split={"tapw": [0, 1], "th_mon": [10, 11], "offset": [3, 4]}

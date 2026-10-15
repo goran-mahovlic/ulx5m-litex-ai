@@ -1386,3 +1386,93 @@ JTAG PEER 200/200. So neither the bitstream defaults nor the link data pattern s
 - Calibration toward the operating point: the diagnose finding "thresholds railed at +15" explains why the DFE tap adapts to 0; pinning
   the gs tap to +2 lowers the m2→gs BER ×3–28 on 3/3 loads. Lowering m2 TX_AMP instead helps gs but costs the m2 receiver ×30–40 → rejected.
 - 5 G P2: diagnose/capture only (CDR unlocked on both, BER 3·10⁻², gs thresholds 13–14 not railed, TAPW 2–3); no calibration attempted.
+
+## 18. TASK-5527: after Goran's C143/C144 repair (15.10. 18:49) — calibration first (uputa #336), then 3 × 300 s — **no fixed recipe holds; the worse direction changes from load to load, and a TAPW +2 pin helps only the receiver that is bad on that load**
+
+Goran 15.10. 17:46 "new measurement of the worse direction"; 18:32 pause (C143/C144 on M2, the 220 nF 0201 coupling caps of M2→GS, TASK-5524);
+19:05 uputa #336: "first calibration/equalisation, only then the measurement". Same bits as §16/§17 (`/home/pi/fpga/{m2,gs}_2g5.bit`), lab22
+procedure per load (m2 then gs `-r`, SET_ACC 2→0), no power cycle, metric = serial BER (`lab/ber_long.py`, both directions at once, gs own
+counters for M2→GS, m2 counters carried in the gs UART line for GS→M2; 0 errors → 95 % upper bound). Raw: `docs/data_20261015/t5527/`
+(`lab2[8-9]*`, `quick30.*`, `lab3[0-5].{sh,out}`, `log3*/`, `calib_table_lab30-32.md`, `calib_table_lab34.md`, `png33/`, `png35/`).
+Tables: `tools/lab/calib_table.py` (PT lines → BER + ratio vs the nearest A row of the same load), `tools/lab/aba_table.py` (A1/B/A2).
+
+### 18.1 Before the repair (17:45–18:33, lab28/lab29) — not valid any more
+
+After the first change at 17:45 M2→GS was 1.0·10⁻²…4·10⁻² on every load (lab28 r1 A1/B/A2 300 s: 1.3·10⁻² / 4.1·10⁻² / 1.3·10⁻²) and no
+gs RX lever (AFE_GAIN 1–8, PEAK 8–31, TAPW −4…+4, CDR CKP/CKI, EQA_LOCK_CFG; lab29, 20 s points) moved it below 1.5·10⁻². Goran found
+the C143/C144 fault; lab29 was stopped at 18:33 and is kept only as a record.
+
+### 18.2 quick30 (REGOČ 18:51, after the repair)
+
+Both boards on JTAG, health without problems (PLL BISC flags as always), JTAG PEER 200/200 both, TH_MON +15 / +15 on both receivers, gs
+RX_OFFSET 1, m2 7. 60 s: **M2→GS 8.9·10⁻¹¹, GS→M2 8.9·10⁻⁹** — the C143/C144 fault is gone, and on this load GS→M2 was the worse one.
+
+### 18.3 Calibration screening (lab30/lab31 19:08–20:40 one load, lab32 two fresh loads 20:34–21:05)
+
+The lab30 load came up the other way round: **M2→GS 1.5–3.3·10⁻⁷, GS→M2 0–2·10⁻¹¹**. Every change undone before the next, A rows in
+between (30 s points, the offset block 60 s). Full tables in `calib_table_lab30-32.md`; the levers that matter:
+
+| Lever (one load, lab30/31) | M2→GS (A ≈ 1.5–3·10⁻⁷) | GS→M2 (A ≈ 0–1·10⁻¹⁰) | Verdict |
+|---|---|---|---|
+| m2 RX TAPW −2…+3, AFE_GAIN 1–8, PEAK 8–31, CDR CKP/CKI, EQA_LOCK_CFG, AFE offset 6/8 | unchanged | ×3–1000 **worse** or unchanged | m2 RX stays adapted (on this load GS→M2 had no resolution, see 18.5) |
+| gs RX AFE_GAIN 1–8 / PEAK / CDR / LOCK_CFG | ×1 … ×5 worse | unchanged | rejected |
+| gs RX AFE offset pinned (uputa #337: 1, 0, 3; freeze control without override 2.6·10⁻⁷) | 1.1·10⁻⁷ / 4.5·10⁻⁸ / 3.2·10⁻⁷ | unchanged | at most ×4 → **not the recipe**; the load-start offset 1↔2 correlates with good/bad loads but pinning it does not reproduce a good load |
+| **gs RX TAPW +2 (pin)** | **3.2·10⁻¹⁰** (lab30, ×700) / 1.8·10⁻⁸ (lab31, ×11); +1 1.9–4·10⁻⁸, +3 2.2·10⁻⁸, −1 1·10⁻⁶ | unchanged | best single lever on a bad M2→GS load |
+| gs TX_AMP 16 / m2 TX_AMP 24–16 | 4.7·10⁻¹⁰ / 2.5–5·10⁻⁸ | 4·10⁻¹⁰ / **1.2–3.2·10⁻⁹** | lowering a TX amplitude helps one direction and costs the other (as lab26) |
+| m2 TX_SEL_POST 10 | 2.0·10⁻⁸ (×9) | unchanged | candidate |
+| m2 TX_BRANCH_EN_PRE 0 / gs BRANCH_EN_POST 0 | 8.8·10⁻¹⁰ / 2.5·10⁻⁹ | 4.8·10⁻¹⁰ (×20 worse) / unchanged | rejected / unstable (lab32 r2 ×10 worse) |
+
+Recipe selection on two fresh loads (lab32, 60 s per recipe, `calib_table_lab30-32.md`): r1 (M2→GS A 2.9·10⁻⁸/7.7·10⁻⁹) R1 gs TAPW+2
+2.6·10⁻⁹, **R5 = gs TAPW+2 + m2 TX_SEL_POST 10: 8.0·10⁻¹⁰ (GS→M2 2.0·10⁻¹⁰)**, R4 gs TX_AMP 16 1.3·10⁻¹⁰ but GS→M2 1.0·10⁻⁹; r2 (a good
+M2→GS load, A 3.2·10⁻⁹/4.9·10⁻⁹) R5 3.9·10⁻⁹ (= A), R1 9.1·10⁻⁹, R4 GS→M2 1.1·10⁻⁸. R5 was chosen (21:08, chat) as the best balance.
+
+### 18.4 Step 2 — measurement with R5, 3 fresh loads × A1/B/A2 300 s (lab33 21:06–22:05) — **R5 rejected**
+
+JTAG PEER 200/200 at start / B / end of every load; health without problems; throttled 0xd0005 at r1/r2 start (under-voltage flag of the
+Pi itself, as in lab28), 0xd0000 at r3. B = gs `freeze RX_TAPW=2` + m2 `set TX_SEL_POST=10`, undone before A2 (`png33/aba.png`).
+
+| Load (gs RX_OFFSET at start) | M2→GS A1 | **M2→GS B (R5)** | M2→GS A2 | GS→M2 A1 | GS→M2 B | GS→M2 A2 |
+|---|---|---|---|---|---|---|
+| r1 (0/1/2) | 5.6·10⁻¹² | ≤ 8.4·10⁻¹² (0 err) | 5.0·10⁻¹² | 8.4·10⁻¹² | ≤ 8.4·10⁻¹² (0 err) | 1.0·10⁻¹¹ |
+| r2 (1/2) | 2.2·10⁻⁹ | **1.7·10⁻⁸** | 1.2·10⁻⁹ | 1.7·10⁻⁸ | 1.7·10⁻⁸ | 1.9·10⁻⁸ |
+| r3 (1) | 8.5·10⁻¹⁰ | **2.9·10⁻⁸** | 4.1·10⁻⁹ | 3.6·10⁻⁸ | 2.4·10⁻⁸ | 6.0·10⁻⁸ |
+| median | 8.5·10⁻¹⁰ | 1.7·10⁻⁸ | 1.2·10⁻⁹ | 1.7·10⁻⁸ | 1.7·10⁻⁸ | 1.9·10⁻⁸ |
+
+r1 is the best load ever recorded on this pair (both directions ≈ 10⁻¹¹ without any recipe). On r2 and r3 M2→GS was already good
+(≈ 10⁻⁹) and **R5 made it ×7–30 worse**, while GS→M2 was the bad direction (1.7–6·10⁻⁸) and R5 does not touch the m2 RX. So the
+recipe chosen on the lab30–32 loads (where M2→GS was bad) is not a recipe for the pair.
+
+### 18.5 Why: the pin helps only the receiver that is bad on that load (lab34 on lab33-r3, lab35 conditional rule on 3 fresh loads)
+
+lab34 (22:10–22:25, the r3 load kept, 60 s points, `calib_table_lab34.md`): GS→M2 A 4.9–5.6·10⁻⁸ — m2 TAPW +1 1.6·10⁻⁸, **+2 9.8·10⁻⁹,
++3 8.7·10⁻⁹**, −1 3.3·10⁻⁷, +4 7.0·10⁻⁸; m2 AFE offset pinned 8 5.0·10⁻⁹, 6 8.5·10⁻⁸; and **gs TAPW +2 on this good M2→GS (9·10⁻¹⁰)
+→ 1.0·10⁻⁷**. Together with lab30 (gs pin on a bad M2→GS ×700) and lab30 (m2 pin on a good GS→M2 → ×50–1000 worse): the tap +2 is
+the bottom of the bathtub only when the adapted point (tap 0, thresholds on the +15 rail) is the bad one; otherwise it moves a good
+receiver off its point. The DFE cannot find this itself while TH_MON is railed (Dora, SERDES_UMJERAVANJE_KAKO_DRUGI §6: no gradient at
+the DAC rail → the adapted point depends on the start conditions = the "load lottery").
+
+lab35 (22:26–23:15, `png35/aba.png`), rule per load: A1 120 s; a direction with BER > 5·10⁻⁹ gets TAPW +2 on its receiver; B 300 s; A2 300 s.
+
+| Load (gs offset) | M2→GS A1 / B / A2 | GS→M2 A1 / B / A2 | Rule |
+|---|---|---|---|
+| r1 (2) | 1.5·10⁻⁷ / **4.0·10⁻⁹** / 1.2·10⁻⁷ | 1.8·10⁻¹⁰ / 2.8·10⁻¹⁰ / 1.7·10⁻¹⁰ | pin gs (×34) |
+| r2 (–) | 6.4·10⁻¹² / 1.4·10⁻¹¹ / 1.4·10⁻¹¹ | 4.7·10⁻⁹ / 7.4·10⁻⁹ / 4.8·10⁻⁹ | none (GS→M2 just below 5·10⁻⁹) |
+| r3 (–) | 4.2·10⁻¹⁰ / 8.8·10⁻¹⁰ / 1.7·10⁻⁹ | 1.9·10⁻¹¹ / 2.6·10⁻¹⁰ / 6.6·10⁻¹⁰ | none |
+
+The rule repairs the bad receiver (×34) and leaves good loads alone, but the worst load after the rule is still ≈ 4–7·10⁻⁹, not < 10⁻⁹
+(G9). Over the 10 loads after the repair (first A step of quick30, lab30, lab32 ×2, lab33 ×3, lab35 ×3) the median of the adapted A is
+M2→GS 1.5·10⁻⁹ (range 5.6·10⁻¹²…1.5·10⁻⁷) and GS→M2 4.4·10⁻¹⁰ (8.4·10⁻¹²…3.6·10⁻⁸); the worse direction is M2→GS on 5 loads, GS→M2
+on 4, one tie (lab33 r1). Compared with the morning (§16: median gs→m2 3.6·10⁻¹⁰, m2→gs 4.1·10⁻⁹) M2→GS is ×2.7 better in the median,
+GS→M2 about the same; the load-to-load spread (4–5 decades) is unchanged.
+
+### 18.6 Uputa #338 P1/P2 (EYE_MEAS_UZROK.md §4) — **W/C strobes execute; only the eye engine is dead** (lab36 23:14–23:20)
+
+PRBS-15 gs TX → m2 RX checker (`tools/lab/strobe_probe.py`, one board per `fpga-jtag … run`): RX_PRBS_LOCKED 1, ERR_CNT 0→1 in ~10 s.
+- **P1:** gs `TX_PRBS_FORCE_ERR` ×200 (7.8 s) and ×20 → m2 `RX_PRBS_ERR_CNT` 1 → **32767** (saturated) both times, field reads back 0
+  (self-cleared). m2 `RX_PRBS_CNT_RESET` → ERR_CNT 32767 → **0** with no extra TCK, field reads back 0. So W/C strobes are executed
+  through the JTAG path with `REGFILE_CLK_I = 0` → **H-A (no W/C strobe ever executes) is false** for these two strobes.
+- **P2:** after the upstream freeze, `RX_EYE_MEAS_CFG` 15, `RX_EYE_MEAS_EN` 1 and then 0 / 10⁵ / 10⁶ TCK in Run-Test/Idle (up to
+  4.8 s): 0x14 = 0x00F1 (EN still 1), counters 0x16–0x1D all 0. Extra TCK changes nothing.
+- So the dead part is the eye measurement engine itself (H-B: silicon revision or an enable outside the regfile) → question to Patrick,
+  P3 (free clock on `REGFILE_CLK_I`) is not expected to help. Side effect for G7: an RX reset strobe over JTAG most likely does execute.
+- After lab36 the standard pair was reloaded, JTAG PEER 200/200 on both.

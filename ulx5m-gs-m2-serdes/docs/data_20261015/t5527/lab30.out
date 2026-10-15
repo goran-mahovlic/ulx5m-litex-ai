@@ -1,0 +1,54 @@
+-- load 19:08:16 throttled=0xd0000
+Done
+Done
+HEALTH board=m2 l30 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs l30 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+CAPSTAT board=m2  op={"tapw": [0], "th_mon1": [15], "th_mon2": [15], "offset": [7]} split={"tapw": [0], "th_mon": [15], "offset": [7]}
+CAPSTAT board=gs  op={"tapw": [0], "th_mon1": [15], "th_mon2": [15], "offset": [2]} split={"tapw": [0], "th_mon": [15], "offset": [2]}
+JTAG start m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG start gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+PT A0 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 30.0 gs->m2 BER=1.9999876096767606e-11 (<None) m2->gs BER=1.4655909191986647e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT m2_tapw-2 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=-2 | 30.2 gs->m2 BER=9.894675782581781e-10 (<None) m2->gs BER=7.907319465589296e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT m2_tapw-1 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=-1 | 30.0 gs->m2 BER=4.599971502256549e-10 (<None) m2->gs BER=1.5211905856557034e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT m2_tapw1 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=1 | 25.2 gs->m2 BER=0.0 (<2.3999852544905965e-10) m2->gs BER=2.571984049583718e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT m2_tapw2 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=2 | 33.8 gs->m2 BER=1.902690880924291e-09 (<None) m2->gs BER=1.289721738753266e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT m2_tapw3 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=3 | 30.0 gs->m2 BER=2.0759871388444774e-08 (<None) m2->gs BER=1.1021931655206193e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT A1 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 32.6 gs->m2 BER=2.1052501097761617e-11 (<None) m2->gs BER=2.5871418533680286e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT m2_gain1 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 30.2 gs->m2 BER=2.030756673819656e-09 (<None) m2->gs BER=1.1376339716103192e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT m2_gain2 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 30.0 gs->m2 BER=2.7399830252571618e-09 (<None) m2->gs BER=1.383991408181338e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT m2_gain4 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 30.0 gs->m2 BER=1.2512742813179396e-09 (<None) m2->gs BER=1.403068217434371e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT m2_gain8 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 30.0 gs->m2 BER=7.999950348795962e-10 (<None) m2->gs BER=8.366777366519798e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT m2_peak8 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=2 RX_EQA_TAPW=0 | 30.0 gs->m2 BER=1.6179899348082136e-08 (<None) m2->gs BER=1.4115912402293996e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT m2_peak16 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 30.2 gs->m2 BER=1.1999925658060563e-10 (<None) m2->gs BER=2.3035857140828355e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT m2_peak28 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 30.0 gs->m2 BER=5.999962829030281e-11 (<None) m2->gs BER=1.3897913721751617e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT m2_peak31 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 30.0 gs->m2 BER=0.0 (<6.315750329328485e-11) m2->gs BER=2.093460688006575e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT A2 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 30.0 gs->m2 BER=0.0 (<5.999962675432189e-11) m2->gs BER=1.7559891030340223e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT m2_ckp31 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 33.0 gs->m2 BER=6.486446184969173e-11 (<None) m2->gs BER=1.7377189494849517e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT m2_ckp124 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 30.0 gs->m2 BER=0.0 (<6.1538079409079e-11) m2->gs BER=2.827059351815721e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT m2_cki4 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 26.2 gs->m2 BER=0.0 (<2.3999852544905965e-10) m2->gs BER=2.236786099716462e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT m2_cki16 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 34.2 gs->m2 BER=4.444416885109164e-11 (<None) m2->gs BER=2.2128751513599493e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT m2_lockcfg0 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 26.6 gs->m2 BER=7.999950029112139e-11 (<None) m2->gs BER=2.1927863801652355e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT m2_lockcfg8 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 33.8 gs->m2 BER=6.666625327663747e-11 (<None) m2->gs BER=2.72864972720916e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT m2_lockcfg14 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 25.0 gs->m2 BER=3.1999800116448555e-10 (<None) m2->gs BER=2.330385525509424e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT A3 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 25.8 gs->m2 BER=0.0 (<2.3999850087336416e-10) m2->gs BER=6.335960524431549e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_amp24 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 25.9 gs->m2 BER=3.9999750145560693e-10 (<None) m2->gs BER=6.175961659630017e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_amp16 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=2 RX_EQA_TAPW=0 | 33.4 gs->m2 BER=3.9999751832127927e-10 (<None) m2->gs BER=4.705853147862911e-10 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_amp10 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=13 RX_OFFSET=2 RX_EQA_TAPW=1 | 30.0 gs->m2 BER=1.1999925658060563e-10 (<None) m2->gs BER=3.293979532528777e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_post0 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 30.0 gs->m2 BER=1.84614238227237e-10 (<None) m2->gs BER=1.3169148939515965e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_post10 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 30.0 gs->m2 BER=1.1999925658060563e-10 (<None) m2->gs BER=8.081949820789952e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_post15 | board=m2 RX_CDR_LOCKED=0 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=6 RX_EQA_TAPW=0 | 30.0 gs->m2 BER=6.048742946650605e-10 (<None) m2->gs BER=1.9346221377171813e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_pre0 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 30.0 gs->m2 BER=1.0256346568179833e-10 (<None) m2->gs BER=8.953790554020994e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_pre10 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 30.0 gs->m2 BER=6.599958942975408e-10 (<None) m2->gs BER=1.1001931656000553e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_brpost0 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 30.0 gs->m2 BER=1.5609659217162853e-10 (<None) m2->gs BER=2.5365695950724726e-09 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_brpost31 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 30.0 gs->m2 BER=9.170674790083176e-10 (<None) m2->gs BER=1.51725887353984e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_brpre0 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 30.0 gs->m2 BER=8.421000439104647e-11 (<None) m2->gs BER=2.0547240690753028e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_brpre31 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 30.0 gs->m2 BER=4.599971384498011e-10 (<None) m2->gs BER=1.8591884417972951e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT A4 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 30.6 gs->m2 BER=1.0526250265227823e-10 (<None) m2->gs BER=2.3401959569947704e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_tapw1 | board=gs RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=2 RX_EQA_TAPW=1 | 32.4 gs->m2 BER=0.0 (<6.153807779332002e-11) m2->gs BER=1.934346937364371e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_tapw2 | board=gs RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=2 RX_EQA_TAPW=2 | 25.2 gs->m2 BER=0.0 (<2.3999850087336416e-10) m2->gs BER=3.199980144763198e-10 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT A5 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 26.2 gs->m2 BER=0.0 (<2.3999852544905965e-10) m2->gs BER=3.3303793250051504e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+BASE m2 board=m2 RX_AFE_GAIN=0 RX_AFE_PEAK=24 RX_CDR_CKP=62 RX_CDR_CKI=0 RX_EQA_LOCK_CFG=12 TX_AMP=31 TX_SEL_PRE=5 TX_SEL_POST=5 TX_BRANCH_EN_PRE=12 TX_BRANCH_EN_POST=12
+BASE gs board=gs RX_AFE_GAIN=0 RX_AFE_PEAK=24 RX_CDR_CKP=62 RX_CDR_CKI=0 RX_EQA_LOCK_CFG=12 TX_AMP=31 TX_SEL_PRE=5 TX_SEL_POST=5 TX_BRANCH_EN_PRE=12 TX_BRANCH_EN_POST=12
+JTAG end m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG end gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+LAB30 DONE 19:48:10

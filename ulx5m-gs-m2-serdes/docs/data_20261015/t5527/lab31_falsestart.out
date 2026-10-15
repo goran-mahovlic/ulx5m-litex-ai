@@ -1,0 +1,3 @@
+bash: line 1: 3907: command not found
+-- lab31 19:18:22 throttled=0xd0005
+NOTE 19:18 lab31 slucajno pokrenut paralelno (kill -0 lista PID-ova), ugasen u M gs A0 prije ijednog set; tocka lab30 m2_gain1 mozda kontaminirana (dva ber_long citaca)

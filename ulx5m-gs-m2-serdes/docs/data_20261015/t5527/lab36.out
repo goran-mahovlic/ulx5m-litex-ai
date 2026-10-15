@@ -1,0 +1,30 @@
+-- lab36 23:14:55 throttled=0xd0000
+STATE board=gs step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS_OVR': 1, 'TX_PRBS_SEL': 2, 'RX_CDR_LOCKED': 1}
+STATE board=m2 step=rx_prbs_on {'RX_PRBS_LOCKED': 1, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 1, 'RX_PRBS_SEL': 2, 'TX_PRBS_OVR': 0, 'TX_PRBS_SEL': 0, 'RX_CDR_LOCKED': 1}
+STATE board=m2 step=cnt {'RX_PRBS_LOCKED': 1, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 1, 'RX_PRBS_SEL': 2, 'TX_PRBS_OVR': 0, 'TX_PRBS_SEL': 0, 'RX_CDR_LOCKED': 1}
+STATE board=m2 step=cnt {'RX_PRBS_LOCKED': 1, 'RX_PRBS_ERR_CNT': 1} {'RX_PRBS_OVR': 1, 'RX_PRBS_SEL': 2, 'TX_PRBS_OVR': 0, 'TX_PRBS_SEL': 0, 'RX_CDR_LOCKED': 1}
+STATE board=m2 step=cnt {'RX_PRBS_LOCKED': 1, 'RX_PRBS_ERR_CNT': 1} {'RX_PRBS_OVR': 1, 'RX_PRBS_SEL': 2, 'TX_PRBS_OVR': 0, 'TX_PRBS_SEL': 0, 'RX_CDR_LOCKED': 1}
+FORCE board=gs n=200 secs=7.79 field_after=0
+STATE board=gs step=force {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS_OVR': 1, 'TX_PRBS_SEL': 2, 'RX_CDR_LOCKED': 1}
+STATE board=m2 step=cnt {'RX_PRBS_LOCKED': 1, 'RX_PRBS_ERR_CNT': 32767} {'RX_PRBS_OVR': 1, 'RX_PRBS_SEL': 2, 'TX_PRBS_OVR': 0, 'TX_PRBS_SEL': 0, 'RX_CDR_LOCKED': 1}
+CNT_RESET board=m2 rti=0 (0.000s) before={'RX_PRBS_LOCKED': 1, 'RX_PRBS_ERR_CNT': 32767} field_after=0 after={'RX_PRBS_LOCKED': 1, 'RX_PRBS_ERR_CNT': 0}
+STATE board=m2 step=cnt_reset {'RX_PRBS_LOCKED': 1, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 1, 'RX_PRBS_SEL': 2, 'TX_PRBS_OVR': 0, 'TX_PRBS_SEL': 0, 'RX_CDR_LOCKED': 1}
+CNT_RESET board=m2 rti=100000 (0.391s) before={'RX_PRBS_LOCKED': 1, 'RX_PRBS_ERR_CNT': 0} field_after=0 after={'RX_PRBS_LOCKED': 1, 'RX_PRBS_ERR_CNT': 0}
+STATE board=m2 step=cnt_reset {'RX_PRBS_LOCKED': 1, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 1, 'RX_PRBS_SEL': 2, 'TX_PRBS_OVR': 0, 'TX_PRBS_SEL': 0, 'RX_CDR_LOCKED': 1}
+FORCE board=gs n=0 secs=0.00 field_after=0
+STATE board=gs step=force {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS_OVR': 1, 'TX_PRBS_SEL': 2, 'RX_CDR_LOCKED': 1}
+STATE board=m2 step=cnt {'RX_PRBS_LOCKED': 1, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 1, 'RX_PRBS_SEL': 2, 'TX_PRBS_OVR': 0, 'TX_PRBS_SEL': 0, 'RX_CDR_LOCKED': 1}
+FORCE board=gs n=20 secs=1.17 field_after=0
+STATE board=gs step=force {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS_OVR': 1, 'TX_PRBS_SEL': 2, 'RX_CDR_LOCKED': 1}
+STATE board=m2 step=cnt {'RX_PRBS_LOCKED': 1, 'RX_PRBS_ERR_CNT': 32767} {'RX_PRBS_OVR': 1, 'RX_PRBS_SEL': 2, 'TX_PRBS_OVR': 0, 'TX_PRBS_SEL': 0, 'RX_CDR_LOCKED': 1}
+EYE board=m2 rti=0 (0.000s) 0x14 before=00F0 after=00F1 cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+EYE board=m2 rti=100000 (0.391s) 0x14 before=00F0 after=00F1 cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+EYE board=m2 rti=1000000 (4.802s) 0x14 before=00F0 after=00F1 cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+STATE board=m2 step=rx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 32767} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS_OVR': 0, 'TX_PRBS_SEL': 0, 'RX_CDR_LOCKED': 0}
+STATE board=gs step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS_OVR': 0, 'TX_PRBS_SEL': 0, 'RX_CDR_LOCKED': 1}
+-- reload standard pair 23:17:43
+Done
+Done
+JTAG end m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG end gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+LAB36 DONE 23:19:56

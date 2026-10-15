@@ -1,0 +1,13 @@
+-- lab34 22:10:09 throttled=0xd0000
+PT A0 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 60.0 gs->m2 BER=5.024446472970778e-08 (<None) m2->gs BER=9.193972906297003e-10 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT m2_tapw1 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=1 | 60.1 gs->m2 BER=1.648944979354607e-08 (<None) m2->gs BER=1.0387995247548055e-09 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT m2_tapw2 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=2 | 60.1 gs->m2 BER=9.828510467094849e-09 (<None) m2->gs BER=9.59994042551256e-10 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT m2_tapw3 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=3 | 60.0 gs->m2 BER=8.690855154935281e-09 (<None) m2->gs BER=7.878738967576368e-10 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT A1 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 60.1 gs->m2 BER=4.862059419661837e-08 (<None) m2->gs BER=9.07457058708104e-10 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT m2_tapw-1 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=-1 | 60.1 gs->m2 BER=3.292849114047381e-07 (<None) m2->gs BER=7.072419898612803e-10 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT m2_tapw4 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=4 | 60.0 gs->m2 BER=6.966623388144413e-08 (<None) m2->gs BER=2.1066535964259803e-09 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT m2_off6 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=6 RX_EQA_TAPW=0 | 60.0 gs->m2 BER=8.460843086376173e-08 (<None) m2->gs BER=1.5880498565315162e-09 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT m2_off8 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=0 RX_EQA_TAPW=0 | 59.0 gs->m2 BER=5.030477261743797e-09 (<None) m2->gs BER=1.5186346475257146e-09 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_tapw2 | board=gs RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=1 RX_EQA_TAPW=2 | 60.1 gs->m2 BER=4.672209778576812e-08 (<None) m2->gs BER=1.010381794007301e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT A2 | board=m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 60.0 gs->m2 BER=5.632692315897385e-08 (<None) m2->gs BER=1.1999925568461675e-09 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+LAB34 DONE 22:25:02

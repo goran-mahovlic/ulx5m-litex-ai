@@ -1,0 +1,61 @@
+-- load r1 21:06:29 throttled=0xd0005
+Done
+Done
+HEALTH board=m2 r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs r1 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+CAPSTAT board=m2  op={"tapw": [0], "th_mon1": [15], "th_mon2": [15], "offset": [7]} split={"tapw": [0], "th_mon": [15], "offset": [7]}
+CAPSTAT board=gs  op={"tapw": [0], "th_mon1": [15], "th_mon2": [15], "offset": [0, 1, 2]} split={"tapw": [0], "th_mon": [15], "offset": [0, 1]}
+JTAG r1_start m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG r1_start gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER r1_A1 TOTAL secs=298.5 gs->m2 BER=8.421000393720168e-12 (<None) m2->gs BER=5.614000268153172e-12 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=5
+FREEZE board=gs op={'th_mon1': 15, 'tapw': 0, 'offset': 1, 'th_mon2': 15, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE': 7, 'RX_TAPW': 2, 'RX_TH_MON1': 15, 'RX_TH_MON2': 15, 'RX_AFE_OFFSET': 8, 'RX_CDR_LOCKED': 1}
+board=m2 set TX_SEL_POST=10
+JTAG r1_B m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG r1_B gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER r1_B_R5 TOTAL secs=297.4 gs->m2 BER=0.0 (<8.42100033320753e-12) m2->gs BER=0.0 (<8.42100033888059e-12) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=5
+RESTORE board=gs {'RX_EN_EQA': 1, 'RX_EN_EQA_EXT_VALUE': 0, 'RX_EQA_CONFIG': 448, 'RX_EQA_LOCKED': 1, 'RX_CDR_LOCKED': 1}
+board=m2 set TX_SEL_POST=5
+BER r1_A2 TOTAL secs=303.9 gs->m2 BER=9.999937952384993e-12 (<None) m2->gs BER=4.999968966692614e-12 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=5
+JTAG r1_end m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG r1_end gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+-- load r2 21:27:40 throttled=0xd0005
+Done
+Done
+HEALTH board=m2 r2 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs r2 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+CAPSTAT board=m2  op={"tapw": [0], "th_mon1": [15], "th_mon2": [15], "offset": [7]} split={"tapw": [0], "th_mon": [15], "offset": [7]}
+CAPSTAT board=gs  op={"tapw": [0], "th_mon1": [15], "th_mon2": [15], "offset": [1, 2]} split={"tapw": [0], "th_mon": [15], "offset": [1, 2]}
+JTAG r2_start m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG r2_start gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER r2_A1 TOTAL secs=299.90000000000003 gs->m2 BER=1.668480872014304e-08 (<None) m2->gs BER=2.248407094015434e-09 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=5
+FREEZE board=gs op={'th_mon1': 15, 'tapw': 0, 'offset': 1, 'th_mon2': 15, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE': 7, 'RX_TAPW': 2, 'RX_TH_MON1': 15, 'RX_TH_MON2': 15, 'RX_AFE_OFFSET': 8, 'RX_CDR_LOCKED': 1}
+board=m2 set TX_SEL_POST=10
+JTAG r2_B m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG r2_B gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER r2_B_R5 TOTAL secs=297.2 gs->m2 BER=1.6878216951228055e-08 (<None) m2->gs BER=1.6531365923245512e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=5
+RESTORE board=gs {'RX_EN_EQA': 1, 'RX_EN_EQA_EXT_VALUE': 0, 'RX_EQA_CONFIG': 448, 'RX_EQA_LOCKED': 1, 'RX_CDR_LOCKED': 1}
+board=m2 set TX_SEL_POST=5
+BER r2_A2 TOTAL secs=303.9 gs->m2 BER=1.862013755565835e-08 (<None) m2->gs BER=1.1873344017811145e-09 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=5
+JTAG r2_end m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG r2_end gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+-- load r3 21:48:55 throttled=0xd0000
+Done
+Done
+HEALTH board=m2 r3 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+HEALTH board=gs r3 problems=PLL_BISC_TIMER_DONE=0,PLL_BISC_CP_VALID=0 freq_acc=[0, 0, 0] span=0
+CAPSTAT board=m2  op={"tapw": [0], "th_mon1": [15], "th_mon2": [15], "offset": [7]} split={"tapw": [0], "th_mon": [15], "offset": [7]}
+CAPSTAT board=gs  op={"tapw": [0], "th_mon1": [15], "th_mon2": [15], "offset": [1]} split={"tapw": [0], "th_mon": [15], "offset": [1, 2]}
+JTAG r3_start m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG r3_start gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER r3_A1 TOTAL secs=299.70000000000005 gs->m2 BER=3.580328641668735e-08 (<None) m2->gs BER=8.477140346850675e-10 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=5
+FREEZE board=gs op={'th_mon1': 15, 'tapw': 0, 'offset': 2, 'th_mon2': 15, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE': 7, 'RX_TAPW': 2, 'RX_TH_MON1': 15, 'RX_TH_MON2': 15, 'RX_AFE_OFFSET': 8, 'RX_CDR_LOCKED': 1}
+board=m2 set TX_SEL_POST=10
+JTAG r3_B m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG r3_B gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER r3_B_R5 TOTAL secs=299.90000000000003 gs->m2 BER=2.3761256196320323e-08 (<None) m2->gs BER=2.8519121403845766e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=5
+RESTORE board=gs {'RX_EN_EQA': 1, 'RX_EN_EQA_EXT_VALUE': 0, 'RX_EQA_CONFIG': 448, 'RX_EQA_LOCKED': 1, 'RX_CDR_LOCKED': 1}
+board=m2 set TX_SEL_POST=5
+BER r3_A2 TOTAL secs=303.4 gs->m2 BER=5.9561001258692356e-08 (<None) m2->gs BER=4.064772284217306e-09 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=5
+JTAG r3_end m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG r3_end gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+LAB33 DONE 22:10:09

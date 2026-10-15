@@ -1,0 +1,31 @@
+-- load 18:12:08 throttled=0xd0005
+Done
+Done
+JTAG start m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG start gs: rx: OTHER 60/200 PEER 140/200 distinct=200  expect=peer -> FAIL
+PT A0 | RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=11 RX_OFFSET=3 RX_EQA_TAPW=0 | 20.0 gs->m2 BER=1.0899496695414002e-08 (<None) m2->gs BER=0.015631528749354688 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_gain1 | RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=3 RX_EQA_TAPW=2 | 18.6 gs->m2 BER=None (<None) m2->gs BER=0.030109987563820596 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_gain2 | RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=3 RX_EQA_TAPW=1 | 18.4 gs->m2 BER=None (<None) m2->gs BER=0.030939958953684482 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_gain3 | RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=3 RX_EQA_TAPW=1 | 16.2 gs->m2 BER=None (<None) m2->gs BER=0.04652171945960339 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_gain4 | RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=3 RX_EQA_TAPW=0 | 16.2 gs->m2 BER=None (<None) m2->gs BER=0.08109045690345226 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_gain6 | RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=4 RX_EQA_TAPW=0 | 21.4 gs->m2 BER=5.391998016128161e-09 (<None) m2->gs BER=0.016801608598581413 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_gain8 | RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=15 RX_OFFSET=7 RX_EQA_TAPW=0 | 23.8 gs->m2 BER=1.4802849726206492e-08 (<None) m2->gs BER=0.015617851687683017 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_peak8 | RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=6 RX_OFFSET=0 RX_EQA_TAPW=-1 | 24.2 gs->m2 BER=5.535748798020588e-09 (<None) m2->gs BER=0.07562833111565054 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_peak16 | RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=10 RX_OFFSET=3 RX_EQA_TAPW=0 | 23.2 gs->m2 BER=2.70388962328108e-08 (<None) m2->gs BER=0.01621079760447772 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_peak20 | RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=10 RX_OFFSET=2 RX_EQA_TAPW=0 | 23.4 gs->m2 BER=2.4687758633661875e-08 (<None) m2->gs BER=0.015219286184852639 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_peak28 | RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=10 RX_OFFSET=3 RX_EQA_TAPW=0 | 22.8 gs->m2 BER=1.3606846260769975e-08 (<None) m2->gs BER=0.01705288603988784 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_peak31 | RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=11 RX_OFFSET=4 RX_EQA_TAPW=0 | 15.4 gs->m2 BER=5.801148019412896e-09 (<None) m2->gs BER=0.017440400441402614 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT A1 | RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=10 RX_OFFSET=3 RX_EQA_TAPW=0 | 20.0 gs->m2 BER=8.220057458125166e-09 (<None) m2->gs BER=0.01688721097777593 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_tapw-4 | RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=10 RX_OFFSET=3 RX_EQA_TAPW=-4 | 15.4 gs->m2 BER=None (<None) m2->gs BER=None (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_tapw-2 | RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=10 RX_OFFSET=3 RX_EQA_TAPW=-2 | 21.6 gs->m2 BER=None (<None) m2->gs BER=0.031067095620062716 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_tapw-1 | RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=10 RX_OFFSET=3 RX_EQA_TAPW=-1 | 24.2 gs->m2 BER=5.841679757801183e-09 (<None) m2->gs BER=0.020470289130304006 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_tapw1 | RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=10 RX_OFFSET=3 RX_EQA_TAPW=1 | 24.2 gs->m2 BER=6.5319404230646065e-09 (<None) m2->gs BER=0.02010797246956779 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_tapw2 | RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=11 RX_OFFSET=3 RX_EQA_TAPW=2 | 21.6 gs->m2 BER=None (<None) m2->gs BER=0.041468191422846606 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_tapw4 | RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=10 RX_OFFSET=3 RX_EQA_TAPW=4 | 16.6 gs->m2 BER=None (<None) m2->gs BER=None (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_ckp31 | RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=11 RX_OFFSET=3 RX_EQA_TAPW=1 | 22.0 gs->m2 BER=1.5832879244103766e-08 (<None) m2->gs BER=0.016805726479027408 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_ckp124 | RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=10 RX_OFFSET=4 RX_EQA_TAPW=0 | 23.4 gs->m2 BER=9.237297257428313e-09 (<None) m2->gs BER=0.01687844067006008 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_ckp248 | RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=10 RX_OFFSET=3 RX_EQA_TAPW=0 | 23.4 gs->m2 BER=1.5282720851296407e-08 (<None) m2->gs BER=0.01689253039421761 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_cki1 | RX_CDR_LOCKED=0 RX_EQA_LOCKED=1 RX_TH_MON=11 RX_OFFSET=3 RX_EQA_TAPW=0 | 22.4 gs->m2 BER=1.2818558032697939e-08 (<None) m2->gs BER=0.01711026730839263 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_cki4 | RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=11 RX_OFFSET=3 RX_EQA_TAPW=1 | 24.0 gs->m2 BER=1.0998087189302493e-08 (<None) m2->gs BER=0.017164069492174774 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PT gs_cki16 | RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=11 RX_OFFSET=3 RX_EQA_TAPW=0 | 23.4 gs->m2 BER=7.916427524537496e-09 (<None) m2->gs BER=0.01686297596595853 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+PAUZA TASK-5527 18:33:19 lab29 zaustavljen (Goran pregledava C143/C144)
