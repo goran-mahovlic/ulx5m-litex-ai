@@ -1215,7 +1215,7 @@ on both boards at start and end; 5 G: m2 RX_CDR_LOCKED 0 at start and end (as §
   `*_CALIB_DONE = 1` both times. They are not set by the bitstream or by any lab tool.
 - History from the raw health JSONs: **0 / 0 on both boards on 26.–28.09.** (§9, `data_20260928/t5089/log/q1.health_*.json`, the good
   lab13 state) and on 12.10. before the rework; **9 / 7 on both boards** from 12.10. 17:24 (after Goran's supply-filter rework, §13) in
-  all 10 loads of §14.5 and in lab22 §15 (13.10.); **0 / 0 again on 15.10.** in all 10 health snapshots, both boards, both rates.
+  all 10 loads of §14.5 and in lab22 §15 (13.10.); **0 / 0 again on 15.10.** in all 24 health snapshots (quick + long, start + end, both boards, both rates).
 - Same bits, same `eyescan.py`, same procedure → the change is in the boards, not in the setup. The good BER coincides with 0 / 0 and
   the bad one with 9 / 7 in every run so far (correlation in 3 periods, not proof of cause). An identical 9 / 7 on two different dies,
   constant over 13 loads, looks more like a common supply / reference condition seen by the calibration than a per-die trim.
