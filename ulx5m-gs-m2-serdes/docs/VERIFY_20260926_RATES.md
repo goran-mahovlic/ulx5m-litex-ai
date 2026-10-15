@@ -1164,3 +1164,65 @@ Comparison (2.5 G, median gs→m2 / m2→gs): 28.09. lab12 separate refclks + RT
 - Finding (tooling, not hardware): after a UART `Z` the m2 checker re-clears its counters every ~10–20 s, because `ber_top.v` r.146
   executes a command whenever the aux-frame command byte changes and that frame has no check; a corrupted-then-restored byte counts as
   a new `Z`. `ber_long.py` therefore never sends `Z`. Gateware fix (accept a command only after two identical frames) not done.
+
+## 16. TASK-5522: re-run of the lab22 procedure on 15.10.2026 (Goran 12:02 "recalibrate and test SerDes again") — **2.5 G is back at the 28.09. level, 5 G still does not work**
+
+Procedure = `lab22.sh` of §15 unchanged (only the log path and `SECS`/`SECS5` parameters): per load `fpga-jtag m2 … -r`, `fpga-jtag gs … -r`,
+SET_ACC 2→0, `eyescan.py health`, `ber_jtag_check`, `ber_long.py` over the gs UART (snapshot every 60 s, no `Z`), health + JTAG at the end.
+Same bits as §15 (`/home/pi/fpga/{m2,gs}_{2g5,5g}.bit`, mtime 12.10. 16:47, unchanged), same `eyescan.py` (12.10. 21:38). No power cycle.
+Quick round 12:03–12:22 (1 × 60 s 2.5 G + 1 × 60 s 5 G P2), long round 12:22–13:07 (3 × 300 s 2.5 G + 1 × 300 s 5 G P2).
+Raw: `docs/data_20261015/t5522/` (`lab.sh`, `quick.out`, `long.out`, `log/`, `log_quick/`).
+
+| Rate | Load | Time | gs→m2 BER (errors / bits) | m2→gs BER (errors / bits) | synced gs→m2 / m2→gs | 60 s intervals gs→m2 ; m2→gs | JTAG PEER start/end |
+|---|---|---|---|---|---|---|---|
+| 2.5 G | quick | 55 s | 2.9·10⁻⁷ (18 251 / 6.3·10¹⁰) | 7.0·10⁻¹⁰ (44 / 6.3·10¹⁰) | 1.00 / 1.00 | 2.4…3.7·10⁻⁷ ; 0.6…1.1·10⁻⁹ | 200/200 both |
+| 2.5 G | r1 | 296 s | **0** (0 / 3.6·10¹¹, < 8.4·10⁻¹² at 95 %) | 8.4·10⁻¹² (3 / 3.6·10¹¹) | 1.00 / 1.00 | 0 … 0 ; 0 … 3.9·10⁻¹¹ | 200/200 both |
+| 2.5 G | r2 | 303 s | 2.1·10⁻⁹ (843 / 3.9·10¹¹) | 2.0·10⁻⁸ (7 774 / 3.9·10¹¹) | 1.00 / 1.00 | 1.1…3.4·10⁻⁹ ; 1.4…2.5·10⁻⁸ | 200/200 both |
+| 2.5 G | r3 | 304 s | 3.6·10⁻¹⁰ (142 / 4.0·10¹¹) | 4.1·10⁻⁹ (1 637 / 4.0·10¹¹) | 1.00 / 1.00 | 1.5…5.3·10⁻¹⁰ ; 0.2…18·10⁻⁹ | 200/200 both |
+| **2.5 G** | **median r1–r3** | 15 min | **3.6·10⁻¹⁰** | **4.1·10⁻⁹** | 1.00 / 1.00 | no checker restart | |
+| 5 G P2 | quick | 60 s | 2.1·10⁻² | 6.7·10⁻² | — | | 894 / 883 of 1000 → FAIL |
+| 5 G P2 | long | 242 s counted of 300 | 1.7·10⁻² | 5.1·10⁻² (gs checker restarted 3×, only 1.9·10⁹ bits) | snapshots 1 / 1, UART lost at 304 s | 1.0…2.8·10⁻² ; 4.6…5.7·10⁻² | m2 897→927, gs 908→878 of 1000 → FAIL |
+
+Health: PLL_LOCKED 1, FT_OF/UF 0 everywhere; CAP_FT m2 507–510 / gs 495–500 (2.5 G), m2 515–518 / gs 499–500 (5 G); 2.5 G CDR and EQA lock 1
+on both boards at start and end; 5 G: m2 RX_CDR_LOCKED 0 at start and end (as §15). gs RX_OFFSET 1–3 (2 at every start), m2 RX_OFFSET 7.
+
+**Comparison, 2.5 G median gs→m2 / m2→gs:**
+
+| Run | gs→m2 | m2→gs | now vs that run |
+|---|---|---|---|
+| 28.09. lab13, shared refclk, 5.1/4.7 Ω (§11.5), 3 × 300 s | 1.0·10⁻⁹ | 0 (worst 2.2·10⁻⁹) | same order (gs→m2 ×3 better, m2→gs within the load scatter) |
+| 28.09. lab12, separate refclks + RTERM (§11.3) | 1.5·10⁻⁸ | 4.7·10⁻⁸ | **×42 / ×11 better** |
+| 12.10. §14.5 scatter, 10 × 240 s (after the supply-filter rework) | ~8·10⁻⁷ | ~2·10⁻⁷ | ×2000 / ×50 better |
+| 13.10. lab22 §15, 3 × 3600 s | 7.6·10⁻⁷ | 1.1·10⁻⁷ | **×2100 / ×27 better** |
+| **15.10. this run, 3 × 300 s** | **3.6·10⁻¹⁰** | **4.1·10⁻⁹** | |
+
+5 G P2: 13.10. 5.5·10⁻³ / 2.0·10⁻² → now 1.7·10⁻² / 5.1·10⁻² (×3 worse, same order), JTAG PEER 83–87 % → 88–93 %. Not usable either way.
+
+**Is it better? — 2.5 G: yes. 5 G: no.**
+- **2.5 G is ×2100 (gs→m2) / ×27 (m2→gs) better than 13.10.** and back at the best shared-clock level of 28.09. (lab13). Load r1 had
+  0 errors gs→m2 in 3.6·10¹¹ bits and 3 errors m2→gs. No sync loss, no checker restart, JTAG PEER 200/200 in every check.
+- **The load-to-load scatter is still there:** the quick load at 12:03 gave gs→m2 2.9·10⁻⁷ (13.10.-like), the three long loads
+  0 … 2.1·10⁻⁹. That is ≥ ×3·10⁴ between loads with the same bits, so "better" means "most loads are good now", not "every load is
+  good". Inside a load the 60 s intervals stay within ×2–4 (r3 m2→gs ×90), consistent with §15 (BER fixed at load time).
+- **The worse direction swapped**: on 12./13.10. gs→m2 (m2 receiver) was ×6–15 worse in every load; now m2→gs (gs receiver) is worse in
+  r1–r3 (×10). gs RX_OFFSET is 2 at every start — in §14.5 offset 2 marked the three worst loads, now it comes with the good ones, so the
+  ρ = −0.74 hint of §14.5 does not hold.
+- 300 s instead of 3600 s per load: §15 showed the BER is constant within a load (halves within ×1.4), so 300 s is representative; the
+  floor at 300 s is 8.4·10⁻¹² (0 errors, 95 %).
+
+**`RX_CALIB_CAL` / `TX_CALIB_CAL` = 0 / 0 (was 9 / 7) — what it is and what changed:**
+- These are the 4-bit read-only results of the RX / TX **termination calibration** (`0x02[10:7]`, `0x3C[10:7]`, `TUNING_5G.md`), with
+  `*_CALIB_DONE = 1` both times. They are not set by the bitstream or by any lab tool.
+- History from the raw health JSONs: **0 / 0 on both boards on 26.–28.09.** (§9, `data_20260928/t5089/log/q1.health_*.json`, the good
+  lab13 state) and on 12.10. before the rework; **9 / 7 on both boards** from 12.10. 17:24 (after Goran's supply-filter rework, §13) in
+  all 10 loads of §14.5 and in lab22 §15 (13.10.); **0 / 0 again on 15.10.** in all 10 health snapshots, both boards, both rates.
+- Same bits, same `eyescan.py`, same procedure → the change is in the boards, not in the setup. The good BER coincides with 0 / 0 and
+  the bad one with 9 / 7 in every run so far (correlation in 3 periods, not proof of cause). An identical 9 / 7 on two different dies,
+  constant over 13 loads, looks more like a common supply / reference condition seen by the calibration than a per-die trim.
+- UNVERIFIED: the exact meaning of the code (CologneChip question still open, §9) and what changed between 13.10. 04:22 and 15.10. 12:02
+  — the agents did no power cycle; if the boards were power-cycled or reworked in between, that is the most likely trigger. **Question for
+  Goran:** was anything done to the boards / their supply after 13.10.?
+
+**Pi:** `throttled=0xd0005` at the end of the quick round (under-voltage now + throttled now + both in the past); the long round logged
+0xd0000 / 0xd0008 (past only / soft temperature limit). No probe re-enumerated and every JTAG check passed, so it did not affect this
+data, but the Pi supply is still marginal (as on 28.09.).
