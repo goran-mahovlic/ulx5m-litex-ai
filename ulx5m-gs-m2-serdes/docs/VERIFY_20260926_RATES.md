@@ -1514,7 +1514,7 @@ direction does not get worse (asymmetric changes in §18.3 always cost the other
 `freeze RX_AFE_OFFSET=v --ext 0b1111`, read `RX_OFFSET` (0x07[13:10]) for v = 0…31 (`MAP` lines in `lab38.out`):
 v 0…7 → 0…+7, **v 8 (default) → 0**, v 9…15 → −7…−1, v 16…31 repeat 0…15 (bit 4 is not visible in the readout). So to pin the point
 read as r: AFE = r for r ≥ 0, AFE = 16 + r for r < 0 (upstream `eye_freeze` writes r itself, which is wrong for r < 0, §17.1).
-"Retry by offset" (G7 b) is not supported by the data: start offset vs M2→GS A over 11 loads — gs 1: 8.9·10⁻¹¹, 8.5·10⁻¹⁰ but also 2.9·10⁻⁸;
+"Retry by offset" (G7 b) is not supported by the data: start offset vs M2→GS A over the 8 loads with a recorded start offset — gs 1: 8.9·10⁻¹¹, 8.5·10⁻¹⁰ but also 2.9·10⁻⁸;
 gs 2–3: 1.5·10⁻⁷ ×2, 5.4·10⁻⁷, 3.1·10⁻⁹ but also 6.1·10⁻¹⁰. A BER gate after the load (60 s) is the reliable test → used in 18.10.
 
 ### 18.10 Uputa #339 PROOF (running, lab39 from 01:20): repeatability of link establishment + overnight soak
