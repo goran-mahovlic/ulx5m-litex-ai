@@ -1,0 +1,2 @@
+# GS and M2 both have the UART TX on IO_NB_B5 (gateware/ber/top_*.ccf); held idle high
+NET "uart_tx" Loc = "IO_NB_B5";

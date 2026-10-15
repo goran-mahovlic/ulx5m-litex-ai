@@ -29,5 +29,15 @@ class Report(unittest.TestCase):
         self.assertEqual(R.steps_in_order(d), ['A0', 'amp16', 'A_amp16'])
 
 
+    def test_tapw_points(self):
+        d = tempfile.mkdtemp()
+        tot = lambda a, b: json.dumps({'kind': 'total', 'm2_to_gs': {'errb': 1, 'ber': a}, 'gs_to_m2': {'errb': 1, 'ber': b}})
+        for i, (n, a, b) in enumerate((('A0', 1e-7, 1e-8), ('tapw-2', 3e-6, 4e-8), ('A_tapw-2', 2e-7, 5e-8), ('tapw2', 7e-9, 6e-8))):
+            p = os.path.join(d, n + '.jsonl'); open(p, 'w').write(tot(a, b) + '\n'); os.utime(p, (1000 + i, 1000 + i))
+        got = R.tapw_points([d])
+        self.assertEqual(got['B'], [(-2, 3e-6, 4e-8), (2, 7e-9, 6e-8)])
+        self.assertEqual(got['A'], [(0, 2e-7, 5e-8)])
+
+
 if __name__ == '__main__':
     unittest.main()

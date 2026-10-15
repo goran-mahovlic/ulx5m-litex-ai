@@ -1,0 +1,54 @@
+## serdes_lb.ccf
+
+NET  "ser_clk"                   Loc = "SER_CLK";
+
+NET  "regfile_we"                Loc = "IO_SB_A7";
+NET  "regfile_rstn"              Loc = "IO_SB_A6";
+
+NET  "trx_rstn_i"                Loc = "IO_EB_B0" | pullup=true;
+
+#NET  "TX_PRBS_FORCE_ERR_I"       Loc = "IO_NB_B4" | pulldown=true;
+NET  "RX_PRBS_CNT_RESET_I"       Loc = "IO_NB_B5" | pulldown=true;
+#NET  "RX_COMMA_DETECT_EN_I"     Loc = "IO_NB_B6" | pullup=true;
+NET  "RX_BUF_RESET_I"            Loc = "IO_NB_B6" | pulldown=true;
+NET  "RX_POLARITY_I"             Loc = "IO_NB_B7" | pulldown=true;
+NET  "RX_SLIDE_I"                Loc = "IO_NB_B8" | pulldown=true;
+
+NET  "RX_RESET_DONE_O_N"         Loc = "IO_EB_B1";
+NET  "TX_RESET_DONE_O_N"         Loc = "IO_EB_B2";
+NET  "TX_DETECT_RX_DONE_O_N"     Loc = "IO_EB_B3";
+NET  "TX_DETECT_RX_PRESENT_O_N"  Loc = "IO_EB_B4";
+NET  "RX_BYTE_IS_ALIGNED_O_N"    Loc = "IO_EB_B5";
+NET  "RX_BYTE_REALIGN_O_N"       Loc = "IO_EB_B6";
+NET  "RX_BUF_ERR_O_N"            Loc = "IO_EB_B7";
+NET  "TX_BUF_ERR_O_N"            Loc = "IO_EB_B8";
+
+NET  "PLL_CLK_O"                 Loc = "IO_SB_A4" | slew=fast;
+NET  "RX_CLK_O"                  Loc = "IO_SB_A5" | slew=fast;
+
+NET  "RX_DATA_O[0]"              Loc = "IO_NA_A1";
+NET  "RX_DATA_O[1]"              Loc = "IO_NA_A2";
+NET  "RX_DATA_O[2]"              Loc = "IO_NA_A3";
+NET  "RX_DATA_O[3]"              Loc = "IO_NA_A4";
+NET  "RX_DATA_O[4]"              Loc = "IO_NA_A5";
+NET  "RX_DATA_O[5]"              Loc = "IO_NA_A6";
+NET  "RX_DATA_O[6]"              Loc = "IO_NA_A7";
+NET  "RX_DATA_O[7]"              Loc = "IO_NA_A8";
+NET  "RX_CHAR_IS_K_O[0]"         Loc = "IO_EA_A7";
+NET  "RX_DISP_ERR_O[0]"          Loc = "IO_EA_A6";
+
+NET  "RX_DATA_O[8]"              Loc = "IO_NA_B1";
+NET  "RX_DATA_O[9]"              Loc = "IO_NA_B2";
+NET  "RX_DATA_O[10]"             Loc = "IO_NA_B3";
+NET  "RX_DATA_O[11]"             Loc = "IO_NA_B4";
+NET  "RX_DATA_O[12]"             Loc = "IO_NA_B5";
+NET  "RX_DATA_O[13]"             Loc = "IO_NA_B6";
+NET  "RX_DATA_O[14]"             Loc = "IO_NA_B7";
+NET  "RX_DATA_O[15]"             Loc = "IO_NA_B8";
+NET  "RX_CHAR_IS_K_O[1]"         Loc = "IO_EA_A5";
+NET  "RX_DISP_ERR_O[1]"          Loc = "IO_EA_A4";
+
+#NET  "RX_DISP_ERR_O[2]"          Loc = "IO_EA_A1";
+#NET  "RX_DISP_ERR_O[3]"          Loc = "IO_EA_A0";
+#NET  "RX_CHAR_IS_K_O[2]"         Loc = "IO_EA_B5";
+#NET  "RX_CHAR_IS_K_O[3]"         Loc = "IO_EA_B4";

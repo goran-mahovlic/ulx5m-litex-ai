@@ -4,6 +4,7 @@
 1. diag_chain.png   eye_diagnose PASS/FAIL per board x rate (lab25 diag_*.json)
 2. capture_op.png   eye_capture_op x10 per board x rate: RX_OFFSET, TH_MON1/2, TAPW per capture (lab25 capture_*.json)
 3. calib_<dir>.png  A/B/A inside one load (lab26, lab26b): serial BER per 60 s step in execution order, both directions
+4. tapw_bathtub.png gs RX_TAPW pinned vs serial BER (all tapw<N>.jsonl of the A/B/A dirs; A steps = adapted tap 0)
 """
 import glob
 import json
@@ -56,6 +57,21 @@ def steps_in_order(d):
     """Step names of an A/B/A run in execution order (ber_long writes each .jsonl once, at the end of its step)."""
     fs = sorted(glob.glob(os.path.join(d, '*.jsonl')), key=os.path.getmtime)
     return [os.path.basename(f)[:-6] for f in fs]
+
+
+TAPW = re.compile(r'^(A_)?tapw(-?\d+)$')
+
+
+def tapw_points(dirs):
+    """{'B': [(tapw, m2_to_gs, gs_to_m2)], 'A': [...]} from tapw<N> / A_tapw<N> step files (A = adapted, plotted at 0)."""
+    out = {'A': [], 'B': []}
+    for d in dirs:
+        for st in steps_in_order(d):
+            m = TAPW.match(st)
+            v = m and ber_total(os.path.join(d, st + '.jsonl'))
+            if v:
+                out['A' if m.group(1) else 'B'].append((0 if m.group(1) else int(m.group(2)), v['m2_to_gs'], v['gs_to_m2']))
+    return out
 
 
 def main(l25, outdir, *aba):
@@ -135,6 +151,22 @@ def main(l25, outdir, *aba):
                      fontsize=10)
         fig.tight_layout(); fig.savefig(os.path.join(outdir, 'calib_%s.png' % tag), dpi=110); plt.close(fig)
         json.dump(vals, open(os.path.join(outdir, 'calib_%s.json' % tag), 'w'), indent=1)
+    # 4. TAPW bathtub
+    tp = tapw_points(aba)
+    if tp['B']:
+        fig, ax = plt.subplots(figsize=(9, 5))
+        b = sorted(tp['B'])
+        ax.semilogy([x for x, _, _ in b], [y or 1e-12 for _, y, _ in b], 'o-', color='#c62828', ms=8,
+                    label='m2->gs (gs RX), gs RX_TAPW pinned (freeze, readback ok)')
+        ax.semilogy([x for x, _, _ in tp['A']], [y or 1e-12 for _, y, _ in tp['A']], 'x', color='#555', ms=8,
+                    label='m2->gs, A steps: adapted tap (reads 0)')
+        ax.semilogy([x for x, _, _ in b], [z or 1e-12 for _, _, z in b], 's--', color='#1565c0', ms=5, alpha=0.7,
+                    label='gs->m2 (m2 RX, control)')
+        ax.set_xlabel('gs RX_TAPW (DFE tap, signed code)'); ax.set_ylabel('serial BER, 60 s per point')
+        ax.grid(alpha=0.3, which='both'); ax.legend(fontsize=8)
+        ax.set_title('gs receiver bathtub over the pinned DFE tap, 2.5 G, one load (lab26c + lab26d)\n'
+                     'adapted tap = 0 because both monitors rail at +15; bottom at +2', fontsize=10)
+        fig.tight_layout(); fig.savefig(os.path.join(outdir, 'tapw_bathtub.png'), dpi=110); plt.close(fig)
     print('wrote', ' '.join(sorted(os.path.basename(p) for p in glob.glob(os.path.join(outdir, '*.png')))))
 
 
