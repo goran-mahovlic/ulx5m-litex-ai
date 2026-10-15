@@ -1476,3 +1476,51 @@ PRBS-15 gs TX → m2 RX checker (`tools/lab/strobe_probe.py`, one board per `fpg
 - So the dead part is the eye measurement engine itself (H-B: silicon revision or an enable outside the regfile) → question to Patrick,
   P3 (free clock on `REGFILE_CLK_I`) is not expected to help. Side effect for G7: an RX reset strobe over JTAG most likely does execute.
 - After lab36 the standard pair was reloaded, JTAG PEER 200/200 on both.
+
+### 18.7 Uputa #338 G2 — adapt on PRBS-15, then freeze (lab37 23:32–00:13, 5 fresh loads, 60 s per step) — **helps the bad loads, can break a good one**
+
+Per load: A1 (adapted on the 8b10b frame as always) → both TX `TX_PRBS_OVR/SEL=2` (PRBS-15) 5 s → `eyescan freeze` on both RX (EN_EQA 0,
+EXT 0b0111, op pinned) → PRBS off → B → `restore` → A2 (`png37/aba.png`). The first lab37 attempt (23:20–23:33) ran in **two instances**
+(my chaining error: an earlier `setsid nohup` chain thought dead was alive) — its output is kept as `lab37_dup_contaminated.out` and not used.
+
+| Load | M2→GS A1 / **B** / A2 | GS→M2 A1 / **B** / A2 | op frozen on PRBS (m2 / gs offset) |
+|---|---|---|---|
+| r1 | 4.8·10⁻¹¹ / **1.6·10⁻⁸** / 7.5·10⁻⁹ | ≤3.6·10⁻¹¹ / **4.4·10⁻⁸** / 3.3·10⁻⁷ | 2 / 0 |
+| r2 | 2.9·10⁻⁸ / **5.3·10⁻⁹** / 2.1·10⁻⁸ | 1.4·10⁻⁹ / **≤3.8·10⁻¹¹** / 7.5·10⁻¹⁰ | 2 / −1 |
+| r3 | 9.0·10⁻⁹ / **≤3.9·10⁻¹¹** / 1.5·10⁻¹⁰ | 5.5·10⁻¹⁰ / **≤3.9·10⁻¹¹** / 1.3·10⁻⁹ | 2 / 0 |
+| r4 | 3.9·10⁻⁹ / **4.9·10⁻¹⁰** / 3.2·10⁻⁹ | 1.2·10⁻⁸ / **5.4·10⁻¹⁰** / 1.0·10⁻⁸ | 2 / 0 |
+| r5 | 1.3·10⁻¹¹ / **≤3.6·10⁻¹¹** / 1.6·10⁻¹⁰ | 5.2·10⁻¹¹ / **≤3.6·10⁻¹¹** / 9.7·10⁻¹¹ | 2 / 0 |
+
+Worse direction per load, median: A1 9·10⁻⁹ → **B 5.4·10⁻¹⁰**; on r3 and r5 zero errors in both directions. On PRBS the offset loop settles
+at m2 2 (on the frame always 7) and gs 0/−1 (frame 1–3). r1 (a very good load) was broken by the PRBS episode and stayed bad after
+`restore` too (A2 3.3·10⁻⁷) — so G2 is used only as a rule for a load that fails the acceptance test, never on a good load (18.10).
+
+### 18.8 Uputa #338 G3 — symmetric TX swing (lab38 00:13–01:20, 3 fresh loads, 60 s per point, `calib_table_lab38.md`)
+
+Both TX together, default FFE 5/5; then FFE off (SEL_PRE = SEL_POST = 0) at 31 and 20.
+
+| Load | worse direction A (31) | 24 | 20 | 16 | **12** | FFE off 31 / 20 | TH_MON gs / m2 at 12 |
+|---|---|---|---|---|---|---|---|
+| r1 | M2→GS 6·10⁻¹⁰–1·10⁻⁸ | 4.8·10⁻¹⁰ | 1.1·10⁻⁸ | **2.6·10⁻¹¹ (both)** | 2.2·10⁻¹⁰ | 4.5·10⁻⁷ / 3.3·10⁻⁸ | 12 / 14 |
+| r2 | M2→GS 5.4·10⁻⁷ | 3.1·10⁻⁷ | 3.3·10⁻⁷ | 6.6·10⁻⁸ | **1.5·10⁻⁸** | 2.0·10⁻⁵ / 2.6·10⁻⁶ | 13 / 14 |
+| r3 | GS→M2 2.1–2.5·10⁻⁸ | 7.8·10⁻⁸ | 4.9·10⁻⁸ | 1.7·10⁻⁸ | **6.0·10⁻¹⁰** (M2→GS 5.3·10⁻⁹) | 3.7·10⁻⁸ / 6.8·10⁻⁸ | 12 / 15 |
+
+Symmetric 12 lowers the worse direction ×4–36 on 3/3 loads and the thresholds leave the +15 rail (Dora's G3 criterion), the other
+direction does not get worse (asymmetric changes in §18.3 always cost the other direction). FFE off is ×40–40 000 worse for M2→GS.
+**G3 does not remove the load-to-load difference** (r2 stays 1.5·10⁻⁸), so — uputa #339 — the parameter search stops here.
+
+### 18.9 Uputa #338 G7 — map RX_AFE_OFFSET → RX_OFFSET (lab38, end, both boards identical)
+
+`freeze RX_AFE_OFFSET=v --ext 0b1111`, read `RX_OFFSET` (0x07[13:10]) for v = 0…31 (`MAP` lines in `lab38.out`):
+v 0…7 → 0…+7, **v 8 (default) → 0**, v 9…15 → −7…−1, v 16…31 repeat 0…15 (bit 4 is not visible in the readout). So to pin the point
+read as r: AFE = r for r ≥ 0, AFE = 16 + r for r < 0 (upstream `eye_freeze` writes r itself, which is wrong for r < 0, §17.1).
+"Retry by offset" (G7 b) is not supported by the data: start offset vs M2→GS A over 11 loads — gs 1: 8.9·10⁻¹¹, 8.5·10⁻¹⁰ but also 2.9·10⁻⁸;
+gs 2–3: 1.5·10⁻⁷ ×2, 5.4·10⁻⁷, 3.1·10⁻⁹ but also 6.1·10⁻¹⁰. A BER gate after the load (60 s) is the reliable test → used in 18.10.
+
+### 18.10 Uputa #339 PROOF (running, lab39 from 01:20): repeatability of link establishment + overnight soak
+
+Recipe (unchanged bits `m2_2g5.bit` b1b98a5d…, `gs_2g5.bit` 36f09752…): load m2 then gs (`-r`), SET_ACC 2→0, **TX_AMP 12 on both TX**.
+Acceptance: both directions < 10⁻⁹ in 60 s serial BER. Rule if not: G2 (18.7) and 60 s again; still not: reload (≤ 3 loads per trial).
+(B) 10 trials (t_link, PEER 200/200 both, BER per attempt), then (A) reload until accepted and soak on that one load until 07:58
+(REGOČ shortened the 8 h soak to end at 08:00, uputa #340; hourly report by REGOČ), 60 s snapshots, both RX lock/TH_MON/OFFSET +
+Pi temperature/throttled every 15 min. Results and the proof summary follow in 18.11 (morning).

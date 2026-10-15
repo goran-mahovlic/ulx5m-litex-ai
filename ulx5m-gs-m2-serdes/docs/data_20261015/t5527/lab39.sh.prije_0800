@@ -1,0 +1,61 @@
+#!/bin/bash
+# TASK-5527 lab39 = PROOF (uputa #339, Goran 23:59): (B) repeatability of link establishment over 10 fresh 2.5 G loads,
+# then (A) overnight soak on one accepted load. Bits UNCHANGED (m2_2g5.bit / gs_2g5.bit, lab22 procedure, no power cycle).
+# (B) per trial: load m2 then gs (-r), SET_ACC 2->0; t_link = s from the end of the gs load until JTAG PEER 10/10 on both;
+#     PEER 200/200 both; 60 s serial BER. Acceptance: both directions < 1e-9 in 60 s. If not: rule = G2 (lab37: both TX
+#     PRBS-15 5 s, freeze both RX at the PRBS-adapted point, PRBS off; worst-direction median over 5 loads 9e-9 -> 5.4e-10),
+#     60 s again. Still not: reload (up to 3 loads per trial). Logged per attempt. Good loads are left adapted (lab37 r1).
+# (A) soak: reload until accepted (max 5), then ber_long SOAK_SECS (default 8 h), 60 s snapshots, both directions; every
+#     15 min both RX CDR/EQA lock, TH_MON, RX_OFFSET, EQA_TAPW + Pi temperature/throttled.
+F=/home/pi/fpga; T=/home/pi/ulx5m-serdes/tools; L=/home/pi/ulx5m-serdes/t5527/log39; mkdir -p $L
+SOAK_SECS=${SOAK_SECS:-28800}; TRIALS=${TRIALS:-10}; ACC=1e-9
+echo "TASK-5527 $(date +%s) lab39 PROOF repeatability + overnight soak until ~$(date -d "+$((SOAK_SECS/3600+2)) hours" +%H:%M) (jelena)" > /home/pi/gs.owner
+J() { (cd $T; fpga-jtag $1 run python3 eyescan.py "${@:2}" 2>&1 | tail -1); }
+PEER() { (cd $T; fpga-jtag $1 run python3 ber_jtag_check.py --samples $2 2>&1 | tail -1 | sed 's/.*rx: /rx: /'); }
+P() { (cd $T; fpga-jtag $1 run python3 lab/strobe_probe.py "${@:2}" 2>&1 | grep -E "^STATE" | cut -c1-120); }
+ber() { (cd $T; timeout $(($2+300)) python3 lab/ber_long.py --secs $2 --every 60 --out $L/$1.jsonl 2>&1 | grep TOTAL | cut -c1-220); }
+bad() { python3 -c "import re,sys; m=re.search(r'$1 BER=(\S+)', sys.argv[1]); v=m and m.group(1); print(1 if v in (None,'None') or float(v)>=$ACC else 0)" "$2"; }
+load() {  # load <tag>: lab22 procedure, prints t_link
+  fpga-jtag m2 $F/m2_2g5.bit -r 2>&1 | tail -1 >/dev/null; fpga-jtag gs $F/gs_2g5.bit -r 2>&1 | tail -1 >/dev/null
+  local t0=$(date +%s.%N)
+  for b in m2 gs; do J $b set RX_CDR_SET_ACC_CONFIG=2 >/dev/null; J $b set RX_CDR_SET_ACC_CONFIG=0 >/dev/null; done
+  local ok=0 n=0
+  while [ $n -lt 20 ]; do n=$((n+1))
+    a=$(PEER m2 10); b=$(PEER gs 10)
+    if echo "$a" | grep -q PASS && echo "$b" | grep -q PASS; then ok=1; break; fi
+  done
+  echo "LOAD $1 t_link=$(python3 -c "print('%.1f' % ($(date +%s.%N)-$t0))")s ok=$ok polls=$n $(J gs get RX_OFFSET | sed 's/board=//') $(J m2 get RX_OFFSET | sed 's/board=//')"
+}
+attempt() {  # attempt <tag> -> sets ACCEPT=0/1, prints lines
+  load $1
+  echo "PEER $1 m2: $(PEER m2 200) | gs: $(PEER gs 200)"
+  local a=$(ber $1_A 60); echo "BER $1_A $a"
+  local pg=$(bad 'm2->gs' "$a") pm=$(bad 'gs->m2' "$a")
+  if [ $pg = 0 ] && [ $pm = 0 ]; then ACCEPT=1; echo "RESULT $1 accepted=first"; return; fi
+  P gs tx_prbs_on; P m2 tx_prbs_on; sleep 5
+  for x in m2 gs; do J $x freeze | cut -c1-140; done
+  P gs tx_prbs_off; P m2 tx_prbs_off; sleep 2
+  local b=$(ber $1_g2_g${pg}m${pm} 60); echo "BER $1_g2_g${pg}m${pm} $b"
+  if [ $(bad 'm2->gs' "$b") = 0 ] && [ $(bad 'gs->m2' "$b") = 0 ]; then ACCEPT=1; echo "RESULT $1 accepted=G2 (failed g$pg m$pm)"; return; fi
+  ACCEPT=0; echo "RESULT $1 rejected (G2, failed g$pg m$pm)"
+}
+echo "== (B) repeatability $(date +%T) $(vcgencmd get_throttled) $(vcgencmd measure_temp)"
+for t in $(seq 1 $TRIALS); do
+  for k in 1 2 3; do
+    attempt t${t}_l$k
+    [ $ACCEPT = 1 ] && break
+  done
+  echo "TRIAL t$t loads=$k accepted=$ACCEPT $(date +%T)"
+done
+echo "== (A) soak $(date +%T) $(vcgencmd get_throttled) $(vcgencmd measure_temp)"
+for k in 1 2 3 4 5; do attempt soak_l$k; [ $ACCEPT = 1 ] && break; done
+echo "SOAK start $(date +%T) load=soak_l$k accepted=$ACCEPT secs=$SOAK_SECS"
+(cd $T; python3 lab/ber_long.py --secs $SOAK_SECS --every 60 --out $L/soak.jsonl > $L/soak_ber.out 2>&1) &
+BP=$!
+while kill -0 $BP 2>/dev/null; do
+  echo "MON $(date +%T) $(J gs get RX_CDR_LOCKED RX_EQA_LOCKED RX_TH_MON RX_OFFSET RX_EQA_TAPW RX_EN_EQA | sed 's/board=//') | $(J m2 get RX_CDR_LOCKED RX_EQA_LOCKED RX_TH_MON RX_OFFSET RX_EQA_TAPW RX_EN_EQA | sed 's/board=//') | $(vcgencmd measure_temp) $(vcgencmd get_throttled)"
+  for i in $(seq 1 90); do kill -0 $BP 2>/dev/null || break; sleep 10; done
+done
+echo "SOAK $(grep TOTAL $L/soak_ber.out | cut -c1-260)"
+echo "PEER end m2: $(PEER m2 200) | gs: $(PEER gs 200)"
+rm -f /home/pi/gs.owner; echo "LAB39 DONE $(date +%T)"

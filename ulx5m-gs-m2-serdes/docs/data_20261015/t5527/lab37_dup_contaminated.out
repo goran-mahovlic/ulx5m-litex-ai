@@ -1,0 +1,22 @@
+-- load r1 23:20:00 throttled=0xd0005
+Done
+Done
+CAPSTAT board=m2  op={"tapw": [0], "th_mon1": [15], "th_mon2": [15], "offset": [7]} split={"tapw": [0], "th_mon": [15], "offset": [7]}
+CAPSTAT board=gs  op={"tapw": [0], "th_mon1": [15], "th_mon2": [15], "offset": [1, 2]} split={"tapw": [0], "th_mon": [15], "offset": [1, 2JTAJTAG r1_start m2: rx: PEER 200/200 distinct=200  expect=peer -> PAJTAJTAG r1_start gs: rx: PEER 200/200 distinct=200  expect=peer -> PABERBER r1_A1 TOTAL secs=60.0 gs->m2 BER=9.277949820039314e-08 (<None) m2->gs BER=5.6200079526972604e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+STATE board=gs step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS_OVR': 1, 'TX_PRBS_SEL': 2, 'RX_CDR_LOCKED': 0}
+STATE board=m2 step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS_OVR': 1, 'TX_PRBS_SEL': 2, 'RX_CDR_LOCKED': 0}
+FREEZE board=m2 op={'th_mon1': 15, 'tapw': 0, 'offset': 2, 'th_mon2': 15, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE': 7, 'RX_TAPW': 0, 'RX_TH_MON1': 15, 'RX_TH_MON2': 15, 'RX_AFE_OFFSET': 8, 'RX_CDR_LOCKED'
+FREEZE board=gs op={'th_mon1': 15, 'tapw': 0, 'offset': 0, 'th_mon2': 15, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE': 7, 'RX_TAPW': 0, 'RX_TH_MON1': 15, 'RX_TH_MON2': 15, 'RX_AFE_OFFSET': 8, 'RX_CDR_LOCKED'
+STATE board=gs step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS_OVR': 0, 'TX_PRBS_SEL': 0, 'RX_CDR_LOCKED': 0}
+STATE board=m2 step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS_OVR': 0, 'TX_PRBS_SEL': 0, 'RX_CDR_LOCKED': 1}
+JTAG r1_B m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG r1_B gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER r1_B_prbsfrz TOTAL secs=60.1 gs->m2 BER=1.0932187556333269e-06 (<None) m2->gs BER=6.978680161383388e-10 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESTORE board=m2 {'RX_EN_EQA': 1, 'RX_EN_EQA_EXT_VALUE': 0, 'RX_EQA_CONFIG': 448, 'RX_EQA_LOCKED': 1, 'RX_CDR_LOCKED': 1}
+RESTORE board=gs {'RX_EN_EQA': 1, 'RX_EN_EQA_EXT_VALUE': 0, 'RX_EQA_CONFIG': 448, 'RX_EQA_LOCKED': 1, 'RX_CDR_LOCKED': 1}
+BER r1_A2 TOTAL secs=61.7 gs->m2 BER=6.679442652412164e-07 (<None) m2->gs BER=3.6008578702714353e-09 (<None) restarts={'m2_to_gs': 1, 'gs_to_m2': 1} snaps=1
+-- load r2 23:32:04 throttled=0xd0000
+one
+CAPSTAT board=m2  op={"tapw": [0], "th_mon1": [15], "th_mon2": [15], "offset": [7]} split={"tapw": [0], "th_mon": [15], "offset": [7]}
+CAPSTAT board=gs  op={"tapw": [0], "th_mon1": [15], "th_mon2": [15], "offset": [2]} split={"tapw": [0], "th_mon": [15], "offset": [1, 2]}
+NOTE 23:33 dvije instance lab37 (lanac iz 22:50 nije umro + chain3738.sh) radile paralelno 23:20-23:33 -> podaci neupotrebljivi; obje ugasene (pkill -s 24243/24280), ponovni start
