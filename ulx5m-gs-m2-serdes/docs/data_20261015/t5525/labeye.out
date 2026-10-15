@@ -1,0 +1,101 @@
+-- labeye 16:47:44 throttled=0xd0000 2627c71c7129ad54
+Done
+Done
+board=m2 PLL_LOCKED=1 RX_CDR_LOCKED=1 RX_EQA_LOCKED=0 RX_PRBS_LOCKED=1 RX_PRBS_ERR_CNT=32767 SERDES_TESTMODE=1 RX_EQA_LOCK_CFG=12 RX_RESET_DONE=1
+board=gs PLL_LOCKED=1 RX_CDR_LOCKED=1 RX_EQA_LOCKED=0 RX_PRBS_LOCKED=1 RX_PRBS_ERR_CNT=32767 SERDES_TESTMODE=1 RX_EQA_LOCK_CFG=12 RX_RESET_DONE=1
+PROBE m2
+before freeze 0x14=8000 cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+WARN:  RX_EQA_LOCKED is low; the capture may return stale data
+op {'th_mon1': 15, 'tapw': 0, 'offset': 2, 'th_mon2': 10, 'locked': 0} frozen 0x04=1801 0x05=0AAF 0x06=0220 0x08=0010 0x14=8000
+win    1: 0x14 before=0010 polls=30 last=1 after=0011 t=1.57s cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+win   15: 0x14 before=0010 polls=28 last=1 after=0011 t=1.56s cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+win  255: 0x14 before=0010 polls=47 last=1 after=0011 t=1.54s cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+win 2048: 0x14 before=0010 polls=48 last=1 after=0011 t=1.55s cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+after write 0: 0x14=0010 cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+restored {'RX_EN_EQA': 0, 'RX_EQA_LOCKED': 0, 'RX_CDR_LOCKED': 1, 'RX_EQA_CONFIG': 448, 'RX_EN_EQA_EXT_VALUE': 0}
+PROBE gs
+before freeze 0x14=8000 cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+WARN:  RX_EQA_LOCKED is low; the capture may return stale data
+op {'th_mon1': 13, 'tapw': 0, 'offset': 2, 'th_mon2': 9, 'locked': 0} frozen 0x04=1801 0x05=0A6D 0x06=0220 0x08=0010 0x14=8000
+win    1: 0x14 before=0010 polls=29 last=1 after=0011 t=1.55s cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+win   15: 0x14 before=0010 polls=26 last=1 after=0011 t=1.56s cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+win  255: 0x14 before=0010 polls=33 last=1 after=0011 t=1.56s cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+win 2048: 0x14 before=0010 polls=48 last=1 after=0011 t=1.56s cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+after write 0: 0x14=0010 cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+restored {'RX_EN_EQA': 0, 'RX_EQA_LOCKED': 0, 'RX_CDR_LOCKED': 1, 'RX_EQA_CONFIG': 448, 'RX_EN_EQA_EXT_VALUE': 0}
+DIAG m2 INFO:  eye measurement diagnostics
+DIAG m2   [PASS] CDR locked                   RX_CDR_LOCKED=1
+DIAG m2   [FAIL] equalizer locked             RX_EQA_LOCKED=0
+DIAG m2   [FAIL] link error free              RX_PRBS_ERR_CNT=32767
+DIAG m2 WARN:  RX_EQA_LOCKED is low; the capture may return stale data
+DIAG m2   [FAIL] adapted threshold in range   th_mon1=+15 th_mon2=+10 tapw=+0 offset=+1  RAILED: ['th_mon1'] -> reduce RX_AFE_GAIN or TX_AMP
+DIAG m2   [PASS] ext-value override set       RX_EN_EQA_EXT_VALUE=0b0111 (need 0b0111)
+DIAG m2   [PASS] sel_comp_data routed         sel_comp_data=2 (need 2)
+DIAG m2   [PASS] integrators frozen           en_acc=0b000 (need 0b000)
+DIAG m2   [PASS] RX_TH_MON2 writable          wrote -15, read -15
+DIAG m2   [FAIL] exception                  TimeoutError: eye measurement did not complete; RX_EYE_MEAS_EN stuck at 1
+DIAG m2 WARN:  RX_EQA_LOCKED is low; the capture may return stale data
+DIAG m2   dump_point failed TimeoutError: eye measurement did not complete; RX_EYE_MEAS_EN stuck at 1
+DIAGRESULT board=m2 pu ok=False restored={'RX_EN_EQA': 0, 'RX_EQA_LOCKED': 0, 'RX_CDR_LOCKED': 1, 'RX_EN_EQA_EXT_VALUE': 0, 'RX_EQA_CONFIG': 448}
+DIAG gs INFO:  eye measurement diagnostics
+DIAG gs   [PASS] CDR locked                   RX_CDR_LOCKED=1
+DIAG gs   [FAIL] equalizer locked             RX_EQA_LOCKED=0
+DIAG gs   [FAIL] link error free              RX_PRBS_ERR_CNT=32767
+DIAG gs WARN:  RX_EQA_LOCKED is low; the capture may return stale data
+DIAG gs   [PASS] adapted threshold in range   th_mon1=+13 th_mon2=+9 tapw=+0 offset=+2
+DIAG gs   [PASS] ext-value override set       RX_EN_EQA_EXT_VALUE=0b0111 (need 0b0111)
+DIAG gs   [PASS] sel_comp_data routed         sel_comp_data=2 (need 2)
+DIAG gs   [PASS] integrators frozen           en_acc=0b000 (need 0b000)
+DIAG gs   [PASS] RX_TH_MON2 writable          wrote -15, read -15
+DIAG gs   [FAIL] exception                  TimeoutError: eye measurement did not complete; RX_EYE_MEAS_EN stuck at 1
+DIAG gs WARN:  RX_EQA_LOCKED is low; the capture may return stale data
+DIAG gs   dump_point failed TimeoutError: eye measurement did not complete; RX_EYE_MEAS_EN stuck at 1
+DIAGRESULT board=gs pu ok=False restored={'RX_EN_EQA': 0, 'RX_EQA_LOCKED': 0, 'RX_CDR_LOCKED': 1, 'RX_EN_EQA_EXT_VALUE': 0, 'RX_EQA_CONFIG': 448}
+-- minimal 16:49:39
+Done
+Done
+PROBE min m2
+before freeze 0x14=8000 cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+op {'th_mon1': 15, 'tapw': 0, 'offset': 7, 'th_mon2': 15, 'locked': 1} frozen 0x04=3801 0x05=0BEF 0x06=0220 0x08=0010 0x14=8000
+win    1: 0x14 before=0010 polls=27 last=1 after=0011 t=1.58s cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+win   15: 0x14 before=0010 polls=42 last=1 after=0011 t=1.53s cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+win  255: 0x14 before=0010 polls=47 last=1 after=0011 t=1.54s cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+win 2048: 0x14 before=0010 polls=40 last=1 after=0011 t=1.58s cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+after write 0: 0x14=0010 cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+restored {'RX_EN_EQA': 1, 'RX_EQA_LOCKED': 1, 'RX_CDR_LOCKED': 1, 'RX_EQA_CONFIG': 448, 'RX_EN_EQA_EXT_VALUE': 0}
+PROBE min gs
+before freeze 0x14=8000 cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+op {'th_mon1': 15, 'tapw': 0, 'offset': 3, 'th_mon2': 15, 'locked': 1} frozen 0x04=3801 0x05=0BEF 0x06=0220 0x08=0010 0x14=8000
+win    1: 0x14 before=0010 polls=47 last=1 after=0011 t=1.54s cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+win   15: 0x14 before=0010 polls=47 last=1 after=0011 t=1.54s cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+win  255: 0x14 before=0010 polls=48 last=1 after=0011 t=1.57s cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+win 2048: 0x14 before=0010 polls=48 last=1 after=0011 t=1.55s cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+after write 0: 0x14=0010 cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+restored {'RX_EN_EQA': 1, 'RX_EQA_LOCKED': 1, 'RX_CDR_LOCKED': 1, 'RX_EQA_CONFIG': 448, 'RX_EN_EQA_EXT_VALUE': 0}
+DIAG m2 INFO:  eye measurement diagnostics
+DIAG m2   [PASS] CDR locked                   RX_CDR_LOCKED=1
+DIAG m2   [PASS] equalizer locked             RX_EQA_LOCKED=1
+DIAG m2   [FAIL] adapted threshold in range   th_mon1=+15 th_mon2=+15 tapw=+0 offset=+7  RAILED: ['th_mon1', 'th_mon2'] -> reduce RX_AFE_GAIN or TX_AMP
+DIAG m2   [PASS] ext-value override set       RX_EN_EQA_EXT_VALUE=0b0111 (need 0b0111)
+DIAG m2   [PASS] sel_comp_data routed         sel_comp_data=2 (need 2)
+DIAG m2   [PASS] integrators frozen           en_acc=0b000 (need 0b000)
+DIAG m2   [PASS] RX_TH_MON2 writable          wrote -15, read -15
+DIAG m2   [FAIL] exception                  TimeoutError: eye measurement did not complete; RX_EYE_MEAS_EN stuck at 1
+DIAG m2   dump_point failed TimeoutError: eye measurement did not complete; RX_EYE_MEAS_EN stuck at 1
+DIAGRESULT board=m2 min ok=False restored={'RX_EN_EQA': 1, 'RX_EQA_LOCKED': 1, 'RX_CDR_LOCKED': 1, 'RX_EN_EQA_EXT_VALUE': 0, 'RX_EQA_CONFIG': 448}
+DIAG gs INFO:  eye measurement diagnostics
+DIAG gs   [PASS] CDR locked                   RX_CDR_LOCKED=1
+DIAG gs   [PASS] equalizer locked             RX_EQA_LOCKED=1
+DIAG gs   [FAIL] adapted threshold in range   th_mon1=+15 th_mon2=+15 tapw=+0 offset=+2  RAILED: ['th_mon1', 'th_mon2'] -> reduce RX_AFE_GAIN or TX_AMP
+DIAG gs   [PASS] ext-value override set       RX_EN_EQA_EXT_VALUE=0b0111 (need 0b0111)
+DIAG gs   [PASS] sel_comp_data routed         sel_comp_data=2 (need 2)
+DIAG gs   [PASS] integrators frozen           en_acc=0b000 (need 0b000)
+DIAG gs   [PASS] RX_TH_MON2 writable          wrote -15, read -15
+DIAG gs   [FAIL] exception                  TimeoutError: eye measurement did not complete; RX_EYE_MEAS_EN stuck at 1
+DIAG gs   dump_point failed TimeoutError: eye measurement did not complete; RX_EYE_MEAS_EN stuck at 1
+DIAGRESULT board=gs min ok=False restored={'RX_EN_EQA': 1, 'RX_EQA_LOCKED': 1, 'RX_CDR_LOCKED': 1, 'RX_EN_EQA_EXT_VALUE': 0, 'RX_EQA_CONFIG': 448}
+Done
+Done
+JTAG std m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG std gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+LABEYE DONE 16:53:12

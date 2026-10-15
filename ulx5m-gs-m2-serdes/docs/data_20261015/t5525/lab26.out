@@ -1,0 +1,42 @@
+-- load 14:55:18 throttled=0xd0005
+Done
+Done
+JTAG m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+CAPSTAT board=gs A0 op={"tapw": [0], "th_mon1": [15], "th_mon2": [15], "offset": [2]} split={"tapw": [0], "th_mon": [15], "offset": [2]}
+BER A0 TOTAL secs=61.099999999999994 gs->m2 BER=3.232768406953672e-08 (<None) m2->gs BER=2.588050780641938e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+board=m2 set TX_AMP=24
+CAPSTAT board=gs amp24 op={"tapw": [0], "th_mon1": [15], "th_mon2": [15], "offset": [0]} split={"tapw": [0], "th_mon": [15], "offset": [0]}
+BER amp24 TOTAL secs=60.3 gs->m2 BER=7.89819009788631e-07 (<None) m2->gs BER=8.321128881562683e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+board=m2 set TX_AMP=31
+BER A_amp24 TOTAL secs=62.1 gs->m2 BER=3.0425632581881836e-08 (<None) m2->gs BER=2.4580504643267394e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+board=m2 set TX_AMP=16
+CAPSTAT board=gs amp16 op={"tapw": [1], "th_mon1": [15], "th_mon2": [15], "offset": [1]} split={"tapw": [1], "th_mon": [15], "offset": [0, 1]}
+BER amp16 TOTAL secs=61.7 gs->m2 BER=1.0295705790220042e-06 (<None) m2->gs BER=3.617626342167079e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+board=m2 set TX_AMP=31
+BER A_amp16 TOTAL secs=61.5 gs->m2 BER=3.6180437807699914e-08 (<None) m2->gs BER=3.0621760050819836e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+board=m2 set TX_AMP=10
+CAPSTAT board=gs amp10 op={"tapw": [0, 1], "th_mon1": [11], "th_mon2": [11, 12], "offset": [1, 2]} split={"tapw": [0, 1], "th_mon": [11, 12], "offset": [1]}
+BER amp10 TOTAL secs=60.3 gs->m2 BER=3.8251838562903495e-06 (<None) m2->gs BER=7.85386799824439e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+board=m2 set TX_AMP=31
+BER A_amp10 TOTAL secs=61.9 gs->m2 BER=3.592237477055512e-08 (<None) m2->gs BER=2.1841165024748774e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+ValueError: unsupported format character 'b' (0x62) at index 31
+BER tapw-4 TOTAL secs=61.4 gs->m2 BER=3.5517256820491714e-08 (<None) m2->gs BER=2.486842879273756e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESTORE board=gs {'RX_EN_EQA': 1, 'RX_EN_EQA_EXT_VALUE': 0, 'RX_EQA_CONFIG': 448, 'RX_EQA_LOCKED': 1, 'RX_CDR_LOCKED': 1}
+BER A_tapw-4 TOTAL secs=61.099999999999994 gs->m2 BER=4.423200456661744e-08 (<None) m2->gs BER=2.732758533255229e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+ValueError: unsupported format character 'b' (0x62) at index 31
+BER tapw-2 TOTAL secs=61.9 gs->m2 BER=3.9922351186940484e-08 (<None) m2->gs BER=3.4025611166556813e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESTORE board=gs {'RX_EN_EQA': 1, 'RX_EN_EQA_EXT_VALUE': 0, 'RX_EQA_CONFIG': 448, 'RX_EQA_LOCKED': 1, 'RX_CDR_LOCKED': 1}
+BER A_tapw-2 TOTAL secs=61.3 gs->m2 BER=4.587070485248687e-08 (<None) m2->gs BER=2.505404970258122e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+ValueError: unsupported format character 'b' (0x62) at index 31
+BER tapw2 TOTAL secs=61.5 gs->m2 BER=4.436103535252145e-08 (<None) m2->gs BER=3.1108208539671137e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESTORE board=gs {'RX_EN_EQA': 1, 'RX_EN_EQA_EXT_VALUE': 0, 'RX_EQA_CONFIG': 448, 'RX_EQA_LOCKED': 1, 'RX_CDR_LOCKED': 1}
+BER A_tapw2 TOTAL secs=62.4 gs->m2 BER=3.452678630493993e-08 (<None) m2->gs BER=1.3497065395127923e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+ValueError: unsupported format character 'b' (0x62) at index 31
+BER tapw4 TOTAL secs=61.199999999999996 gs->m2 BER=3.399980458228448e-08 (<None) m2->gs BER=2.3830830796144473e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESTORE board=gs {'RX_EN_EQA': 1, 'RX_EN_EQA_EXT_VALUE': 0, 'RX_EQA_CONFIG': 448, 'RX_EQA_LOCKED': 1, 'RX_CDR_LOCKED': 1}
+BER A_tapw4 TOTAL secs=61.89999999999999 gs->m2 BER=3.845139189950958e-08 (<None) m2->gs BER=2.661662133515066e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+CAPSTAT board=gs END op={"tapw": [0], "th_mon1": [15], "th_mon2": [15], "offset": [1, 2]} split={"tapw": [0], "th_mon": [15], "offset": [2]}
+JTAG m2 end: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG gs end: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+LAB26 DONE 15:17:31

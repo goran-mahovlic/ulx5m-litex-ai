@@ -1,0 +1,25 @@
+-- lab26d 15:47:09 throttled=0xd0005
+BER A0 TOTAL secs=60.1 gs->m2 BER=4.433205591896759e-08 (<None) m2->gs BER=1.888112343614409e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+FREEZE board=gs op={'th_mon1': 15, 'tapw': 0, 'offset': 2, 'th_mon2': 15, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE': 7, 'RX_TAPW': -2, 'RX_TH_MON1': 15, 'RX_TH_MON2': 15, 'RX_AFE_OFFSET': 8, 'RX_CDR_LOCKED': 1}
+BER tapw-2 TOTAL secs=61.9 gs->m2 BER=4.1109443854060416e-08 (<None) m2->gs BER=2.9024351046013665e-06 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESTORE board=gs {'RX_EN_EQA': 1, 'RX_EN_EQA_EXT_VALUE': 0, 'RX_EQA_CONFIG': 448, 'RX_EQA_LOCKED': 1, 'RX_CDR_LOCKED': 1}
+BER A_tapw-2 TOTAL secs=61.199999999999996 gs->m2 BER=5.2167445543617784e-08 (<None) m2->gs BER=1.7918607834988657e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=
+FREEZE board=gs op={'th_mon1': 15, 'tapw': 0, 'offset': 1, 'th_mon2': 15, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE': 7, 'RX_TAPW': -1, 'RX_TH_MON1': 15, 'RX_TH_MON2': 15, 'RX_AFE_OFFSET': 8, 'RX_CDR_LOCKED': 1}
+BER tapw-1 TOTAL secs=61.5 gs->m2 BER=7.36382912979042e-08 (<None) m2->gs BER=6.361899331864959e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESTORE board=gs {'RX_EN_EQA': 1, 'RX_EN_EQA_EXT_VALUE': 0, 'RX_EQA_CONFIG': 448, 'RX_EQA_LOCKED': 1, 'RX_CDR_LOCKED': 1}
+BER A_tapw-1 TOTAL secs=61.199999999999996 gs->m2 BER=5.848999123295805e-08 (<None) m2->gs BER=1.7445062301411643e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+FREEZE board=gs op={'th_mon1': 15, 'tapw': 0, 'offset': 1, 'th_mon2': 15, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE': 7, 'RX_TAPW': 1, 'RX_TH_MON1': 15, 'RX_TH_MON2': 15, 'RX_AFE_OFFSET': 8, 'RX_CDR_LOCKED': 1}
+BER tapw1 TOTAL secs=61.9 gs->m2 BER=7.581892532205195e-08 (<None) m2->gs BER=4.803843701744935e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESTORE board=gs {'RX_EN_EQA': 1, 'RX_EN_EQA_EXT_VALUE': 0, 'RX_EQA_CONFIG': 448, 'RX_EQA_LOCKED': 1, 'RX_CDR_LOCKED': 1}
+BER A_tapw1 TOTAL secs=62.099999999999994 gs->m2 BER=5.043842394212068e-08 (<None) m2->gs BER=1.48799155051198e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+FREEZE board=gs op={'th_mon1': 15, 'tapw': 0, 'offset': 2, 'th_mon2': 15, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE': 7, 'RX_TAPW': 2, 'RX_TH_MON1': 15, 'RX_TH_MON2': 15, 'RX_AFE_OFFSET': 8, 'RX_CDR_LOCKED': 1}
+BER tapw2 TOTAL secs=61.9 gs->m2 BER=6.736736029721464e-08 (<None) m2->gs BER=6.709639429809267e-09 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESTORE board=gs {'RX_EN_EQA': 1, 'RX_EN_EQA_EXT_VALUE': 0, 'RX_EQA_CONFIG': 448, 'RX_EQA_LOCKED': 1, 'RX_CDR_LOCKED': 1}
+BER A_tapw2 TOTAL secs=61.3 gs->m2 BER=6.030933576502226e-08 (<None) m2->gs BER=9.738009324861731e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+FREEZE board=gs op={'th_mon1': 15, 'tapw': 0, 'offset': 1, 'th_mon2': 15, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE': 7, 'RX_TAPW': 3, 'RX_TH_MON1': 15, 'RX_TH_MON2': 15, 'RX_AFE_OFFSET': 8, 'RX_CDR_LOCKED': 1}
+BER tapw3 TOTAL secs=61.3 gs->m2 BER=5.3651308966829824e-08 (<None) m2->gs BER=4.3986847814310645e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESTORE board=gs {'RX_EN_EQA': 1, 'RX_EN_EQA_EXT_VALUE': 0, 'RX_EQA_CONFIG': 448, 'RX_EQA_LOCKED': 1, 'RX_CDR_LOCKED': 1}
+BER A_tapw3 TOTAL secs=61.4 gs->m2 BER=7.469635103631021e-08 (<None) m2->gs BER=9.749622177366574e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+JTAG m2 end: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG gs end: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+LAB26D DONE 16:01:29

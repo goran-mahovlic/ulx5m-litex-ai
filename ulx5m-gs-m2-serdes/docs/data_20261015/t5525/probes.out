@@ -1,0 +1,30 @@
+# TASK-5525 raw probes 15.10.2026 ~14:28-14:35, 2.5 G bits (m2_2g5 + gs_2g5, lab22 procedure), verbatim stdout
+## probe_meas.py on m2, fabric 8b10b data (no PRBS); 0x14[0] polled up to 1.5 s after each start
+before freeze 0x14=8001 cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+op {'th_mon1': 15, 'tapw': 0, 'offset': 7, 'th_mon2': 15, 'locked': 1} frozen 0x04=3801 0x05=0BEF 0x06=0220 0x08=0010 0x14=8001
+win    1: 0x14 before=8000 polls=42 last=1 after=8001 t=1.54s cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+win   15: 0x14 before=8000 polls=48 last=1 after=8001 t=1.56s cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+win  255: 0x14 before=8000 polls=42 last=1 after=8001 t=1.60s cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+win 2048: 0x14 before=8000 polls=27 last=1 after=8001 t=1.57s cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+after write 0: 0x14=8000 cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+restored {'RX_EN_EQA': 1, 'RX_EQA_LOCKED': 1, 'RX_CDR_LOCKED': 1, 'RX_EQA_CONFIG': 448, 'RX_EN_EQA_EXT_VALUE': 0}
+## PRBS on the link: gs TX_PRBS_OVR=1 SEL=2 -> m2 RX_PRBS_OVR=1 SEL=2
+board=m2 RX_PRBS_LOCKED=1 RX_PRBS_ERR_CNT=1 RX_CDR_LOCKED=1
+## probe_meas.py on m2 with PRBS locked
+op {'th_mon1': 15, 'tapw': 0, 'offset': 0, 'th_mon2': 15, 'locked': 1} frozen 0x04=3801 0x05=0BEF 0x06=0220 0x08=0010 0x14=8000
+win    1: 0x14 before=0010 polls=36 last=1 after=0011 t=1.58s cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+win   15: 0x14 before=0010 polls=30 last=1 after=0011 t=1.59s cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+win  255: 0x14 before=0010 polls=48 last=1 after=0011 t=1.56s cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+win 2048: 0x14 before=0010 polls=47 last=1 after=0011 t=1.54s cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+after write 0: 0x14=0010 cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+## probe_cfg.py on m2 (PRBS locked): RX_EQA_CONFIG sel_comp_data 0..7 x sel_tap 0/1 frozen, then adapting with the monitor routed
+frozen cfg=0000..0039 (16 values, readback = written): en=1 cnt=[0]*8 in every case
+adapting cfg=0010 en=1 cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+adapting lockcfg=14 en=1 cnt=[0, 0, 0, 0, 0, 0, 0, 0]
+restored {'RX_EN_EQA': 1, 'RX_EQA_LOCKED': 1, 'RX_CDR_LOCKED': 1, 'RX_EQA_CONFIG': 448, 'RX_EN_EQA_EXT_VALUE': 0, 'RX_EQA_LOCK_CFG': 12}
+## probe_mode.py: undocumented 0x14[3:1] = 0..7, frozen, window 64
+board m2 {'RX_PRBS_LOCKED': 1, 'RX_PRBS_ERR_CNT': 10, 'RX_CDR_LOCKED': 1, 'RX_EQA_LOCKED': 1} op {'th_mon1': 15, 'tapw': 0, 'offset': -1, 'th_mon2': 15, 'locked': 1}
+m=0..7 0x14=0401..040F cnt=[0]*8 in every case
+board gs {'RX_PRBS_LOCKED': 1, 'RX_PRBS_ERR_CNT': 0, 'RX_CDR_LOCKED': 1, 'RX_EQA_LOCKED': 1} op {'th_mon1': 15, 'tapw': 0, 'offset': 1, 'th_mon2': 15, 'locked': 1}
+m=0..7 0x14=0401..040F cnt=[0]*8 in every case
+## PRBS off on both boards afterwards (TX/RX_PRBS_OVR=0); IDCODE m2 0x20000001 (busdev 1:32), gs 0x20000001 (1:36)

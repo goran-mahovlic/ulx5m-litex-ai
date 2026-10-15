@@ -59,6 +59,12 @@ def steps_in_order(d):
     return [os.path.basename(f)[:-6] for f in fs]
 
 
+def is_a_step(name):
+    """A (reference) steps: A0, A_amp16, r1_A1, r2_A2 ..."""
+    return re.search(r'(^|_)A(\d*)($|_)', name) is not None
+
+
+RENAME = {'exception': 'eye measurement runs (EN clears)', 'link error free': 'PRBS error free'}
 TAPW = re.compile(r'^(A_)?tapw(-?\d+)$')
 
 
@@ -81,21 +87,24 @@ def main(l25, outdir, *aba):
     os.makedirs(outdir, exist_ok=True)
 
     # 1. diagnose chain
-    cols = [(r, b) for r in ('2g5', '5g_p2', '2g5_back') for b in ('m2', 'gs')]
+    cols = [(r, b) for r in ('2g5', '5g_p2', '2g5_back', 'pu', 'min') for b in ('m2', 'gs')
+            if os.path.exists(os.path.join(l25, '%s.diag_%s.json' % (r, b)))]
+    heads = {'pu': "Patrick's\nserdes_lb 2.5G", 'min': 'ours +\nEYE_CFG 2048'}
     data = {}
     for r, b in cols:
         p = os.path.join(l25, '%s.diag_%s.json' % (r, b))
         if os.path.exists(p):
-            data[(r, b)] = diag_rows(json.load(open(p))['text'])
+            data[(r, b)] = [(RENAME.get(n, n), v, d) for n, v, d in diag_rows(json.load(open(p))['text'])]
     names = []
     for rows in data.values():
         for n, _, _ in rows:
             if n not in names:
                 names.append(n)
-    fig, ax = plt.subplots(figsize=(13, 0.5 * len(names) + 1.8))
+    fig, ax = plt.subplots(figsize=(2.1 * len(cols) + 3, 0.5 * len(names) + 2.2))
     ax.set_xlim(0, len(cols)); ax.set_ylim(0, len(names)); ax.invert_yaxis(); ax.axis('off')
     for j, c in enumerate(cols):
-        ax.text(j + 0.5, -0.3, '%s RX\n%s' % (c[1], c[0].replace('_', ' ')), ha='center', va='bottom', fontsize=10, weight='bold')
+        ax.text(j + 0.5, -0.3, '%s RX\n%s' % (c[1], heads.get(c[0], c[0].replace('_', ' '))), ha='center', va='bottom',
+                fontsize=9, weight='bold')
         rows = {n: (v, d) for n, v, d in data.get(c, [])}
         for i, n in enumerate(names):
             v = rows.get(n, ('—', ''))[0]
@@ -106,8 +115,8 @@ def main(l25, outdir, *aba):
         ax.text(-0.05, i + 0.5, n, ha='right', va='center', fontsize=9)
     ax.set_title('eye_diagnose (Cologne Chip serdestool 15.10.2026) on ULX5M GS/M2 - TASK-5525\n'
                  'freeze + routing PASS; RX_EYE_MEAS_EN never clears (counters 0); adapted thresholds railed at +15 on 2.5 G',
-                 fontsize=10, pad=40)
-    fig.subplots_adjust(left=0.25, right=0.98, top=0.82)
+                 fontsize=10, pad=60)
+    fig.subplots_adjust(left=0.16, right=0.98, top=0.78)
     fig.savefig(os.path.join(outdir, 'diag_chain.png'), dpi=110); plt.close(fig)
 
     # 2. capture series
@@ -143,10 +152,10 @@ def main(l25, outdir, *aba):
             ax.bar([x + dx for x in xs], ys, width=0.38, color=col,
                    label=k.replace('_to_', '->') + (' (gs RX, tuned)' if k == 'm2_to_gs' else ' (m2 RX, control)'))
         for x, s in zip(xs, steps):
-            if not s.startswith('A'):
+            if not is_a_step(s):
                 ax.axvspan(x - 0.5, x + 0.5, color='#fff59d', alpha=0.35, lw=0)
         ax.set_yscale('log'); ax.set_xticks(list(xs)); ax.set_xticklabels(steps, rotation=35, fontsize=9)
-        ax.set_ylabel('serial BER, 60 s'); ax.grid(axis='y', alpha=0.3); ax.legend(fontsize=9)
+        ax.set_ylabel('serial BER per step (60 s; lab27 300 s / 120 s)'); ax.grid(axis='y', alpha=0.3); ax.legend(fontsize=9)
         ax.set_title('%s: gs RX operating point, A/B/A inside one 2.5 G load (yellow = B: m2 TX_AMP or gs TAPW pinned)' % tag,
                      fontsize=10)
         fig.tight_layout(); fig.savefig(os.path.join(outdir, 'calib_%s.png' % tag), dpi=110); plt.close(fig)

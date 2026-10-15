@@ -1226,3 +1226,163 @@ on both boards at start and end; 5 G: m2 RX_CDR_LOCKED 0 at start and end (as §
 **Pi:** `throttled=0xd0005` at the end of the quick round (under-voltage now + throttled now + both in the past); the long round logged
 0xd0000 / 0xd0008 (past only / soft temperature limit). No probe re-enumerated and every JTAG check passed, so it did not affect this
 data, but the Pi supply is still marginal (as on 28.09.).
+
+## 17. TASK-5525: Cologne Chip eye tools (serdestool 15.10.2026, Patrick Urban, mail UID 84) on both receivers — **the freeze path works, the eye counters still do not run; the adapted thresholds sit on the +15 rail at 2.5 G**
+
+Goran 15.10. 14:18: "new tools from Cologne — see what is new and whether we can use it for a better calibration". Upstream copy:
+`tools/upstream_cc_20261015/serdestool.py` (2439 r.; `eyetools.py` identical to ours). Same bits as §16 (`/home/pi/fpga/{m2,gs}_{2g5,5g}.bit`),
+lab22 procedure per load (m2 then gs `-r`, SET_ACC 2→0), no power cycle. Raw: `docs/data_20261015/t5525/` (`lab25.*`, `lab26*`, `probes.out`, `log25/`, `log26*/`, `png/`).
+
+### 17.1 What is new upstream and what was wrong in our E7 scan (§9.6, §14.6)
+
+| Upstream rule (docstrings of `eye_freeze` / `eye_measure` / `eye_capture_op`) | What our `eyescan.py scan` did since E7 | Now measured on HW |
+|---|---|---|
+| `RX_EN_EQA` must be 0 **before** `RX_EQA_CONFIG` (0x08) is written, else the write is silently dropped; `sel_comp_data` (0x08[5:3]) = 2 routes monitor 2 | set `RX_EN_EQA=1` + `RX_EQA_LOCK_CFG[1]`, never wrote 0x08 → monitor never routed | after `eye_freeze`: `sel_comp_data=2`, `en_acc=0` read back (PASS, both boards) |
+| `RX_TH_MON2` is **write-protected** while `RX_EN_EQA_EXT_VALUE[3]` = 0x06[11] is 1; freeze uses EXT_VALUE 0b0111 | set exactly 0x06[11]=1 (`th2_ovr_write`) → every threshold write was ignored | with 0b0111: wrote −15, read −15 (PASS, both boards) |
+| `RX_EYE_MEAS_EN` 0x14[0] is start **and** status: 1 = running, 0 = done | read 1 as "done" (TASK-5066) and read the counters at once | bit never clears (§17.3) |
+| a read of 0x07 **is** the capture; slice TAPW / TH_MON / OFFSET from ONE read (`eye_capture_op`) | `health` used `rd_fields` = one read of 0x07 too | identical sets (§17.4) |
+
+Port (`tools/serdestool.py` = upstream + py3.7 + 2 fixes, `tools/eyescan.py capture|diagnose|eye|freeze|restore`, `tests/test_eye_cc.py` on a fake
+regfile that models the three rules). Two upstream bugs fixed in our copy (to report to Patrick): `eye_diagnose` freezes with EXT_VALUE 0b0111 but then
+demands 0b1111 → that check FAILs on every healthy receiver; `eye_freeze` writes the captured sign-magnitude `RX_OFFSET` into the unsigned
+`RX_AFE_OFFSET` → ValueError for a negative offset (now written only when EXT_VALUE[3] is set). Plus our own: `freeze` printed with `%04b`
+(ValueError after the writes, lab26 TAPW steps had no readback → repeated in lab26b).
+
+### 17.2 `eye_diagnose` (lab25 14:37–14:54, 2.5 G / 5 G P2 / 2.5 G again)
+
+| Check | m2 RX 2.5 G | gs RX 2.5 G | m2 RX 5 G P2 | gs RX 5 G P2 |
+|---|---|---|---|---|
+| CDR locked / EQA locked | PASS / PASS | PASS / PASS | **FAIL** / PASS | **FAIL** / PASS |
+| adapted threshold in range | **FAIL** th1 = th2 = +15 | **FAIL** +15 / +15 | **FAIL** +15 / +15 | PASS 13–14 |
+| ext-value set, sel_comp_data routed, integrators frozen, TH_MON2 writable | PASS ×4 | PASS ×4 | PASS ×4 | PASS ×4 |
+| phase sweep / counters respond | **TimeoutError: RX_EYE_MEAS_EN stuck at 1** | same | same | same |
+
+`PNG: png/diag_chain.png`. After every diagnose the restore was checked (EN_EQA 1, EXT 0, 0x08 = 0x01C0, CDR/EQA lock 1) and the link was
+intact: JTAG PEER 200/200 before and after on both boards at 2.5 G; 60 s serial BER after the freeze/restore 6.7·10⁻¹⁰ / 4.2·10⁻⁹
+(gs→m2 / m2→gs, = §16 r3) and 6.0·10⁻⁹ / 5.5·10⁻⁸ on the third load (load scatter as §16).
+
+### 17.3 The eye engine does not start on our boards — probes (`probes.out`, m2 and gs, 2.5 G, IDCODE 0x20000001 both)
+
+- After the upstream freeze, `RX_EYE_MEAS_EN` stays 1 for 1.5 s for window 1, 15, 255, 2048 (upstream: a full window is 131 µs at 1.25 G,
+  "never observable over JTAG"); all eight counters 0x16–0x1D stay 0. 0x14[0] simply reads back the last written value; 0x14[15:4] is
+  writable only while 0x14[0] = 0.
+- **PRBS on the link** (gs TX_PRBS_SEL 2 → m2 RX_PRBS_SEL 2, `RX_PRBS_LOCKED=1`, then m2 TX → gs RX the same) — still stuck, still 0 →
+  Manda's H1 (counters need the PRBS reference) is not sufficient.
+- `RX_EQA_CONFIG` sel_comp_data 0…7 × sel_tap 0/1 (16 values, readback = written), adapting with the monitor routed, LOCK_CFG 14, and the
+  undocumented 0x14[3:1] = 0…7 on both boards — no counter ever moves.
+- So the vendor sequence is now implemented and verified register by register, and the measurement engine still does not run on
+  CCGM1A1 here. **No eye picture is possible yet** (64 × 31 scan not run — it would return 1984 timeouts). Question for Patrick: is there a
+  bitstream / CFG-level enable or clock for the eye unit outside the regfile (our `CC_SERDES` has `RX_EYE_MEAS_EN(EYE_EN=0)`,
+  `RX_EYE_MEAS_CFG=0`, `RX_MON_PH_OFFSET=0`, `RX_DATAPATH_SEL=3`), or a silicon revision where it works?
+
+### 17.4 `eye_capture_op` ×10 — is the RX_OFFSET movement a read-out artefact? — **No**
+
+| Load | m2 RX_OFFSET (op / split) | gs RX_OFFSET (op / split) | TH_MON1/2 | TAPW |
+|---|---|---|---|---|
+| 2.5 G | 7 ×10 / 7 ×10 | **2 2 2 2 1 1 1 2 2 1** / 2 1 1 1 1 2 1 1 1 2 | +15 / +15 both | 0 both |
+| 5 G P2 | 1 1 0 1 0 1 1 1 0 1 / 0–1 | 2 ×10 / 2–3 | m2 +15, gs 13–14 | 2–3 both |
+| 2.5 G again | 7 ×10 | 2 2 2 2 1 2 2 2 1 2 / 2…1 | +15 / +15 | 0 |
+
+`op` = one read of 0x07 per monitor (upstream), `split` = three separate field reads (three captures). gs RX_OFFSET moves 1↔2 **also with the
+single-read capture**, so the "offset changes inside a window" of §14.5 (lab19) is the live offset loop sitting on a code boundary, not an
+artefact of how it was read. Our `health` already sliced all three fields from one 0x07 read (`rd_fields`), so the §14.5/§16 values stand.
+`PNG: png/capture_op.png`.
+
+### 17.5 Calibration toward the operating point — gs RX (m2→gs), A/B/A inside one 2.5 G load (lab26 14:55–15:17)
+
+The eye diagnose names the one lever left: both monitors sit on the +15 rail at 2.5 G (amplitude above the threshold DAC), so the DFE tap
+(= th1 − th2) is forced to 0. TX_AMP is already 31 (max) and RX_AFE_GAIN 0 (min), so the lever is the m2 TX amplitude. Second lever: pin the
+gs DFE tap by freeze (EXT_VALUE 0b0111, `RX_TAPW`). Each step 60 s serial BER (`ber_long`, ≈ 8·10¹⁰ bits per direction).
+
+| Step | gs TH_MON1/2, TAPW, OFFSET | m2→gs (gs RX, tuned) | gs→m2 (m2 RX, control) |
+|---|---|---|---|
+| A0 (TX_AMP 31) | +15 / +15, 0, 2 | 2.6·10⁻⁷ | 3.2·10⁻⁸ |
+| m2 TX_AMP 24 | +15 / +15, 0, 0 | 8.3·10⁻⁸ | **7.9·10⁻⁷** |
+| A | | 2.5·10⁻⁷ | 3.0·10⁻⁸ |
+| m2 TX_AMP 16 | +15 / +15, 1, 1 | **3.6·10⁻⁸** | **1.0·10⁻⁶** |
+| A | | 3.1·10⁻⁷ | 3.6·10⁻⁸ |
+| m2 TX_AMP 10 | **11 / 11–12**, 0–1, 1–2 | 7.9·10⁻⁸ | **3.8·10⁻⁶** |
+| A | | 2.2·10⁻⁷ | 3.6·10⁻⁸ |
+| gs `freeze RX_TAPW` −4 / −2 / +2 / +4 (lab26) | **not applied** (see below) | 2.5 / 3.4 / 3.1 / 2.4·10⁻⁷ | 3.6 / 4.0 / 4.4 / 3.4·10⁻⁸ |
+| A after each | | 2.7 / 2.5 / 1.3 / 2.7·10⁻⁷ | 4.4 / 4.6 / 3.5 / 3.8·10⁻⁸ |
+
+**m2 TX_AMP 16 repeated (lab26b 15:28–15:33, same load, A/B/A ×2):** m2→gs 5.8·10⁻⁸ / 3.8·10⁻⁸ against A 2.7·10⁻⁷ / 2.8·10⁻⁷ (×5–7 better),
+gs→m2 1.4·10⁻⁶ / 1.5·10⁻⁶ against A 4.4·10⁻⁸ / 4.0·10⁻⁸ (×30–40 worse). Every A step returns to the A0 level → the effect is causal and
+reproduces 3/3. Lowering the m2 TX swing helps the gs receiver (the +15 rail / over-drive story) and hurts the m2 receiver of the other
+direction; `TX_AMP` is a pure TX field (0x30[14:10], next to PRE/POST), so the coupling is physical (driver current on the shared SerDes
+supply, or near-end crosstalk in the adapter) — UNVERIFIED which. Sum of both directions: A ≈ 3.1·10⁻⁷, TX_AMP 16 ≈ 1.5·10⁻⁶ →
+**×5 worse for the link, not adopted.**
+
+**TAPW pin — a write-protect upstream does not document (lab26b readback):** `freeze RX_TAPW=-8/-4/+4/+8` read back `RX_TAPW=0` with
+EXT_VALUE 0b0111: `RX_EN_EQA_EXT_VALUE[2]` write-protects `RX_TAPW` as well, not only `RX_TH_MON1`. The lab26 TAPW steps and the lab26b
+TAPW steps (m2→gs 3.2 / 2.1 / 1.1 / 3.0·10⁻⁷, = A) therefore measured the unchanged adapted tap. Upstream `tc_eyemeas(tapw_sweep=True)`
+writes `RX_TAPW` after `eye_freeze` the same way, so its sweep pins nothing either (on these chips). Fixed: `eyescan.pin_fields` clears
+EXT_VALUE, writes, enables EXT_VALUE last (test `test_upstream_tapw_sweep_write_is_blocked`, `test_freeze_pins_tapw_and_prints`).
+
+**gs TAPW really pinned (lab26c 15:34–15:46, same load, readback −8 / −4 / +4 / +8):**
+
+| gs RX_TAPW | m2→gs (gs RX) | A after it (adapted, TAPW 0) | gs→m2 (control) |
+|---|---|---|---|
+| A0 | — | 1.7·10⁻⁷ | 3.7·10⁻⁸ |
+| −8 | **3.3·10⁻⁴** | 2.0·10⁻⁷ | 7.2·10⁻⁸ |
+| −4 | **2.0·10⁻⁵** | 1.9·10⁻⁷ | 6.3·10⁻⁸ |
+| +4 | 6.7·10⁻⁷ | 1.4·10⁻⁷ | 6.5·10⁻⁸ |
+| +8 | **7.0·10⁻⁴** (gs checker restarted once) | 1.1·10⁻⁷ | 4.9·10⁻⁸ |
+
+The DFE tap is a live knob on the gs receiver (×4000 over ±8 codes) and the bathtub is asymmetric (+4 ×30 better than −4).
+
+**Fine TAPW sweep (lab26d 15:47–16:01, same load):**
+
+| gs RX_TAPW (readback) | m2→gs (gs RX) | A after it (adapted 0) | gs→m2 (control) |
+|---|---|---|---|
+| A0 | — | 1.9·10⁻⁷ | 4.4·10⁻⁸ |
+| −2 | 2.9·10⁻⁶ | 1.8·10⁻⁷ | 4.1·10⁻⁸ |
+| −1 | 6.4·10⁻⁷ | 1.7·10⁻⁷ | 7.4·10⁻⁸ |
+| +1 | 4.8·10⁻⁸ | 1.5·10⁻⁷ | 7.6·10⁻⁸ |
+| **+2** | **6.7·10⁻⁹** | 9.7·10⁻⁸ | 6.7·10⁻⁸ |
+| +3 | 4.4·10⁻⁸ | 9.7·10⁻⁸ | 5.4·10⁻⁸ |
+| (+4, lab26c) | 6.7·10⁻⁷ | 1.4·10⁻⁷ | 6.5·10⁻⁸ |
+
+**The bottom of the gs bathtub is TAPW +2, not the adapted 0:** ×15–28 lower m2→gs BER than the A steps around it, the control direction
+unchanged. Why the adaptation misses it: both monitors are railed at +15 and the tap is computed as th1 − th2 = 0, so the DFE loop never
+gets a gradient. This is the "calibration toward the eye" the vendor tools enable — with the eye itself measured as BER over the pinned tap,
+because the eye counters do not run (17.3). Raw logs: `log26c/` (lab26c ran with the old log path `log26b`; its files were moved to `log26c/`; the lab26b
+TAPW/A0 jsonl were overwritten by it — their totals are in `lab26b.out`).
+
+**Confirmation on two fresh loads (lab27 16:02–16:47, 300 s per step, JTAG PEER 200/200 at start / B / end of both loads):**
+
+| Load | A1 (adapted) m2→gs | **B: gs TAPW +2** m2→gs | A2 (adapted) m2→gs | gs→m2 A1 / B / A2 | exploratory m2 TAPW +2, 120 s: gs→m2 |
+|---|---|---|---|---|---|
+| r1 | 7.4·10⁻⁸ | **4.7·10⁻⁹** | 5.4·10⁻⁸ | 7.7·10⁻⁹ / 5.2·10⁻⁹ / 1.2·10⁻⁸ | 2.3·10⁻⁹ (m2→gs 8.2·10⁻⁸, gs adapted again) |
+| r2 | 3.6·10⁻⁸ | **1.1·10⁻⁸** | 4.3·10⁻⁸ | 1.3·10⁻⁹ / 1.5·10⁻⁹ / 3.8·10⁻⁹ | 1.5·10⁻⁹ (= A, inconclusive) |
+
+**gs TAPW +2 is better on every load tested (3/3: lab26d ×15–28, r1 ×11–16, r2 ×3–4), the control direction does not move.** The gain
+depends on the load (the load scatter of §14.5/§16 remains). Recipe added to `/home/pi/fpga/README.txt` (bits unchanged; a JTAG step after
+each load: `fpga-jtag gs run python3 eyescan.py freeze RX_TAPW=2`, undo `restore`). Baking it into the bitstream needs the regfile power-up
+values `RX_EN_EQA=0`, `RX_TAPW=2`, `RX_EN_EQA_EXT_VALUE=0b0111` — not done (the freeze also stops the DFE and offset adaptation,
+which is fine at 2.5 G on this channel but has to be re-checked at 5 G). PNG: `png/tapw_bathtub.png`, `png/calib_log2*.png`.
+
+### 17.6 Uputa #333: Patrick's `serdes_lb.v` (mail UID 85) as a fix for `RX_EYE_MEAS_EN` — **does not fix it on our boards**
+
+Built unchanged for both boards (`gateware/eye_cc/top_eye.v`: OUTDIV 2 = 2.5 G from the 100 MHz LVDS refclk, RX_POLARITY_I 1 for the
+adapter P/N swap, PRBS-15 both ways, `RX_EYE_MEAS_CFG` {12'h800,3'b0}, `RX_EQA_LOCK_CFG` C, all RX resets overridden, TX_CALIB_EN 1,
+PLL_CP 96 / AO A, TX_AMP 15; `eye_pu2g5_s1.bit` sha256 2627c71c…). Same bit on both (labeye 16:47–16:53):
+PLL and CDR locked, `RX_PRBS_LOCKED=1` but `RX_PRBS_ERR_CNT` saturated (32767; this profile has DFE off, EQA not locked, no FFE on our
+channel), `RX_EYE_MEAS_EN` stuck at 1 for 1.5 s at window 1…2048, all counters 0, `eye_diagnose` FAIL at the measurement on both.
+Minimal change of our own bits, `ber_top` parameter `EYE_CFG` = 0x4000 (RX_EYE_MEAS_CFG 2048; LOCK_CFG is already C in PROFILE 1;
+default 0 rebuilds gs_2g5 byte-identical 36f09752): gs f4a07905…, m2 91638802… — same result. Standard pair reloaded afterwards,
+JTAG PEER 200/200. So neither the bitstream defaults nor the link data pattern start the engine here. Open for Patrick: chip revision
+(IDCODE 0x20000001 both), a CFG/clock enable of the eye unit outside the regfile, or the exact board/bit where he saw it count.
+
+### 17.7 Result of TASK-5525
+
+- Ported: upstream eye path in `tools/serdestool.py` + `eyescan.py capture|diagnose|eye|freeze|restore`, 28 tests on a fake regfile
+  (`tests/test_eye_cc.py`, `test_eye_cc_report.py`), green on the Pi (py3.7). Three upstream defects found and fixed in our copy:
+  diagnose EXT 0b1111 check, negative offset into `RX_AFE_OFFSET`, and **`RX_TAPW` write-protected by `RX_EN_EQA_EXT_VALUE[2]`** (so
+  `tc_eyemeas(tapw_sweep=True)` pins nothing) — to report to Patrick.
+- E7 was wrong in two ways (0x06[11] locked `RX_TH_MON2`, monitor never routed); with the vendor sequence the freeze verifiably works,
+  **but the eye counters still do not count** on either board, also with Patrick's own bitstream → no eye picture (64 × 31 scan not run).
+- (b) answered: the gs RX_OFFSET movement is real (offset loop on a code boundary), not a read-out artefact.
+- Calibration toward the operating point: the diagnose finding "thresholds railed at +15" explains why the DFE tap adapts to 0; pinning
+  the gs tap to +2 lowers the m2→gs BER ×3–28 on 3/3 loads. Lowering m2 TX_AMP instead helps gs but costs the m2 receiver ×30–40 → rejected.
+- 5 G P2: diagnose/capture only (CDR unlocked on both, BER 3·10⁻², gs thresholds 13–14 not railed, TAPW 2–3); no calibration attempted.

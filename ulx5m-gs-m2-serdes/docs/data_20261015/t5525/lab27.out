@@ -1,0 +1,35 @@
+-- load r1 16:02:10 throttled=0xd0005
+Done
+Done
+JTAG r1_start m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG r1_start gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER r1_A1 TOTAL secs=300.1 gs->m2 BER=7.662240447539754e-09 (<None) m2->gs BER=7.399542964852318e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=5
+FREEZE board=gs op={'th_mon1': 15, 'tapw': 0, 'offset': 2, 'th_mon2': 15, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE': 7, 'RX_TAPW': 2, 'RX_TH_MON1': 15, 'RX_TH_MON2': 15, 'RX_AFE_OFFSET': 8, 'RX_CDR_LOCKED': 1}
+JTAG r1_B m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG r1_B gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER r1_B_gs_tapw2 TOTAL secs=296.70000000000005 gs->m2 BER=5.208362256247259e-09 (<None) m2->gs BER=4.6629107946410515e-09 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=5
+RESTORE board=gs {'RX_EN_EQA': 1, 'RX_EN_EQA_EXT_VALUE': 0, 'RX_EQA_CONFIG': 448, 'RX_EQA_LOCKED': 1, 'RX_CDR_LOCKED': 1}
+BER r1_A2 TOTAL secs=300.1 gs->m2 BER=1.1565570642235848e-08 (<None) m2->gs BER=5.378938799867069e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=5
+FREEZE board=m2 op={'th_mon1': 15, 'tapw': 0, 'offset': 7, 'th_mon2': 15, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE': 7, 'RX_TAPW': 2, 'RX_TH_MON1': 15, 'RX_TH_MON2': 15, 'RX_AFE_OFFSET': 8, 'RX_CDR_LOCKED': 1}
+BER r1_m2_tapw2 TOTAL secs=120.3 gs->m2 BER=2.291716434005808e-09 (<None) m2->gs BER=8.215893589571902e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=2
+RESTORE board=m2 {'RX_EN_EQA': 1, 'RX_EN_EQA_EXT_VALUE': 0, 'RX_EQA_CONFIG': 448, 'RX_EQA_LOCKED': 1, 'RX_CDR_LOCKED': 1}
+JTAG r1_end m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG r1_end gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+-- load r2 16:24:48 throttled=0xd0000
+Done
+Done
+JTAG r2_start m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG r2_start gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER r2_A1 TOTAL secs=304.1 gs->m2 BER=1.259992931943649e-09 (<None) m2->gs BER=3.6264796529106114e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=5
+FREEZE board=gs op={'th_mon1': 15, 'tapw': 0, 'offset': 2, 'th_mon2': 15, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE': 7, 'RX_TAPW': 2, 'RX_TH_MON1': 15, 'RX_TH_MON2': 15, 'RX_AFE_OFFSET': 8, 'RX_CDR_LOCKED': 0}
+JTAG r2_B m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG r2_B gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER r2_B_gs_tapw2 TOTAL secs=303.9 gs->m2 BER=1.5368999211052791e-09 (<None) m2->gs BER=1.1459872813051046e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=5
+RESTORE board=gs {'RX_EN_EQA': 1, 'RX_EN_EQA_EXT_VALUE': 0, 'RX_EQA_CONFIG': 448, 'RX_EQA_LOCKED': 1, 'RX_CDR_LOCKED': 1}
+BER r2_A2 TOTAL secs=299.8 gs->m2 BER=3.800680567445467e-09 (<None) m2->gs BER=4.332046021044395e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=5
+FREEZE board=m2 op={'th_mon1': 15, 'tapw': 0, 'offset': 7, 'th_mon2': 15, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE': 7, 'RX_TAPW': 2, 'RX_TH_MON1': 15, 'RX_TH_MON2': 15, 'RX_AFE_OFFSET': 8, 'RX_CDR_LOCKED': 1}
+BER r2_m2_tapw2 TOTAL secs=121.7 gs->m2 BER=1.4961748381266337e-09 (<None) m2->gs BER=3.1676158909207835e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=2
+RESTORE board=m2 {'RX_EN_EQA': 1, 'RX_EN_EQA_EXT_VALUE': 0, 'RX_EQA_CONFIG': 448, 'RX_EQA_LOCKED': 1, 'RX_CDR_LOCKED': 1}
+JTAG r2_end m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+JTAG r2_end gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+LAB27 DONE 16:47:42

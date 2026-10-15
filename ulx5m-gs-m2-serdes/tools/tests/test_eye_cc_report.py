@@ -39,5 +39,12 @@ class Report(unittest.TestCase):
         self.assertEqual(got['A'], [(0, 2e-7, 5e-8)])
 
 
+    def test_is_a_step(self):
+        for n in ('A0', 'A_amp16', 'r1_A1', 'r2_A2', 'A_tapw-2'):
+            self.assertTrue(R.is_a_step(n), n)
+        for n in ('amp16', 'tapw2', 'r1_B_gs_tapw2', 'r1_m2_tapw2'):
+            self.assertFalse(R.is_a_step(n), n)
+
+
 if __name__ == '__main__':
     unittest.main()
