@@ -9,6 +9,15 @@
     python3 eyescan.py margin eye_m2.json [--target 1e-3]
     python3 eyescan.py plot eye_m2.json eye_m2.png        # needs numpy + matplotlib (eyetools.py, pu-cc 83d7858)
 
+Cologne Chip eye path (serdestool 15.10.2026, Patrick Urban; TASK-5525) - use these, not 'scan':
+    fpga-jtag gs run python3 eyescan.py capture -n 10 --out cap.json      # eye_capture_op: ONE 0x07 read per monitor
+    fpga-jtag gs run python3 eyescan.py diagnose --rate 2.5e9 --out d.json  # eye_diagnose PASS/FAIL chain
+    fpga-jtag gs run python3 eyescan.py eye --rate 2.5e9 --out eye.json [--tapw-sweep]   # freeze, 64 ph x 31 th, restore
+    fpga-jtag gs run python3 eyescan.py freeze RX_TAPW=3 [--ext 0b0111]   # pin the adapted point (+overrides), stays frozen
+    fpga-jtag gs run python3 eyescan.py restore                          # adaptation back on (eye_restore)
+'scan' below is the E7 path and is WRONG (kept for the record): it sets 0x06[11] = RX_EN_EQA_EXT_VALUE[3], which
+write-protects RX_TH_MON2, and it never routes the monitor (RX_EQA_CONFIG sel_comp_data, writable only with RX_EN_EQA=0).
+
 How a point is measured (DS1001 2026-09, tables 2.44-2.47, regfile 0x05, 0x14-0x1D): monitor 2 samples the
 received signal at phase RX_MON_PH_OFFSET (0x15[5:0], signed, 64 codes = 1 UI as in eyetools) against threshold
 RX_TH_MON2 (0x05[10:6], signed). Its override enable is 0x06[11] (vendor map, serdestool 56aa48b: RX_TH_MON2_OVR +
@@ -336,6 +345,213 @@ def cmd_health(a):
     return 0
 
 
+# ------------------------------------------------------------------ Cologne Chip eye path (TASK-5525)
+OP_KEYS = ('tapw', 'th_mon1', 'th_mon2', 'offset')
+# words the eye path touches: 0x04 EN_EQA/LOCK_CFG, 0x05 TH_MON1/2, 0x06 TAPW/AFE_OFFSET/EXT, 0x08 EQA_CONFIG, 0x14/0x15 monitor
+EYE_KEEP = (0x04, 0x05, 0x06, 0x08, 0x14, 0x15)
+
+
+def capture_split(s):
+    """The pre-TASK-5525 way: three field reads = three captures of 0x07 (eye_capture_op docstring). For comparison."""
+    return {'tapw': s.rd_field('RX_EQA_TAPW'), 'th_mon': s.rd_field('RX_TH_MON'), 'offset': s.rd_field('RX_OFFSET')}
+
+
+def capture_stats(passes, keys=OP_KEYS):
+    """[{key: value}] -> {key: {'min', 'max', 'distinct'}}: is the operating point stable across captures?"""
+    out = {}
+    for k in keys:
+        v = [p[k] for p in passes if k in p]
+        if v:
+            out[k] = {'min': min(v), 'max': max(v), 'distinct': sorted(set(v))}
+    return out
+
+
+def eye_keep(s):
+    return {a: int(s.rd_regfile(a)) for a in EYE_KEEP}
+
+
+def eye_put_back(s, keep):
+    """eye_restore with the bitstream's own words: adaptation off (0x08 is only writable with RX_EN_EQA=0), overrides
+    off, 0x08/0x05/0x06/0x15 and the window back, then 0x04 (RX_EN_EQA + LOCK_CFG) last. 0x14[0] is start/status."""
+    s.wr_fields({'RX_EN_EQA': 0})
+    s.wr_fields({'RX_EN_EQA_EXT_VALUE': 0})
+    for a in (0x08, 0x05, 0x06, 0x15):
+        s.wr_regfile(addr=a, data=keep[a], mask=0xFFFF)
+    s.wr_regfile(addr=0x14, data=keep[0x14] & 0xFFF0, mask=0xFFF0)
+    s.wr_regfile(addr=0x04, data=keep[0x04], mask=0xFFFF)
+
+
+def capture_op_kept(s):
+    """eye_capture_op leaves RX_EQA_LOCK_CFG[1]=1; restore the bitstream value."""
+    lk = s.rd_field('RX_EQA_LOCK_CFG')
+    try:
+        return s.eye_capture_op()
+    finally:
+        s.wr_field('RX_EQA_LOCK_CFG', lk)
+
+
+def eye_to_json(e):
+    """EyeData -> our points list [[th, ph, {class: (correct, wrong)}]] (margin/plot/load use it)."""
+    return [[th, ph, {c: (e.correct[c][iy][ix], e.wrong[c][iy][ix]) for c in e.EYE_CLASSES}]
+            for iy, th in enumerate(e.thresholds) for ix, ph in enumerate(e.phases)]
+
+
+def _testmode_ok(sd):
+    if sd.field('SERDES_TESTMODE') != 1:
+        print('board=%s: SERDES_TESTMODE=0, regfile writes are ignored' % sd.board)
+        return False
+    return True
+
+
+def cmd_capture(a):
+    from serdes_jtag import Serdes
+    sd = Serdes(); s = sd.s
+    ops, split = [], []
+    for i in range(a.n):
+        ops.append(capture_op_kept(s))
+        split.append(capture_split(s))
+        if i < a.n - 1:
+            time.sleep(a.interval)
+    st = capture_stats(ops); st_split = capture_stats(split, ('tapw', 'th_mon', 'offset'))
+    out = {'board': sd.board, 'label': a.label, 'time': time.strftime('%F %T'), 'n': a.n, 'interval': a.interval,
+           'capture_op': ops, 'split_reads': split, 'stats': st, 'stats_split': st_split}
+    if a.out:
+        json.dump(out, open(a.out, 'w'))
+    for i, (o, q) in enumerate(zip(ops, split)):
+        print('CAP %s %2d op tapw=%+d th1=%+d th2=%+d off=%+d locked=%d | split tapw=%+d th=%+d off=%+d' % (
+            sd.board, i, o['tapw'], o['th_mon1'], o['th_mon2'], o['offset'], o['locked'], q['tapw'], q['th_mon'],
+            q['offset']))
+    print('CAPSTAT board=%s %s op=%s split=%s' % (sd.board, a.label, json.dumps({k: v['distinct'] for k, v in st.items()}),
+                                                 json.dumps({k: v['distinct'] for k, v in st_split.items()})))
+    sd.close()
+    return 0
+
+
+def cmd_diagnose(a):
+    import contextlib, io
+    from serdes_jtag import Serdes
+    sd = Serdes(); s = sd.s
+    if not _testmode_ok(sd):
+        return 1
+    keep, buf, ok, dump = eye_keep(s), io.StringIO(), None, None
+    try:
+        with contextlib.redirect_stdout(buf):
+            try:
+                ok = s.eye_diagnose(window=a.window, monitor=2, line_rate=a.rate)
+            except Exception as e:                          # e.g. TimeoutError: RX_EYE_MEAS_EN stuck at 1
+                print('  [FAIL] exception                  %s: %s' % (type(e).__name__, e)); ok = False
+            try:                                             # raw per-class counters at the data sampler's phase
+                op = capture_op_kept(s); s.eye_freeze(op, monitor=2)
+                dump = s.eye_dump_point(phase=0, threshold=0, window=a.window, repeats=1, line_rate=a.rate)
+            except Exception as e:
+                print('  dump_point failed %s: %s' % (type(e).__name__, e))
+    finally:
+        eye_put_back(s, keep)
+    text = buf.getvalue()
+    print('\n'.join('DIAG %s %s' % (sd.board, ln) for ln in text.splitlines()))
+    after = s.rd_fields(['RX_EN_EQA', 'RX_EQA_LOCKED', 'RX_CDR_LOCKED', 'RX_EN_EQA_EXT_VALUE', 'RX_EQA_CONFIG'])
+    print('DIAGRESULT board=%s %s ok=%s restored=%s' % (sd.board, a.label, ok, after))
+    if a.out:
+        json.dump({'board': sd.board, 'label': a.label, 'time': time.strftime('%F %T'), 'ok': ok, 'text': text,
+                   'dump_point': {k: list(v) for k, v in dump.items()} if dump else None, 'after': after}, open(a.out, 'w'))
+    sd.close()
+    return 0 if ok else 1
+
+
+def tapw_pick(areas):
+    """[(tapw, open_area)] -> tapw with the largest open area (first one on a tie, as tc_eyemeas)."""
+    best, best_a = None, -1
+    for t, ar in areas:
+        if ar > best_a:
+            best, best_a = t, ar
+    return best
+
+
+def cmd_eye(a):
+    from serdes_jtag import Serdes
+    sd = Serdes(); s = sd.s
+    if not _testmode_ok(sd):
+        return 1
+    keep, t0 = eye_keep(s), time.time()
+    phs, ths = parse_range(a.ph), parse_range(a.th)
+    op = capture_op_kept(s)
+    print('EYE board=%s adapted op %s' % (sd.board, op), flush=True)
+    sweep = []
+    done = [0]
+
+    def progress(eye, iy, ix):
+        done[0] += 1
+        if ix == len(eye.phases) - 1 or done[0] % 200 == 0:
+            print('  %d/%d points %.0fs' % (done[0], len(phs) * len(ths), time.time() - t0), flush=True)
+    try:
+        s.eye_freeze(op, monitor=2)
+        if a.tapw_sweep:
+            for tw in range(-15, 16) if a.tapw_signed else range(0, 16):
+                s.wr_field('RX_TAPW', tw)
+                pr = s.eye_scan(phases=range(-32, 32, 8), thresholds=range(-15, 16, 3), window=a.window,
+                                line_rate=a.rate)
+                sweep.append((tw, pr.open_area(a.target)))
+                print('  TAPW %+3d open area %d' % sweep[-1], flush=True)
+            s.wr_field('RX_TAPW', tapw_pick(sweep))
+        e = s.eye_scan(phases=phs, thresholds=ths, window=a.window, repeats=a.repeats, line_rate=a.rate,
+                       on_point=progress)
+        try:
+            from serdestool import eye_codes_per_ui
+            cpu = list(eye_codes_per_ui(e)) if len(phs) >= 64 else None
+        except ValueError as x:
+            cpu = str(x)
+    finally:
+        eye_put_back(s, keep)
+    pts = {(th, ph): c for th, ph, c in eye_to_json(e)}
+    m = margin(pts, a.target)
+    out = {'board': sd.board, 'time': time.strftime('%F %T'), 'secs': round(time.time() - t0, 1), 'window': a.window,
+           'repeats': a.repeats, 'label': a.label, 'path': 'cc_eye_freeze_monitor2', 'op': op, 'tapw_sweep': sweep,
+           'tapw_used': tapw_pick(sweep) if sweep else op['tapw'], 'codes_per_ui': cpu, 'phases': phs, 'thresholds': ths,
+           'points': eye_to_json(e), 'margin': m, 'open_area': e.open_area(a.target),
+           'hits_total': sum(e.hits(iy, ix) for iy in range(len(ths)) for ix in range(len(phs)))}
+    if a.out:
+        json.dump(out, open(a.out, 'w'))
+    print('EYE board=%s %s width=%d codes (%.2f UI) height=%d codes centre_ph=%s open_area=%d hits=%d cpu=%s %.0fs' % (
+        sd.board, a.label, m['width_codes'], m['width_ui'], m['height_codes'], m['center_phase'], out['open_area'],
+        out['hits_total'], cpu, time.time() - t0))
+    sd.close()
+    return 0
+
+
+def parse_ext(v):
+    return int(v, 0)
+
+
+def cmd_freeze(a):
+    """Pin the adapted operating point, then apply field overrides (e.g. RX_TAPW=3 RX_AFE_OFFSET=5) and leave it frozen."""
+    from serdes_jtag import Serdes
+    sd = Serdes(); s = sd.s
+    if not _testmode_ok(sd):
+        return 1
+    op = capture_op_kept(s)
+    s.eye_freeze(op, monitor=2)                      # 0b0111: eye_freeze refuses bit 3 for monitor 2
+    vals = {kv.split('=')[0]: int(kv.split('=')[1], 0) for kv in a.fields}
+    if vals:
+        s.wr_fields(vals)                            # values first, with EXT_VALUE[3] still clear (TH_MON2 writable)
+    if a.ext != 0b0111:
+        s.wr_fields({'RX_EN_EQA_EXT_VALUE': a.ext})  # e.g. 0b1111: RX_AFE_OFFSET override on, enabled last
+    got = s.rd_fields(['RX_EN_EQA', 'RX_EN_EQA_EXT_VALUE', 'RX_TAPW', 'RX_TH_MON1', 'RX_TH_MON2', 'RX_AFE_OFFSET',
+                       'RX_CDR_LOCKED'] + list(vals))
+    print('FREEZE board=%s op=%s ext=0b%04b now %s' % (sd.board, op, a.ext, got))
+    sd.close()
+    return 0 if all(got[k] == v for k, v in vals.items()) else 1
+
+
+def cmd_restore(a):
+    from serdes_jtag import Serdes
+    sd = Serdes(); s = sd.s
+    s.eye_restore()
+    got = s.rd_fields(['RX_EN_EQA', 'RX_EN_EQA_EXT_VALUE', 'RX_EQA_CONFIG', 'RX_EQA_LOCKED', 'RX_CDR_LOCKED'])
+    print('RESTORE board=%s %s' % (sd.board, got))
+    sd.close()
+    return 0
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sp = p.add_subparsers(dest='cmd')
@@ -350,9 +566,21 @@ def main(argv=None):
     h = sp.add_parser('health'); h.add_argument('-n', type=int, default=10); h.add_argument('--interval', type=float, default=1.0)
     h.add_argument('--label', default=''); h.add_argument('--out')
     h.add_argument('--raw', action='store_true', help='also RX_AFE_OFFSET + raw regfile words RAW_REGS into --out')
+    c = sp.add_parser('capture'); c.add_argument('-n', type=int, default=10); c.add_argument('--interval', type=float, default=0.2)
+    c.add_argument('--label', default=''); c.add_argument('--out')
+    d = sp.add_parser('diagnose'); d.add_argument('--window', type=int, default=2048)
+    d.add_argument('--rate', type=float, default=2.5e9); d.add_argument('--label', default=''); d.add_argument('--out')
+    e = sp.add_parser('eye'); e.add_argument('--ph', default='-32:31:1'); e.add_argument('--th', default='-15:15:1')
+    e.add_argument('--window', type=int, default=2048); e.add_argument('--repeats', type=int, default=1)
+    e.add_argument('--rate', type=float, default=2.5e9); e.add_argument('--target', type=float, default=1e-3)
+    e.add_argument('--tapw-sweep', action='store_true'); e.add_argument('--tapw-signed', action='store_true')
+    e.add_argument('--label', default=''); e.add_argument('--out')
+    fz = sp.add_parser('freeze'); fz.add_argument('fields', nargs='*'); fz.add_argument('--ext', type=parse_ext, default=0b0111)
+    sp.add_parser('restore')
     a = p.parse_args(argv)
     fn = {'scan': cmd_scan, 'margin': cmd_margin, 'plot': cmd_plot, 'set': cmd_set, 'get': cmd_get, 'recal': cmd_recal,
-          'health': cmd_health}.get(a.cmd)
+          'health': cmd_health, 'capture': cmd_capture, 'diagnose': cmd_diagnose, 'eye': cmd_eye, 'freeze': cmd_freeze,
+          'restore': cmd_restore}.get(a.cmd)
     if fn is None:
         p.print_help(); return 2
     return fn(a)

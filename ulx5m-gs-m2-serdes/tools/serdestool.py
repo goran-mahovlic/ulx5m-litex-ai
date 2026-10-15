@@ -114,7 +114,7 @@ def ReadCfgFile(filename) -> bytes:
 def ph_code(value):
     """Signed phase offset (-32..+31) -> 6-bit register code."""
     if value not in range(-32, 32):
-        raise ValueError('phase offset out of range (-32..+31)')
+        raise ValueError(f'phase offset {value} out of range (-32..+31)')
     return value & 0x3F
 
 
@@ -122,6 +122,39 @@ def ph_value(code):
     """6-bit register code -> signed phase offset."""
     code &= 0x3F
     return code - 64 if code & 0x20 else code
+
+
+def eye_codes_per_ui(eye, classes=None, closed=0.1):
+    """Measure how many phase codes make up one UI.
+
+    Counts closed regions around one full wrap of the phase register at
+    the threshold nearest zero.  One closed region per wrap means the 64
+    codes span one UI; two means they span two UI and one code is 1/32 UI.
+    Needs a scan covering all 64 codes.
+    """
+    classes = classes or EyeData.EYE_CLASSES
+    if len(eye.phases) < 64:
+        raise ValueError('needs a scan over all 64 phase codes')
+    iy = min(range(len(eye.thresholds)), key=lambda i: abs(eye.thresholds[i]))
+    order = sorted(range(len(eye.phases)), key=lambda ix: ph_code(eye.phases[ix]))
+    shut = [(eye.ber(iy, ix, classes) or 1.0) > closed for ix in order]
+    # A cyclic run count of 0 is ambiguous: it means either every code is
+    # closed or every code is open, and those need opposite fixes.  Report
+    # them distinctly instead of silently returning "0 regions".
+    if all(shut):
+        raise ValueError('the eye is closed at every phase code; the link '
+                         'is not working, the equalizer is mis-set, or '
+                         'sel_comp_data is not 2 (monitor 1 cannot be moved '
+                         'in phase, so its row is flat)')
+    if not any(shut):
+        raise ValueError('the eye is open at every phase code; raise the '
+                         '"closed" threshold, or the phase offset is not '
+                         'reaching the rotator')
+    # count cyclic runs of "closed"
+    regions = sum(1 for k in range(len(shut))
+                  if shut[k] and not shut[k - 1])
+    return {1: 64, 2: 32}.get(regions), regions
+
 
 class ColorFormatter:
     pos_cond = ["DONE", "PRESENT", "LOCKED", "IS_ALIGNED", "EN_ADPLL_CTRL", "CONFIG_SEL", "SERDES_ENABLE"]
@@ -1285,13 +1318,514 @@ class SerdesTool:
         if (int(word[6:8+1]) != i+1):
             print(f'ERROR: TX PRBS mode is invalid')
 
-    def tc_eyemeas(self, window=512, repeats=1, monitor=2, sel_tap=0, phase_step=1, tapw_sweep=False, setup=True):
+    def eye_capture_op(self):
+        """Read back the adapted equalizer settings.
+
+        Reading EYE_CAPTURE_ADDR is what performs the capture, so this does
+        exactly ONE read per pass and slices all three fields out of that
+        single word.  Reading the fields individually would fire three
+        captures and could straddle an adaptation step, giving a tap weight
+        and a threshold that never coexisted.
+
+        RX_EQA_LOCK_CFG[1] selects which monitor threshold the capture
+        register reports, so both monitors need their own pass.
+        """
+        if not self.rd_field('RX_EQA_LOCKED'):
+            print('WARN:  RX_EQA_LOCKED is low; the capture may return stale data')
+
+        f = self.regfile.fields
+        for k in ('RX_EQA_TAPW', 'RX_TH_MON', 'RX_OFFSET'):
+            if f[k]['addr'] != 0x07:
+                raise RuntimeError(f'{k} is not at the capture address')
+
+        op = {}
+        for mon in (1, 2):
+            self.wr_field('RX_EQA_LOCK_CFG[1]', 0 if mon == 1 else 1)
+            sleep(1e-3)                                  # 1 RX clock is enough
+            word = int(self.rd_regfile(args.idx, 0x07))  # fires capture
+            def cut(name):
+                fl = f[name]
+                w = fl['hbit'] - fl['lbit'] + 1
+                return self._decode((word >> fl['lbit']) & ((1 << w) - 1), fl)
+            op[f'th_mon{mon}'] = cut('RX_TH_MON')
+            op['tapw'] = cut('RX_EQA_TAPW')
+            op['offset'] = cut('RX_OFFSET')              # sign-magnitude -> signed
+        op['locked'] = self.rd_field('RX_EQA_LOCKED')
+        return op
+
+
+    def eye_freeze(self, op, monitor=2, sel_tap=0, ext_value=None):
+        """Stop adaptation and pin the equalizer at its adapted operating
+        point, with the chosen monitor routed to both pattern decoders.
+
+        Write order matters, because two fields are write-protected and a
+        blocked write fails silently:
+
+        1. RX_EN_EQA must be 0 BEFORE RX_EQA_CONFIG is written.  The
+            register file freezes RX_EQA_CONFIG while the adaptation engine
+            is enabled, so writing sel_comp_data first is simply ignored and
+            the monitor is never routed.
+        2. RX_TH_MON2 is write-protected while RX_EN_EQA_EXT_VALUE[3] is
+            set, so bit 3 is left clear.  It is the AFE-offset override, and
+            with the integrators frozen the offset holds its adapted value
+            anyway, so nothing is lost.  Pass ext_value=0b1111 only if you
+            are not sweeping RX_TH_MON2.
+
+        The same shifted guard applies to RX_TH_MON1, which is protected by
+        RX_EN_EQA_EXT_VALUE[2] -- the DFE tap override in 0x06.  That makes a
+        monitor-1 sweep impossible with the tap pinned; see the warning below.
+
+        All remaining RX_EN_EQA_EXT_VALUE bits must be set.  The DFE tap is
+        computed combinationally as (mon1 threshold - mon2 threshold) and
+        re-registered every RX clock with no enable term, so bit 2 is what
+        stops the tap following the threshold sweep.
+        """
+        if monitor not in (1, 2):
+            raise ValueError('monitor must be 1 or 2')
+        if ext_value is None:
+            ext_value = 0b0111 if monitor == 2 else 0b1011
+        gate = 3 if monitor == 2 else 2
+        if (ext_value >> gate) & 1:
+            raise ValueError(
+                f'RX_EN_EQA_EXT_VALUE[{gate}] write-protects '
+                f'RX_TH_MON{monitor}; use ext_value='
+                f'0b{ext_value & ~(1 << gate):04b} when sweeping monitor {monitor}')
+        if monitor == 1:
+            print('WARN:  sweeping monitor 1 requires EXT_VALUE[2] clear, which '
+                'is the DFE tap override. The tap is (mon1 - mon2) and will '
+                'follow the sweep. Monitor 1 also cannot be moved in phase, '
+                'so this is a vertical-only scan with a moving equalizer.')
+
+        # 1. disable adaptation first, so RX_EQA_CONFIG becomes writable
+        self.wr_field('RX_EN_EQA', 0)
+
+        # 2. route the monitor and select the cursor
+        cfg = self.rd_field('RX_EQA_CONFIG')
+        cfg = (cfg & ~0x1FF) | ((monitor & 0x7) << 3) | (sel_tap & 0x7)
+        self.wr_field('RX_EQA_CONFIG', cfg)
+        got = self.rd_field('RX_EQA_CONFIG')
+        if got != cfg:
+            raise IOError(f'RX_EQA_CONFIG write blocked: wrote 0x{cfg:04X}, '
+                        f'read 0x{got:04X}. RX_EN_EQA must be 0 first.')
+
+        # 3. load the operating point while the override bits are still clear
+        # ulx5m-gs-m2-serdes TASK-5525: RX_AFE_OFFSET (0x06[10:6], unsigned) is only used with EXT_VALUE[3]; the captured
+        # RX_OFFSET is sign-magnitude and a negative value does not encode, so write it only when bit 3 is set
+        pin = {'RX_TAPW': op['tapw'], 'RX_TH_MON1': op['th_mon1'], 'RX_TH_MON2': op['th_mon2']}
+        if (ext_value >> 3) & 1:
+            pin['RX_AFE_OFFSET'] = op['offset']
+        self.wr_fields(pin)
+
+        # 4. enable the overrides last
+        self.wr_field('RX_EN_EQA_EXT_VALUE', ext_value)
+
+        # 5. prove the swept threshold is still writable
+        th_field = 'RX_TH_MON1' if monitor == 1 else 'RX_TH_MON2'
+        probe = -7 if op.get(f'th_mon{monitor}', 0) != -7 else 7
+        self.wr_field(th_field, probe)
+        if self.rd_field(th_field) != probe:
+            raise IOError(f'{th_field} is not writable with '
+                        f'RX_EN_EQA_EXT_VALUE=0b{ext_value:04b}. Run '
+                        f'probe_writability() to find the gating bit.')
+        self.wr_field(th_field, op[f'th_mon{monitor}'])
+
+
+    def eye_restore(self):
+        """Hand control back to the adaptation loops."""
+        self.wr_field('RX_MON_PH_OFFSET', 0)
+        self.wr_field('RX_EN_EQA_EXT_VALUE', 0)
+        cfg = self.rd_field('RX_EQA_CONFIG')
+        cfg = (cfg & ~0x1FF) | (0b111 << 6)
+        self.wr_field('RX_EQA_CONFIG', cfg)
+        self.wr_field('RX_EN_EQA', 1)
+
+
+    def eye_run_time(self, window, line_rate):
+        """Duration of one measurement run, in seconds.
+
+        The run covers the four pattern classes sequentially:
+            4 * (window + 1) PMA clocks = 40 * (window + 1) UI
+        """
+        return 40.0 * (window + 1) / line_rate
+
+
+    def eye_measure(self, window, line_rate, poll=True):
+        """One measurement run; returns {class: (correct, wrong)}.
+
+        RX_EYE_MEAS_EN is start and status in one bit: write 1 to start, the
+        hardware clears it to 0 on completion.  Reading 1 means still running.
+
+        The deterministic wait is what actually guarantees correctness here,
+        not the poll.  At 1.25 Gb/s a full-window run takes 131 us while a
+        single JTAG transaction takes milliseconds, so the busy state is never
+        observable over JTAG and the poll below will essentially always return
+        "done" on the first read.  It is kept as a cheap second opinion, and it
+        does matter at low line rates or if the run is ever started from
+        fabric logic rather than over JTAG.
+        """
+        self.wr_field('RX_EYE_MEAS_EN', 1)              # 1 = start
+        #sleep(max(2.0 * self.eye_run_time(window, line_rate), 1e-4))
+
+        if poll:
+            t0 = time()
+            while self.rd_field('RX_EYE_MEAS_EN'):      # 1 = still running
+                if time() - t0 > 1.0:
+                    raise TimeoutError('eye measurement did not complete; '
+                                    'RX_EYE_MEAS_EN stuck at 1')
+                sleep(1e-3)
+
+        return {'11S':  (self.rd_field('RX_EYE_MEAS_CORRECT_11S'),  self.rd_field('RX_EYE_MEAS_WRONG_11S')),
+                '00S':  (self.rd_field('RX_EYE_MEAS_CORRECT_00S'),  self.rd_field('RX_EYE_MEAS_WRONG_00S')),
+                '001S': (self.rd_field('RX_EYE_MEAS_CORRECT_001S'), self.rd_field('RX_EYE_MEAS_WRONG_001S')),
+                '110S': (self.rd_field('RX_EYE_MEAS_CORRECT_110S'), self.rd_field('RX_EYE_MEAS_WRONG_110S')),
+                }
+
+
+    def eye_scan(self, phases=None, thresholds=None, window=2048, repeats=1,
+                monitor=2, sel_tap=0, line_rate=None, on_point=None,
+                poll=True):
+        """Sweep phase x threshold and return an EyeData.
+
+        phases are SIGNED offsets (-32..+31); 0 is the data sampler's own
+        phase.  line_rate defaults to whatever the ADPLL dividers decode to.
+        """
+        if line_rate is None:
+            line_rate = self.serdes_line_rate()
+        phases = list(range(-32, 32)) if phases is None else list(phases)
+        if monitor != 2 and len(set(phases)) > 1:
+            raise ValueError('RX_MON_PH_OFFSET moves monitor 2 only; a phase '
+                            'sweep with monitor=1 measures nothing. Use '
+                            'monitor=2 (sel_comp_data=2, RX_TH_MON2).')
+        thresholds = list(range(-15, 16)) if thresholds is None else list(thresholds)
+
+        eye = EyeData(phases, thresholds, meta={
+            'window': window, 'repeats': repeats, 'monitor': monitor,
+            'sel_tap': sel_tap, 'line_rate': line_rate,
+            'date': datetime.datetime.now().isoformat(timespec='seconds'),
+        })
+        th_field = 'RX_TH_MON1' if monitor == 1 else 'RX_TH_MON2'
+        self.wr_field('RX_EYE_MEAS_CFG', window)        # 0x14[15:4] is N directly
+        for ix, ph in enumerate(phases):
+            self.wr_field('RX_MON_PH_OFFSET', ph_code(ph))
+            #print(f'RX_MON_PH_OFFSET: {self.rd_field('RX_MON_PH_OFFSET')}')
+            for iy, th in enumerate(thresholds):
+                self.wr_field(th_field, th)
+                #print(f'RX_TH_MON2: {self.rd_field('RX_TH_MON2')}')
+                for _ in range(repeats):
+                    eye.add(iy, ix, self.eye_measure(window, line_rate, poll))
+                if on_point:
+                    on_point(eye, iy, ix)
+        return eye
+
+
+    def eye_calibrate_ui(self, window=2048, repeats=2, monitor=2, line_rate=None, verbose=True):
+        """Measure how many RX_MON_PH_OFFSET codes make up one UI.
+
+        The rotator turns through 360 degrees of the clock it rotates over the
+        full 6-bit code range.  Whether that is one UI or two depends on
+        whether that clock runs at the line rate or at half of it, which the
+        CDR RTL alone does not settle.  Measuring it takes about a second:
+        sweep the whole code range at threshold 0 and count the closed regions,
+        which are the data transitions.
+
+        Returns (codes_per_ui, n_closed_regions).
+        Call with the equalizer already frozen (after eye_freeze).
+        """
+        eye = self.eye_scan(phases=range(-32, 32), thresholds=[0],
+                            window=window, repeats=repeats, monitor=monitor,
+                            line_rate=line_rate)
+        codes_per_ui, regions = eye_codes_per_ui(eye)
+        if verbose:
+            if codes_per_ui:
+                print(f'INFO:  {regions} closed region(s) over one wrap -> '
+                    f'{codes_per_ui} codes per UI '
+                    f'({64 // codes_per_ui} UI over the full code range)')
+            else:
+                print(f'WARN:  found {regions} closed regions, expected 1 or 2; '
+                    f'check that the eye is open at threshold 0 and that the '
+                    f'traffic has transitions')
+        return codes_per_ui, regions
+
+
+    def eye_dump_point(self, phase=0, threshold=0, window=2048, repeats=1,
+                    monitor=2, line_rate=None):
+        """Print the eight raw counters at one grid point.
+
+        The aggregate BER averages four pattern classes together, so a single
+        broken class shows up only as an unmovable floor.  This shows each
+        class separately, which is almost always enough to name the fault.
+        """
+        rate = line_rate or self.serdes_line_rate()
+        self.wr_field('RX_MON_PH_OFFSET', phase)
+        self.wr_field('RX_TH_MON1' if monitor == 1 else 'RX_TH_MON2', threshold)
+        self.wr_field('RX_EYE_MEAS_CFG', window)
+
+        acc = {c: [0, 0] for c in EyeData.EYE_CLASSES}
+        for _ in range(repeats):
+            r = self.eye_measure(window, rate)
+            for c in EyeData.EYE_CLASSES:
+                acc[c][0] += r[c][0]
+                acc[c][1] += r[c][1]
+
+        tot_n = sum(a[0] + a[1] for a in acc.values())
+        tot_w = sum(a[1] for a in acc.values())
+        print(f'INFO:  phase {phase:+d}, threshold {threshold:+d}, '
+            f'N={window} x{repeats}')
+        print(f'  {"class":6} {"correct":>8} {"wrong":>8} {"hits":>8} '
+            f'{"p_wrong":>9} {"share":>7}')
+        for c in EyeData.EYE_CLASSES:
+            cor, wr = acc[c]
+            n = cor + wr
+            pw = wr / n if n else float("nan")
+            note = ''
+            if n == 0:
+                note = '  <- class never occurs: check the data pattern'
+            elif pw > 0.45:
+                note = '  <- random: this class is not aligned to the monitor'
+            elif pw > 0.95:
+                note = '  <- always wrong'
+            print(f'  {c:6} {cor:8d} {wr:8d} {n:8d} {pw:9.4f} '
+                f'{n / tot_n if tot_n else 0:7.3f}{note}')
+        print(f'  {"total":6} {tot_n - tot_w:8d} {tot_w:8d} {tot_n:8d} '
+            f'{tot_w / tot_n if tot_n else float("nan"):9.4f}')
+        return acc
+
+    def eye_diagnose(self, window=2048, monitor=2, line_rate=None):
+        """Check the eye measurement path before trusting a scan.
+
+        Runs in a couple of seconds and answers, in order: is the link alive,
+        does the threshold reach the slicer, does the phase reach the rotator,
+        and how many codes are in a UI.  Every check prints PASS/FAIL with the
+        numbers it used, so a failure says what to fix.
+        """
+        ok = True
+
+        def chk(name, good, detail):
+            nonlocal ok
+            ok &= bool(good)
+            print(f'  [{"PASS" if good else "FAIL"}] {name:28} {detail}')
+
+        print('INFO:  eye measurement diagnostics')
+
+        # -- 1. link ----------------------------------------------------------
+        st = self.rd_fields(['RX_EQA_LOCKED', 'RX_CDR_LOCKED',
+                            'RX_PRBS_LOCKED', 'RX_PRBS_ERR_CNT'])
+        chk('CDR locked', st['RX_CDR_LOCKED'], f"RX_CDR_LOCKED={st['RX_CDR_LOCKED']}")
+        chk('equalizer locked', st['RX_EQA_LOCKED'], f"RX_EQA_LOCKED={st['RX_EQA_LOCKED']}")
+        if st['RX_PRBS_LOCKED']:
+            chk('link error free', st['RX_PRBS_ERR_CNT'] == 0,
+                f"RX_PRBS_ERR_CNT={st['RX_PRBS_ERR_CNT']}")
+
+        # -- 2. is the signal inside the threshold DAC range? -----------------
+        op = self.eye_capture_op()
+        railed = [k for k in ('th_mon1', 'th_mon2') if abs(op[k]) >= 15]
+        chk('adapted threshold in range', not railed,
+            f"th_mon1={op['th_mon1']:+d} th_mon2={op['th_mon2']:+d} "
+            f"tapw={op['tapw']:+d} offset={op['offset']:+d}"
+            + (f"  RAILED: {railed} -> reduce RX_AFE_GAIN or TX_AMP" if railed else ""))
+
+        # -- 3. freeze, then prove the threshold actually moves the counters --
+        ext = 0b0111 if monitor == 2 else 0b1011     # TASK-5525: eye_freeze's default; the swept monitor's bit stays clear
+        self.eye_freeze(op, monitor=monitor, ext_value=ext)
+        th_field = 'RX_TH_MON1' if monitor == 1 else 'RX_TH_MON2'
+
+        rb = self.rd_fields([th_field, 'RX_EN_EQA_EXT_VALUE', 'RX_EQA_CONFIG'])
+        chk('ext-value override set', rb['RX_EN_EQA_EXT_VALUE'] == ext,
+            f"RX_EN_EQA_EXT_VALUE=0b{rb['RX_EN_EQA_EXT_VALUE']:04b} (need 0b{ext:04b})")
+        chk('sel_comp_data routed', (rb['RX_EQA_CONFIG'] >> 3) & 0x7 == monitor,
+            f"sel_comp_data={(rb['RX_EQA_CONFIG'] >> 3) & 0x7} (need {monitor})")
+        chk('integrators frozen', (rb['RX_EQA_CONFIG'] >> 6) & 0x7 == 0,
+            f"en_acc=0b{(rb['RX_EQA_CONFIG'] >> 6) & 0x7:03b} (need 0b000)")
+
+        self.wr_field(th_field, -15)
+        chk(f'{th_field} writable', self.rd_field(th_field) == -15,
+            f"wrote -15, read {self.rd_field(th_field):+d}")
+
+        # -- 4. does the phase reach the rotator, and what is a UI? -----------
+        rate = line_rate or self.serdes_line_rate()
+        row = self.eye_scan(phases=range(-32, 32), thresholds=[0],
+                            window=window, repeats=1, monitor=monitor,
+                            line_rate=rate)
+        try:
+            cpu, regions = eye_codes_per_ui(row)
+            chk('phase sweep resolves a UI', cpu is not None,
+                f"{regions} closed region(s) -> {cpu} codes/UI")
+        except ValueError as e:
+            chk('phase sweep resolves a UI', False, str(e))
+            cpu = None
+        best = row.phases[row.best_phase_index()]
+        chk('open phase near code 0', abs(best) <= 8,
+            f"widest margin at code {best:+d} (CDR skew)")
+
+        # -- 5. prove the threshold actually moves the counters ---------------
+        # Probe at the most open phase, not at code 0: if code 0 happens to sit
+        # on a transition, a threshold sweep there is flat for the right reason
+        # and the check would fail spuriously.
+        self.wr_field('RX_MON_PH_OFFSET', best)
+        self.wr_field('RX_EYE_MEAS_CFG', window)
+
+        def tot(r):
+            return (sum(r[c][0] + r[c][1] for c in EyeData.EYE_CLASSES),
+                    sum(r[c][1] for c in EyeData.EYE_CLASSES))
+
+        res = {}
+        for th in (0, +15, -15):
+            self.wr_field(th_field, th)
+            res[th] = tot(self.eye_measure(window, rate))
+
+        # Compare each extreme against the CENTRE, never against each other: a
+        # healthy symmetric eye gives identical error counts at -15 and +15, so
+        # an extreme-vs-extreme test reports a working receiver as broken.
+        moved = (res[+15][1] != res[0][1]) and (res[-15][1] != res[0][1])
+        chk('counters respond to threshold', moved,
+            f"@phase {best:+d}: wrong@0={res[0][1]}/{res[0][0]}  "
+            f"wrong@+15={res[+15][1]}  wrong@-15={res[-15][1]}"
+            + ("  FLAT -> the threshold is not reaching the slicer (check "
+            "RX_EN_EQA_EXT_VALUE bit for this monitor and that you are "
+            "writing RX_TH_MON2 at 0x05[10:6], not RX_TH_MON1 at 0x05[4:0]), "
+            "or the signal is far outside the DAC range"
+            if not moved else ""))
+        if moved:
+            asym = abs(res[+15][1] - res[-15][1]) / max(res[0][0], 1)
+            chk('eye vertically symmetric', asym < 0.15,
+                f"|wrong@+15 - wrong@-15| = {asym * 100:.1f}% of hits "
+                f"(large values indicate residual AFE offset)")
+
+        self.eye_restore()
+        print(f'INFO:  diagnostics {"PASSED" if ok else "FAILED"}')
+        return ok
+
+    def tc_eyecal(self, window=2048, repeats=4, monitor=2, setup=True):
+        """Sweep phase at a fixed threshold to find the UI scale."""
+        import math
+
+        word = self.rd_regfile(args.idx, addr=0x5C)
+        if (word[0] != 1 or word[2] != 1):
+            print(f'ERROR: SerDes not enabled or in testmode. 0x5C=0x{int(word):04X}')
+            return
+
+        if setup:
+            self.set_serdes_datapath(80)
+            self.start_serdes_pll(n1=1, n2=5, n3=5, outdiv=4, calib=True)
+            self.reset_serdes_trx()
+            self.check_serdes_datapath(80)
+            self.wr_fields({'TX_PRBS_OVR': 1, 'TX_PRBS_SEL': 2})
+            self.wr_fields({'RX_PRBS_OVR': 1, 'RX_PRBS_SEL': 2,
+                            'RX_PRBS_CNT_RESET': 1})
+            sleep(0.1)
+            if not self.rd_field('RX_PRBS_LOCKED'):
+                print(f'ERROR: RX PRBS did not lock')
+                return
+
+        line_rate = self.serdes_line_rate(ref_mhz=args.refclk/1e6)
+
+        self.wr_field('RX_EN_EQA', 1)
+        self.wr_field('RX_EQA_CONFIG', 0x01C0)
+        for _ in range(50):
+            if self.rd_field('RX_EQA_LOCKED'):
+                break
+            sleep(0.1)
+
+        op = self.eye_capture_op()
+        self.eye_freeze(op, monitor=monitor, ext_value=0b0111)
+        try:
+            for th in (0, -10):
+                eye = self.eye_scan(phases=range(-32, 32), thresholds=[th],
+                                    window=window, repeats=repeats,
+                                    monitor=monitor, line_rate=line_rate)
+                row = [eye.ber(0, ix) for ix in range(64)]
+                print(f'\nthreshold {th:+d}')
+                print('code : ' + ' '.join(f'{p:+3d}' for p in eye.phases))
+                print('-log : ' + ' '.join(
+                    f'{min(9, int(-math.log10(v))):3d}' for v in row))
+        finally:
+            self.eye_restore()
+
+    def tc_eyemeas(self, window=4095, repeats=1, monitor=2, sel_tap=0, phase_step=1, tapw_sweep=False, setup=True):
         print(f'INFO:  Starting SerDes eye measurement')
 
         word = self.rd_regfile(args.idx, addr=0x5C)
         if (word[0] != 1 or word[2] != 1):
             print(f'ERROR: SerDes not enabled or in testmode. 0x5C=0x{int(word):04X}')
             return
+
+        if window not in range(0, 4096):
+            raise ValueError("ERROR: window out of range (0..4095)")
+
+        if setup:
+            self.wr_fields({'TX_PRBS_OVR': 1, 'TX_PRBS_SEL': 2})
+            self.wr_fields({'RX_PRBS_OVR': 1, 'RX_PRBS_SEL': 2, 'RX_PRBS_CNT_RESET': 1})
+            sleep(0.1)
+            if not self.rd_field('RX_PRBS_LOCKED'):
+                print(f'ERROR: RX PRBS did not lock, aborting eye measurement')
+                return
+            self.wr_field('RX_PRBS_CNT_RESET', 1)
+            sleep(0.1)
+            prbs_err_cnt = self.rd_field('RX_PRBS_ERR_CNT')
+            if prbs_err_cnt != 0:
+                print(f'WARN:  RX PRBS error count is not zero ({prbs_err_cnt})')
+
+        line_rate = self.serdes_line_rate(ref_mhz=args.refclk/1e6, verbose=True)
+
+        # let eqa adapt
+        self.wr_field('RX_EN_EQA', 1)
+        self.wr_field('RX_EQA_CONFIG', 0x01C0)
+        for _ in range(50):
+            if self.rd_field('RX_EQA_LOCKED'):
+                break
+            sleep(0.1)
+        else:
+            print(f'WARN:  RX_EQA_LOCKED never asserted, continuing anyway')
+
+        if tapw_sweep:
+            op = {'th_mon1': 0, 'th_mon2': 0, 'tapw': 0, 'offset': 0}
+            print(f'INFO:  capture skipped, sweeping RX_TAPW for best open area')
+        else:
+            op = self.eye_capture_op()
+            print(f'INFO:  adapted operating point: tapw={op["tapw"]:+d}  '
+                f'th_mon1={op["th_mon1"]:+d}  th_mon2={op["th_mon2"]:+d}  '
+                f'offset={op["offset"]:+d}  locked={op["locked"]}')
+
+        phases = list(range(-32, 32, phase_step))
+        n_pts = len(phases) * 31 * repeats
+        t_hw = n_pts * self.eye_run_time(window, line_rate)
+        print(f'INFO:  {n_pts} points, {t_hw * 1e3:.0f} ms of silicon time '
+            f'plus JTAG overhead')
+
+        self.eye_freeze(op, monitor=monitor, sel_tap=sel_tap)
+
+        try:
+            if tapw_sweep:
+                best, best_area = None, -1
+                for tapw in range(0, 16):
+                    self.wr_field('RX_TAPW', tapw)
+                    probe = self.eye_scan(phases=range(-32, 32, 8),
+                                        thresholds=range(-15, 16, 3),
+                                        window=window, repeats=1,
+                                        monitor=monitor, sel_tap=sel_tap,
+                                        line_rate=line_rate)
+                    area = probe.open_area(1e-3)
+                    print(f'INFO:  RX_TAPW={tapw:+3d}  open area {area}')
+                    if area > best_area:
+                        best, best_area = tapw, area
+                print(f'INFO:  best RX_TAPW={best:+d}')
+                self.wr_field('RX_TAPW', best)
+
+            done = [0]
+
+            def progress(eye, iy, ix):
+                done[0] += 1
+                if done[0] % 25 == 0:
+                    print(f'\rINFO:  {done[0]}/{n_pts}', end='', flush=True)
+
+            eye = self.eye_scan(phases=phases, window=window, repeats=repeats,
+                                monitor=monitor, sel_tap=sel_tap,
+                                line_rate=line_rate, on_point=progress)
+
+            print(f'\r' + ' ' * 30 + '\r', end='')
+            EyePlot().eye_plot_report(eye, codes_per_ui=64.0, mv_per_lsb=None, filename='eye.png', show=True)
+        finally:
+            self.eye_restore()
 
     def tc_loopback(self):
         print(f'INFO:  Starting SerDes loopback testcases')
@@ -1891,6 +2425,8 @@ if __name__ == '__main__':
                 if args.tcuipattern is not None:
                     s.tc_uipattern(int(args.tcuipattern))
                 if args.tceyemeas:
+                    #s.eye_diagnose()
+                    #s.tc_eyecal()
                     s.tc_eyemeas()
                 if args.rdregrx:
                     s.rd_regfile_rx(verbose=2)
