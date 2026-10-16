@@ -1571,3 +1571,48 @@ M2→GS at 8.3·10⁻¹⁰ for 4.8 h — about **×5 better than the morning med
   stays); the gate + reload is a procedure, not a fix. The cause of the load-to-load scatter is still open (eye engine dead, §18.6).
 - 5 G was not part of lab39 (unchanged, TUNING_5G.md).
 
+
+## 19. TASK-5531 — lab39 recipe baked into the bitstream for a flash boot (16.10.2026, Goran 09:00)
+
+### 19.1 What of the lab39 recipe can live in the bits
+
+| lab39 step after every JTAG load | In the bits now | How / why |
+|---|---|---|
+| TX_AMP 12 on both TX | **yes** | build parameter `OV_TX_AMP 12` (exists since TASK-5483, no `ber_top.v` change). Control rebuild of both old bits byte-identical (gs 36f09752…, m2 b1b98a5d…); the new `.txt` differs in exactly one line, `TX_AMP 11111 → 01100`. Test `tools/tests/test_tx_amp_bake.py` (3 tests) |
+| `RX_CDR_SET_ACC_CONFIG` 2→0 pulse | **not needed — no sequencer built** | the pair has `RX_CDR_CKI=0` (frequency integrator off). The start-up trap of `LOCAL_REFCLK_M2.md` §4C (FREQ_ACC at the rail) was seen only with CKI ≠ 0 (cki1/cki2 bits); §11.2 already called the pulse "harmless with CKI 0". lab40 confirms it on 6/6 loads: right after the load, with no write, `RX_CDR_LOCKED=1`, `RX_EQA_LOCKED=1`, `SET_ACC_CONFIG=0`, `FREQ_ACC_VAL=0` on both. The pulse ends at 0 = the power-up value anyway |
+| G2 (PRBS-15 adapt + freeze) | no | a conditional runtime rule (§18.7: it can break a good load); stays a JTAG step |
+
+Bits: `ber_m2_2g5_p1_txneg_amp12_s2_CFGRST.bit` 3f4857df… = Pi `/home/pi/fpga/m2_2g5_auto.bit`,
+`ber_gs_2g5_p1_txneg_amp12_s7_CFGRST.bit` 99d80788… = `gs_2g5_auto.bit`; both `gmpack --reset`, `gm_cfgrst_check` → CFGRST,
+hold violations 0, Fmax as the old pair (gs tclk 85.8 / rclk 50.9 MHz, m2 79.7 / 77.5 MHz). Build:
+`LINK=ber_link_gs.v FREQ=40 ./build_ber.sh gs 2g5p1_txneg_amp12 7 N1 1 N2 5 N3 5 OUTDIV 2 PROFILE 1 TX_NEG 1 OV_TX_AMP 12`,
+m2 the same without `LINK`, seed 2.
+
+### 19.2 SRAM check with NO JTAG write after the load (lab40 09:04–09:24, 6 fresh loads, m2 then gs `-r`)
+
+Only reads (`eyescan.py get`, read-only `ber_jtag_check`, gs UART `ber_long`). Raw: `docs/data_20261016/t5531/`.
+
+| Load | t_link (PEER 10/10 both) | PEER 200/200 | 60 s gs→m2 | 60 s m2→gs |
+|---|---|---|---|---|
+| l1 | 33.1 s | both PASS | 3.1·10⁻⁸ | 1.2·10⁻⁸ |
+| l2 | 32.2 s | both PASS | 3.7·10⁻¹⁰ | 2.0·10⁻⁸ |
+| l3 | 33.8 s | both PASS | 1.1·10⁻¹⁰ | 1.5·10⁻⁹ |
+| l4 | 31.8 s | both PASS | 3.2·10⁻¹⁰ | 1.1·10⁻⁹ |
+| l5 | 32.9 s | both PASS | 8.5·10⁻¹⁰ | 4.1·10⁻⁹ |
+| l6 | 39.3 s | both PASS | 0 (< 3.8·10⁻¹¹) | 2.0·10⁻⁹ |
+
+- **The link comes up by itself on 6/6 loads**, 31.8–39.3 s (lab39 with the JTAG steps: 40.8–51.3 s), 0 restarts.
+- BER is in the lab39 first-try spread: worse direction median 3.1·10⁻⁹ (lab39 first try over 21 loads: 9.3·10⁻⁹, range
+  9.7·10⁻¹¹…2.7·10⁻⁷). The 1e-9 gate in 60 s: 0/6 here vs 7/21 in lab39 (P(0/6 | p = 1/3) = 9 %, so not a proven difference).
+  Without G2 and without the reload gate a flash boot gets "a random load": expect 10⁻⁹…10⁻⁸ in the worse direction, not
+  the 8.3·10⁻¹⁰ / 4.2·10⁻¹⁰ of the selected lab39 soak load.
+
+### 19.3 SPI flash — not written (uputa #342: independent review TASK-5532 first) + an open access problem
+
+- Not written: Goran 09:12, the init must pass Kosjenka's review (TASK-5532, `docs/REVIEW_INIT_20261016.md`) before the flash.
+- Read-only preparation found that the flash is **not reachable over JTAG today**: `fpga-jtag gs|m2 --detect -f` →
+  `Read Flash 0 0 0 0 Fail / Read ID failed` on both boards, also at 1 MHz and 200 kHz TCK. The configured SRAM design
+  survived the tool's reset pulse (link still up, TX_AMP 12 read back), i.e. the DirtyJTAG GPIO the CologneChip driver uses
+  as RSTN (`_rstn_pin = 1<<6`) does not reset these FPGAs, so the JTAG-SPI bypass (IR 0x05) runs on a configured chip.
+  Hypothesis (unproven): the bypass only reaches the flash while the chip is unconfigured / in reset. Without a working
+  read the old flash content cannot be backed up and a write cannot be verified.
