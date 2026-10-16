@@ -61,5 +61,38 @@ class Plausible(unittest.TestCase):
         self.assertIsNone(L.plausible([self.line(0, 1, 1, 0)]))
 
 
+class SyncStats(unittest.TestCase):
+    """TASK-5531 P4 (REVIEW_INIT N4/N5): BER counts only while synced, loss_cnt is 5-bit -> report both."""
+    WPS = 31_250_000.0                                   # 2.5 Gb/s / 80 line bits per word clock
+
+    def s(self, t, t25, w, pw, loss=0, ploss=0):
+        return {'t': t, 't25': t25 & 0xFFFFFFFF, 'words': w, 'pwords': pw, 'loss': loss, 'ploss': ploss,
+                'wps': self.WPS, 'rwps': self.WPS}
+
+    def test_full_sync_over_t25_wraps(self):
+        # 300 s apart: t25 wrapped once (171.8 s); host time 2 s late must not matter
+        a = self.s(0, 100, 0, 0); b = self.s(302, 100 + 300 * 25_000_000, int(300 * self.WPS), int(300 * self.WPS))
+        r = L.sync_stats([a, b])
+        self.assertAlmostEqual(r['m2_to_gs']['synced_frac'], 1.0, places=6)
+        self.assertAlmostEqual(r['gs_to_m2']['synced_frac'], 1.0, places=6)
+        self.assertAlmostEqual(r['secs_t25'], 300.0, places=3)
+
+    def test_half_synced_direction(self):
+        a = self.s(0, 0, 0, 0); b = self.s(300, 300 * 25_000_000, int(150 * self.WPS), int(300 * self.WPS))
+        r = L.sync_stats([a, b])
+        self.assertAlmostEqual(r['m2_to_gs']['synced_frac'], 0.5, places=6)
+
+    def test_loss_delta_is_5bit_modular_and_summed(self):
+        s = [self.s(0, 0, 0, 0, loss=30, ploss=1), self.s(60, 60 * 25_000_000, 1, 1, loss=2, ploss=1),
+             self.s(120, 120 * 25_000_000, 2, 2, loss=3, ploss=4)]
+        r = L.sync_stats(s)
+        self.assertEqual(r['m2_to_gs']['dloss'], 5)       # 30 -> 2 wraps = 4, then +1
+        self.assertEqual(r['gs_to_m2']['dloss'], 3)
+
+    def test_missing_rate_gives_none_not_crash(self):
+        a = self.s(0, 0, 0, 0); b = self.s(60, 60 * 25_000_000, 10, 10); b['wps'] = 0.0
+        self.assertIsNone(L.sync_stats([a, b])['gs_to_m2']['synced_frac'])
+
+
 if __name__ == '__main__':
     unittest.main()

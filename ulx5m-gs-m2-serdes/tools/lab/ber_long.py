@@ -12,6 +12,7 @@ import sys
 import time
 
 PAYLOAD_BITS = 40
+LINE_BITS = 80                                  # line bits per word clock (ber_parse.LINE_BITS)
 M48, M32 = (1 << 48) - 1, 0xFFFFFFFF
 DIRS = (('m2_to_gs', 'words', 'errb'), ('gs_to_m2', 'pwords', 'perrb'))
 
@@ -55,6 +56,33 @@ def total(snaps):
     return r
 
 
+def sync_stats(snaps):
+    """TASK-5531 P4 (REVIEW_INIT N4/N5): per direction the 5-bit loss_cnt delta (summed mod 32 per interval, so it
+    misses only >= 32 losses inside one interval) and the share of the window the checker was synced: words counted
+    / (t25 seconds x the sending side's word rate: m2->gs = m2 TX 'rwps', gs->m2 = gs TX 'wps'). t25 wraps every
+    171.8 s; the host time between snapshots picks the wrap count."""
+    secs = 0.0
+    r = {k: {'dloss': 0, 'words': 0, 'expected': 0.0} for k, _, _ in DIRS}
+    rk = {'m2_to_gs': ('words', 'loss', 'rwps'), 'gs_to_m2': ('pwords', 'ploss', 'wps')}
+    ok = {k: True for k in r}
+    for a, b in zip(snaps, snaps[1:]):
+        mod = (b['t25'] - a['t25']) & 0xFFFFFFFF
+        wraps = round(((b['t'] - a['t']) * 25e6 - mod) / 2 ** 32)
+        dt = (mod + max(wraps, 0) * 2 ** 32) / 25e6
+        secs += dt
+        for k, (wk, lk, rate) in rk.items():
+            dw, _, rs = _delta(dict(a, errb=0, perrb=0), dict(b, errb=0, perrb=0), wk, 'errb')
+            r[k]['words'] += dw
+            r[k]['dloss'] += (b[lk] - a[lk]) & 0x1F
+            w = b.get(rate) or 0.0
+            ok[k] = ok[k] and w > 0
+            r[k]['expected'] += dt * w
+    for k in r:
+        r[k]['synced_frac'] = (r[k]['words'] / r[k]['expected']) if ok[k] and r[k]['expected'] else None
+    r['secs_t25'] = secs
+    return r
+
+
 def plausible(L):
     """Last status line whose words AND pwords advanced by 0..1.05 x gs TX words (+1000) since the line before:
     rejects m2 counters corrupted in the back channel. None if no such consecutive pair."""
@@ -76,8 +104,10 @@ def read_snap(M, t0):
     if d is None:
         return {'t': round(time.time() - t0, 1), 'nouart': True, 'lines': len(L)}
     r = {'t': round(time.time() - t0, 1)}
-    for k in ('words', 'errb', 'errw', 'code', 'synced', 'pwords', 'perrb', 'perrw', 'pcode', 'psynced', 'loss', 'ploss', 'inj', 'pinj', 'pexec'):
+    for k in ('words', 'errb', 'errw', 'code', 'synced', 'pwords', 'perrb', 'perrw', 'pcode', 'psynced', 'loss', 'ploss', 'inj', 'pinj', 'pexec', 't25'):
         r[k] = d.get(k)
+    r['wps'] = M.pair_rates(L, 'tcnt') / LINE_BITS        # gs TX word rate (sync_stats)
+    r['rwps'] = M.pair_rates(L, 'rcnt') / LINE_BITS       # m2 TX word rate
     return r
 
 
@@ -111,10 +141,17 @@ def main():
     if len(snaps) < 2:
         w({'error': 'no snapshot after the clear'}); print('NOUART'); return 2
     t = total(snaps); t['kind'] = 'total'; t['segments'] = segments(snaps); t['snaps_ok'] = len(snaps) - 1
+    if all('t25' in x and x.get('t25') is not None for x in snaps):
+        t['sync'] = sync_stats(snaps)
     w(t)
     print('TOTAL secs=%s gs->m2 BER=%s (<%s) m2->gs BER=%s (<%s) restarts=%s snaps=%d' % (
         t['secs'], t['gs_to_m2']['ber'], t['gs_to_m2']['ber_95_upper'], t['m2_to_gs']['ber'],
         t['m2_to_gs']['ber_95_upper'], t['restarts'], t['snaps_ok']))
+    if 'sync' in t:
+        y = t['sync']
+        print('SYNC t25=%.1fs m2->gs frac=%s dloss=%d gs->m2 frac=%s dloss=%d' % (
+            y['secs_t25'], y['m2_to_gs']['synced_frac'], y['m2_to_gs']['dloss'],
+            y['gs_to_m2']['synced_frac'], y['gs_to_m2']['dloss']))
     return 0
 
 

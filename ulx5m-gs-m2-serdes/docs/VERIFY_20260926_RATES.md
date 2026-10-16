@@ -1616,3 +1616,23 @@ Only reads (`eyescan.py get`, read-only `ber_jtag_check`, gs UART `ber_long`). R
   as RSTN (`_rstn_pin = 1<<6`) does not reset these FPGAs, so the JTAG-SPI bypass (IR 0x05) runs on a configured chip.
   Hypothesis (unproven): the bypass only reaches the flash while the chip is unconfigured / in reset. Without a working
   read the old flash content cannot be backed up and a write cannot be verified.
+
+### 19.4 Flash access found, GS backup, Goran writes the flash himself (16.10. 09:46–10:05, uputa #343/#344)
+
+- **The cause of `Read ID failed` is the design in SRAM, not a setting.** GS 09:50 with the amp12 ber bit
+  configured: `fpga-jtag gs --dump-flash --freq 1000000` → `Read Flash Fail / Read ID failed`. 09:51, the same command
+  after `fpga-jtag gs <np1817.bit> -r` (LiteX, the bit TASK-5224 had in SRAM when the flash worked on 04.10.) → read OK.
+  The ber `.ccf` uses no bank-WA pin (JTAG, CFG_MD and the config SPI live there), so this is not a pin clash; why the
+  ber designs block the JTAG-SPI bypass is not known. Rule: **before `-f`, load a non-SerDes bit with `-r`**.
+- **P1 — image for the way back (GS):** 4 MiB dump `~/t5531/flash_before_T5531_gs.bin` on the Pi (1 m 56 s at 1 MHz),
+  sha256 `74b3accf…`; the first 1 286 336 B = np1817 (`dcf82c64…`, the TASK-5224 write), the rest 0xFF (0 non-FF bytes).
+  Undo = `fpga-jtag gs -f --verify --freq 1000000 /home/pi/FPGA/ETH_GateMateA1_2909_1015_Linux_GbE_DVI_USBPNRU_pll60s2_np1817.bit`.
+  M2 flash: not read (uputa #344 came first).
+- Uputa #344 (Goran 09:51): Goran writes `gs_2g5_auto.bit` → GS and `m2_2g5_auto.bit` → M2 himself; we do not touch
+  flash or boards until he reports the reset. Sent to the chat at 09:5x: the GS SRAM holds np1817 now (so the GS write
+  can go straight away), M2 still runs the ber design (load a non-SerDes bit with `-r` first).
+- P4 tool ready: `tools/lab/p4_flash_boot.sh` (reads only: SerDes regs incl. TX_AMP = 12 as the proof that the flash bits
+  booted, PEER 200, 300 s BER) and `ber_long.py` now also writes `SYNC … frac … dloss` (REVIEW_INIT N4/N5: synced share
+  = words / (t25 s × sender word rate), Δloss summed mod 32 per 60 s interval); 4 new tests in `test_ber_long.py`.
+- Correction (REVIEW_INIT 🟢): the §19.2 "t_link 31.8–39.3 s" is the duration of the first PEER poll pair (polls = 1), i.e.
+  the link was already up when it was asked; it is an upper bound, not the link-up time.
