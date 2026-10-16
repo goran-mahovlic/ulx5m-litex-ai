@@ -1517,10 +1517,57 @@ read as r: AFE = r for r ≥ 0, AFE = 16 + r for r < 0 (upstream `eye_freeze` wr
 "Retry by offset" (G7 b) is not supported by the data: start offset vs M2→GS A over the 8 loads with a recorded start offset — gs 1: 8.9·10⁻¹¹, 8.5·10⁻¹⁰ but also 2.9·10⁻⁸;
 gs 2–3: 1.5·10⁻⁷ ×2, 5.4·10⁻⁷, 3.1·10⁻⁹ but also 6.1·10⁻¹⁰. A BER gate after the load (60 s) is the reliable test → used in 18.10.
 
-### 18.10 Uputa #339 PROOF (running, lab39 from 01:20): repeatability of link establishment + overnight soak
+### 18.10 Uputa #339 PROOF (lab39 01:20–07:59): repeatability of link establishment + overnight soak
 
 Recipe (unchanged bits `m2_2g5.bit` b1b98a5d…, `gs_2g5.bit` 36f09752…): load m2 then gs (`-r`), SET_ACC 2→0, **TX_AMP 12 on both TX**.
 Acceptance: both directions < 10⁻⁹ in 60 s serial BER. Rule if not: G2 (18.7) and 60 s again; still not: reload (≤ 3 loads per trial).
 (B) 10 trials (t_link, PEER 200/200 both, BER per attempt), then (A) reload until accepted and soak on that one load until 07:58
 (REGOČ shortened the 8 h soak to end at 08:00, uputa #340; hourly report by REGOČ), 60 s snapshots, both RX lock/TH_MON/OFFSET +
-Pi temperature/throttled every 15 min. Results and the proof summary follow in 18.11 (morning).
+Pi temperature/throttled every 15 min. Results in 18.11.
+
+### 18.11 Proof result (lab39, 21 fresh loads + 4.79 h soak) — **the link always comes up and holds without a single restart, but at BER ≈ 4–8·10⁻¹⁰, not error-free; only every second load passes the 1e-9 gate**
+
+Raw: `docs/data_20261015/t5527/{lab39.sh,lab39.out,log39/}`; table and picture `png39/proof_table.md`, `png39/proof.png`, made by
+`tools/lab/proof_table.py` (+4 tests); summary for Goran (Croatian) `png39/SERDES_DOKAZ_LAB39_20261016.pdf` (`png39/make_pdf.py`). Bits as 18.10 (sha256 `m2_2g5.bit` b1b98a5d946169d1…, `gs_2g5.bit` 36f09752d8b85ebd…), Pi
+`throttled=0xd0000` (past under-voltage flags only; 0xd0005 at 3 of 19 reads = under-voltage now), Pi temperature 53.7–58.5 °C.
+
+**(B) Repeatability, 21 fresh loads** (10 trials + 2 soak loads):
+
+| | count |
+|---|---|
+| link up, JTAG PEER 200/200 both directions | **21/21**, t_link 40.8–51.3 s (end of gs load → PEER 10/10 both, first poll) |
+| accepted on the first 60 s (both < 1e-9) | **7/21** (33 %) |
+| + accepted after the G2 rule | +3 → **10/21** (48 %) |
+| trials accepted within ≤ 3 loads | **9/10** (t1: 3 loads, all M2→GS 1.5–4.2·10⁻⁸ even after G2) |
+| worse direction on the 14 loads failing the first 60 s | **M2→GS on 12/14** (1.0·10⁻⁹…2.7·10⁻⁷); GS→M2 on t1_l3, t4_l1, both within ×1.1 |
+
+Start offset was gs 1–3 / m2 7 on every load and does not separate good from bad loads (again, 18.9). G2 ran on the 14 loads that
+failed the first 60 s: it turned 3 into accepted, M2→GS got better on 7 and worse on 7 (e.g. t3_l1 9.3·10⁻⁹ → 1.8·10⁻⁸, t6_l1
+1.0·10⁻⁹ → 7.9·10⁻⁹) — the reload is what really works.
+
+**(A) Soak on load soak_l2** (accepted first try: M2→GS 3.1·10⁻¹⁰, GS→M2 4.8·10⁻¹¹), 03:10–07:58, 278 × 60 s snapshots, all UART reads OK:
+
+| Direction | bits | bit errors | BER | 95 % interval | 60 s intervals with 0 errors | checker restarts |
+|---|---|---|---|---|---|---|
+| M2→GS | 2.16·10¹³ | 17 844 | **8.3·10⁻¹⁰** | 8.15–8.39·10⁻¹⁰ | 0 / 278 | 0 |
+| GS→M2 | 2.16·10¹³ | 8 953 | **4.2·10⁻¹⁰** | 4.06–4.24·10⁻¹⁰ | 19 / 278 | 0 |
+
+Hourly M2→GS 6.4 / 5.9 / 10 / 7.3 / 13 ·10⁻¹⁰ (last hour 0.79 h), GS→M2 4.9 / 1.6 / 1.5 / 5.3 / 8.4 ·10⁻¹⁰; worst single minute
+1.1·10⁻⁸ / 9.9·10⁻⁹. No burst, no loss of sync (`synced`/`psynced` 1 on every read), PEER 200/200 both at the end. Every 15 min both RX
+CDR and EQA locked, EQA running, TH_MON gs 12–13 / m2 14 (off the +15 rail, G3), RX_OFFSET gs 1–2 / m2 2–3, TAPW gs 0–1 / m2 1 — one
+read (04:57) gave m2 RX_CDR_LOCKED=0 with no trace in the BER of that minute (GS→M2 9·10⁻¹¹) and no restart, so it is a single glitch
+of the status bit or a sub-second slip, not a lock loss.
+
+Compared with the reference: morning 2.5 G (TASK-5522/5523, default TX_AMP, 300 s, median) GS→M2 3.6·10⁻¹⁰ / M2→GS 4.1·10⁻⁹; lab27
+(TASK-5525, gs TAPW +2) M2→GS 4.7·10⁻⁹ / 1.1·10⁻⁸. After the C143/C144 repair + TX_AMP 12 + BER gate the accepted load holds
+M2→GS at 8.3·10⁻¹⁰ for 4.8 h — about **×5 better than the morning median** of M2→GS, and the two directions are now within ×2.
+
+**What this proves and what it does not** (for the HW revision, Goran 15.10. 23:59):
+- proven: with unchanged bits the 2.5 G link comes up on every load in < 52 s and an accepted load runs 4.8 h with 0 restarts,
+  0 lost syncs and a stable BER (no drift beyond ×2 between hours);
+- not proven: an error-free link. ~1 bit error per second in M2→GS (17 844 in 17 257 s on the 1.25 Gb/s checked payload); a 10⁻¹² link would need
+  ~×800 less. As is, a long fast link needs FEC/CRC+retransmit on top, or a better channel;
+- not proven: a fixed recipe. Only 48 % of loads reach < 1e-9, and which one is decided by the load itself (the scatter of §18.4–18.5
+  stays); the gate + reload is a procedure, not a fix. The cause of the load-to-load scatter is still open (eye engine dead, §18.6).
+- 5 G was not part of lab39 (unchanged, TUNING_5G.md).
+

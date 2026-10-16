@@ -1,0 +1,238 @@
+== (B) repeatability 01:20:41 throttled=0xd0000 temp=58.5'C
+LOAD t1_l1 t_link=41.9s ok=1 polls=1 gs RX_OFFSET=2 m2 RX_OFFSET=7
+AMP t1_l1 TX_AMP=12 both: gs TX_AMP=12 RX_TH_MON=13 | m2 TX_AMP=12 RX_TH_MON=14
+PEER t1_l1 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS | gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER t1_l1_A TOTAL secs=60.9 gs->m2 BER=1.3114673191576796e-11 (<None) m2->gs BER=4.217678924961568e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+STATE board=gs step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS
+STATE board=m2 step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS
+FREEZE board=m2 op={'th_mon1': 14, 'tapw': 1, 'offset': 2, 'th_mon2': 14, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE'
+FREEZE board=gs op={'th_mon1': 13, 'tapw': 1, 'offset': 1, 'th_mon2': 13, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE'
+STATE board=gs step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRB
+STATE board=m2 step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRB
+BER t1_l1_g2_g1m0 TOTAL secs=60.099999999999994 gs->m2 BER=0.0 (<3.999975355885167e-11) m2->gs BER=3.2239801351239995e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESULT t1_l1 rejected (G2, failed g1 m0)
+LOAD t1_l2 t_link=45.7s ok=1 polls=1 gs RX_OFFSET=3 m2 RX_OFFSET=7
+AMP t1_l2 TX_AMP=12 both: gs TX_AMP=12 RX_TH_MON=13 | m2 TX_AMP=12 RX_TH_MON=14
+PEER t1_l2 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS | gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER t1_l2_A TOTAL secs=62.1 gs->m2 BER=2.624983830099607e-10 (<None) m2->gs BER=3.234980066052833e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+STATE board=gs step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS
+STATE board=m2 step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS
+FREEZE board=m2 op={'th_mon1': 14, 'tapw': 1, 'offset': 1, 'th_mon2': 15, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE'
+FREEZE board=gs op={'th_mon1': 13, 'tapw': 0, 'offset': 1, 'th_mon2': 12, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE'
+STATE board=gs step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRB
+STATE board=m2 step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRB
+BER t1_l2_g2_g1m0 TOTAL secs=60.0 gs->m2 BER=1.3066586162558213e-09 (<None) m2->gs BER=2.2586527449334545e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESULT t1_l2 rejected (G2, failed g1 m0)
+LOAD t1_l3 t_link=49.1s ok=1 polls=1 gs RX_OFFSET=1 m2 RX_OFFSET=7
+AMP t1_l3 TX_AMP=12 both: gs TX_AMP=12 RX_TH_MON=13 | m2 TX_AMP=12 RX_TH_MON=14
+PEER t1_l3 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS | gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER t1_l3_A TOTAL secs=60.1 gs->m2 BER=1.5764608549805096e-08 (<None) m2->gs BER=1.4823438050556166e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+STATE board=gs step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS
+STATE board=m2 step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS
+FREEZE board=m2 op={'th_mon1': 14, 'tapw': 1, 'offset': 2, 'th_mon2': 14, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE'
+FREEZE board=gs op={'th_mon1': 13, 'tapw': 1, 'offset': 1, 'th_mon2': 13, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE'
+STATE board=gs step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRB
+STATE board=m2 step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRB
+BER t1_l3_g2_g1m1 TOTAL secs=60.9 gs->m2 BER=2.4786732332080142e-09 (<None) m2->gs BER=2.6098199829217893e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESULT t1_l3 rejected (G2, failed g1 m1)
+TRIAL t1 loads=3 accepted=0 01:38:30
+LOAD t2_l1 t_link=47.6s ok=1 polls=1 gs RX_OFFSET=2 m2 RX_OFFSET=7
+AMP t2_l1 TX_AMP=12 both: gs TX_AMP=12 RX_TH_MON=13 | m2 TX_AMP=12 RX_TH_MON=14
+PEER t2_l1 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS | gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER t2_l1_A TOTAL secs=60.4 gs->m2 BER=4.923046559543484e-10 (<None) m2->gs BER=6.153808214577097e-11 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESULT t2_l1 accepted=first
+TRIAL t2 loads=1 accepted=1 01:42:27
+LOAD t3_l1 t_link=43.7s ok=1 polls=1 gs RX_OFFSET=1 m2 RX_OFFSET=7
+AMP t3_l1 TX_AMP=12 both: gs TX_AMP=12 RX_TH_MON=12 | m2 TX_AMP=12 RX_TH_MON=14
+PEER t3_l1 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS | gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER t3_l1_A TOTAL secs=60.1 gs->m2 BER=7.582562052126118e-09 (<None) m2->gs BER=9.321681680775487e-09 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+STATE board=gs step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS
+STATE board=m2 step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS
+FREEZE board=m2 op={'th_mon1': 15, 'tapw': 1, 'offset': 1, 'th_mon2': 14, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE'
+FREEZE board=gs op={'th_mon1': 13, 'tapw': 1, 'offset': 1, 'th_mon2': 13, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE'
+STATE board=gs step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRB
+STATE board=m2 step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRB
+BER t3_l1_g2_g1m1 TOTAL secs=60.1 gs->m2 BER=5.373300228072408e-09 (<None) m2->gs BER=1.806655543449817e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESULT t3_l1 rejected (G2, failed g1 m1)
+LOAD t3_l2 t_link=40.8s ok=1 polls=1 gs RX_OFFSET=2 m2 RX_OFFSET=7
+AMP t3_l2 TX_AMP=12 both: gs TX_AMP=12 RX_TH_MON=12 | m2 TX_AMP=12 RX_TH_MON=14
+PEER t3_l2 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS | gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER t3_l2_A TOTAL secs=60.099999999999994 gs->m2 BER=9.333275830398724e-11 (<None) m2->gs BER=6.666625600252969e-10 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESULT t3_l2 accepted=first
+TRIAL t3 loads=2 accepted=1 01:52:16
+LOAD t4_l1 t_link=43.7s ok=1 polls=1 gs RX_OFFSET=1 m2 RX_OFFSET=7
+AMP t4_l1 TX_AMP=12 both: gs TX_AMP=12 RX_TH_MON=12 | m2 TX_AMP=12 RX_TH_MON=14
+PEER t4_l1 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS | gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER t4_l1_A TOTAL secs=62.9 gs->m2 BER=2.8874822131095673e-09 (<None) m2->gs BER=2.574984150972551e-09 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+STATE board=gs step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS
+STATE board=m2 step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS
+FREEZE board=m2 op={'th_mon1': 15, 'tapw': 1, 'offset': 2, 'th_mon2': 15, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE'
+FREEZE board=gs op={'th_mon1': 13, 'tapw': 1, 'offset': 2, 'th_mon2': 13, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE'
+STATE board=gs step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRB
+STATE board=m2 step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRB
+BER t4_l1_g2_g1m1 TOTAL secs=60.1 gs->m2 BER=1.2748063360234822e-11 (<None) m2->gs BER=9.924404444752385e-09 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESULT t4_l1 rejected (G2, failed g1 m1)
+LOAD t4_l2 t_link=42.2s ok=1 polls=1 gs RX_OFFSET=1 m2 RX_OFFSET=7
+AMP t4_l2 TX_AMP=12 both: gs TX_AMP=12 RX_TH_MON=13 | m2 TX_AMP=12 RX_TH_MON=14
+PEER t4_l2 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS | gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER t4_l2_A TOTAL secs=61.5 gs->m2 BER=2.316235731987891e-08 (<None) m2->gs BER=9.388692170350577e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+STATE board=gs step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS
+STATE board=m2 step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS
+FREEZE board=m2 op={'th_mon1': 14, 'tapw': 1, 'offset': 2, 'th_mon2': 15, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE'
+FREEZE board=gs op={'th_mon1': 13, 'tapw': 1, 'offset': 1, 'th_mon2': 13, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE'
+STATE board=gs step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRB
+STATE board=m2 step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRB
+BER t4_l2_g2_g1m1 TOTAL secs=60.1 gs->m2 BER=4.580542344012968e-09 (<None) m2->gs BER=1.0815954737373384e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESULT t4_l2 rejected (G2, failed g1 m1)
+LOAD t4_l3 t_link=43.9s ok=1 polls=1 gs RX_OFFSET=1 m2 RX_OFFSET=7
+AMP t4_l3 TX_AMP=12 both: gs TX_AMP=12 RX_TH_MON=13 | m2 TX_AMP=12 RX_TH_MON=14
+PEER t4_l3 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS | gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER t4_l3_A TOTAL secs=60.3 gs->m2 BER=5.49250352551861e-10 (<None) m2->gs BER=6.089514772475558e-10 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESULT t4_l3 accepted=first
+TRIAL t4 loads=3 accepted=1 02:07:49
+LOAD t5_l1 t_link=44.0s ok=1 polls=1 gs RX_OFFSET=2 m2 RX_OFFSET=7
+AMP t5_l1 TX_AMP=12 both: gs TX_AMP=12 RX_TH_MON=12 | m2 TX_AMP=12 RX_TH_MON=14
+PEER t5_l1 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS | gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER t5_l1_A TOTAL secs=60.1 gs->m2 BER=1.5999901423540669e-10 (<None) m2->gs BER=2.157320049994679e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+STATE board=gs step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS
+STATE board=m2 step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS
+FREEZE board=m2 op={'th_mon1': 14, 'tapw': 1, 'offset': 2, 'th_mon2': 14, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE'
+FREEZE board=gs op={'th_mon1': 13, 'tapw': 1, 'offset': 2, 'th_mon2': 12, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE'
+STATE board=gs step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRB
+STATE board=m2 step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRB
+BER t5_l1_g2_g1m0 TOTAL secs=60.1 gs->m2 BER=7.395859256144406e-10 (<None) m2->gs BER=1.0756614655570296e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESULT t5_l1 rejected (G2, failed g1 m0)
+LOAD t5_l2 t_link=46.8s ok=1 polls=1 gs RX_OFFSET=2 m2 RX_OFFSET=7
+AMP t5_l2 TX_AMP=12 both: gs TX_AMP=12 RX_TH_MON=12 | m2 TX_AMP=12 RX_TH_MON=14
+PEER t5_l2 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS | gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER t5_l2_A TOTAL secs=60.1 gs->m2 BER=1.1940225055475241e-11 (<None) m2->gs BER=9.55218003525578e-10 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESULT t5_l2 accepted=first
+TRIAL t5 loads=2 accepted=1 02:17:35
+LOAD t6_l1 t_link=43.8s ok=1 polls=1 gs RX_OFFSET=2 m2 RX_OFFSET=7
+AMP t6_l1 TX_AMP=12 both: gs TX_AMP=12 RX_TH_MON=13 | m2 TX_AMP=12 RX_TH_MON=14
+PEER t6_l1 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS | gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER t6_l1_A TOTAL secs=60.1 gs->m2 BER=0.0 (<3.636341238264683e-11) m2->gs BER=1.0060544131554765e-09 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+STATE board=gs step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS
+STATE board=m2 step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS
+FREEZE board=m2 op={'th_mon1': 14, 'tapw': 1, 'offset': 1, 'th_mon2': 14, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE'
+FREEZE board=gs op={'th_mon1': 13, 'tapw': 1, 'offset': 1, 'th_mon2': 13, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE'
+STATE board=gs step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRB
+STATE board=m2 step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRB
+BER t6_l1_g2_g1m0 TOTAL secs=60.9 gs->m2 BER=1.7704809105835439e-09 (<None) m2->gs BER=7.868804067677332e-09 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESULT t6_l1 rejected (G2, failed g1 m0)
+LOAD t6_l2 t_link=48.8s ok=1 polls=1 gs RX_OFFSET=2 m2 RX_OFFSET=7
+AMP t6_l2 TX_AMP=12 both: gs TX_AMP=12 RX_TH_MON=13 | m2 TX_AMP=12 RX_TH_MON=14
+PEER t6_l2 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS | gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER t6_l2_A TOTAL secs=60.1 gs->m2 BER=0.0 (<3.478239473452347e-11) m2->gs BER=1.576801892437933e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+STATE board=gs step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS
+STATE board=m2 step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS
+FREEZE board=m2 op={'th_mon1': 14, 'tapw': 1, 'offset': 2, 'th_mon2': 14, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE'
+FREEZE board=gs op={'th_mon1': 13, 'tapw': 1, 'offset': 1, 'th_mon2': 13, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE'
+STATE board=gs step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRB
+STATE board=m2 step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRB
+BER t6_l2_g2_g1m0 TOTAL secs=58.9 gs->m2 BER=8.13554316496181e-11 (<None) m2->gs BER=7.186396470178297e-10 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESULT t6_l2 accepted=G2 (failed g1 m0)
+TRIAL t6 loads=2 accepted=1 02:29:32
+LOAD t7_l1 t_link=42.8s ok=1 polls=1 gs RX_OFFSET=2 m2 RX_OFFSET=7
+AMP t7_l1 TX_AMP=12 both: gs TX_AMP=12 RX_TH_MON=12 | m2 TX_AMP=12 RX_TH_MON=14
+PEER t7_l1 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS | gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER t7_l1_A TOTAL secs=61.699999999999996 gs->m2 BER=0.0 (<3.8709439588558006e-11) m2->gs BER=1.290314646292286e-10 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESULT t7_l1 accepted=first
+TRIAL t7 loads=1 accepted=1 02:33:26
+LOAD t8_l1 t_link=48.0s ok=1 polls=1 gs RX_OFFSET=2 m2 RX_OFFSET=7
+AMP t8_l1 TX_AMP=12 both: gs TX_AMP=12 RX_TH_MON=13 | m2 TX_AMP=12 RX_TH_MON=14
+PEER t8_l1 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS | gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER t8_l1_A TOTAL secs=61.5 gs->m2 BER=1.9612782400944136e-08 (<None) m2->gs BER=2.9561108500784514e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+STATE board=gs step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS
+STATE board=m2 step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS
+FREEZE board=m2 op={'th_mon1': 14, 'tapw': 1, 'offset': 1, 'th_mon2': 15, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE'
+FREEZE board=gs op={'th_mon1': 12, 'tapw': 1, 'offset': 1, 'th_mon2': 13, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE'
+STATE board=gs step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRB
+STATE board=m2 step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRB
+BER t8_l1_g2_g1m1 TOTAL secs=60.1 gs->m2 BER=6.564371857877417e-11 (<None) m2->gs BER=3.532788510580419e-10 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESULT t8_l1 accepted=G2 (failed g1 m1)
+TRIAL t8 loads=1 accepted=1 02:39:13
+LOAD t9_l1 t_link=44.4s ok=1 polls=1 gs RX_OFFSET=1 m2 RX_OFFSET=7
+AMP t9_l1 TX_AMP=12 both: gs TX_AMP=12 RX_TH_MON=12 | m2 TX_AMP=12 RX_TH_MON=14
+PEER t9_l1 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS | gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER t9_l1_A TOTAL secs=60.1 gs->m2 BER=0.0 (<3.636341294682722e-11) m2->gs BER=9.696910020422356e-11 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESULT t9_l1 accepted=first
+TRIAL t9 loads=1 accepted=1 02:43:05
+LOAD t10_l1 t_link=43.6s ok=1 polls=1 gs RX_OFFSET=2 m2 RX_OFFSET=7
+AMP t10_l1 TX_AMP=12 both: gs TX_AMP=12 RX_TH_MON=12 | m2 TX_AMP=12 RX_TH_MON=14
+PEER t10_l1 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS | gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER t10_l1_A TOTAL secs=61.1 gs->m2 BER=9.232730081857888e-09 (<None) m2->gs BER=2.710540732018461e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+STATE board=gs step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS
+STATE board=m2 step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS
+FREEZE board=m2 op={'th_mon1': 15, 'tapw': 1, 'offset': 2, 'th_mon2': 14, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE'
+FREEZE board=gs op={'th_mon1': 12, 'tapw': 1, 'offset': 1, 'th_mon2': 13, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE'
+STATE board=gs step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRB
+STATE board=m2 step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRB
+BER t10_l1_g2_g1m1 TOTAL secs=60.1 gs->m2 BER=8.820424865329702e-11 (<None) m2->gs BER=3.810698083044482e-09 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESULT t10_l1 rejected (G2, failed g1 m1)
+LOAD t10_l2 t_link=51.3s ok=1 polls=1 gs RX_OFFSET=2 m2 RX_OFFSET=7
+AMP t10_l2 TX_AMP=12 both: gs TX_AMP=12 RX_TH_MON=12 | m2 TX_AMP=12 RX_TH_MON=14
+PEER t10_l2 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS | gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER t10_l2_A TOTAL secs=60.099999999999994 gs->m2 BER=1.3933247727459295e-08 (<None) m2->gs BER=9.911939101046163e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+STATE board=gs step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS
+STATE board=m2 step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS
+FREEZE board=m2 op={'th_mon1': 15, 'tapw': 1, 'offset': 2, 'th_mon2': 14, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE'
+FREEZE board=gs op={'th_mon1': 13, 'tapw': 0, 'offset': 1, 'th_mon2': 12, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE'
+STATE board=gs step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRB
+STATE board=m2 step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRB
+BER t10_l2_g2_g1m1 TOTAL secs=60.1 gs->m2 BER=7.000291511375976e-09 (<None) m2->gs BER=2.7388570972612e-07 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESULT t10_l2 rejected (G2, failed g1 m1)
+LOAD t10_l3 t_link=43.4s ok=1 polls=1 gs RX_OFFSET=2 m2 RX_OFFSET=7
+AMP t10_l3 TX_AMP=12 both: gs TX_AMP=12 RX_TH_MON=12 | m2 TX_AMP=12 RX_TH_MON=14
+PEER t10_l3 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS | gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER t10_l3_A TOTAL secs=61.900000000000006 gs->m2 BER=0.0 (<3.8709439588558006e-11) m2->gs BER=1.0580580170588589e-09 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+STATE board=gs step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS
+STATE board=m2 step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS
+FREEZE board=m2 op={'th_mon1': 14, 'tapw': 1, 'offset': 1, 'th_mon2': 14, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE'
+FREEZE board=gs op={'th_mon1': 13, 'tapw': 0, 'offset': 1, 'th_mon2': 12, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE'
+STATE board=gs step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRB
+STATE board=m2 step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRB
+BER t10_l3_g2_g1m0 TOTAL secs=60.1 gs->m2 BER=0.0 (<3.926502908135323e-11) m2->gs BER=0.0 (<4.449687238662823e-11) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESULT t10_l3 accepted=G2 (failed g1 m0)
+TRIAL t10 loads=3 accepted=1 03:00:36
+== (A) soak 03:00:36 throttled=0xd0000 temp=55.8'C
+LOAD soak_l1 t_link=46.5s ok=1 polls=1 gs RX_OFFSET=2 m2 RX_OFFSET=7
+AMP soak_l1 TX_AMP=12 both: gs TX_AMP=12 RX_TH_MON=12 | m2 TX_AMP=12 RX_TH_MON=14
+PEER soak_l1 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS | gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER soak_l1_A TOTAL secs=60.1 gs->m2 BER=4.375730691268209e-09 (<None) m2->gs BER=1.5115058787472077e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+STATE board=gs step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS
+STATE board=m2 step=tx_prbs_on {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRBS
+FREEZE board=m2 op={'th_mon1': 14, 'tapw': 1, 'offset': 1, 'th_mon2': 15, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE'
+FREEZE board=gs op={'th_mon1': 13, 'tapw': 1, 'offset': 1, 'th_mon2': 13, 'locked': 1} ext=0b0111 now {'RX_EN_EQA': 0, 'RX_EN_EQA_EXT_VALUE'
+STATE board=gs step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRB
+STATE board=m2 step=tx_prbs_off {'RX_PRBS_LOCKED': 0, 'RX_PRBS_ERR_CNT': 0} {'RX_PRBS_OVR': 0, 'RX_PRBS_SEL': 0, 'TX_PRB
+BER soak_l1_g2_g1m1 TOTAL secs=60.0 gs->m2 BER=1.657301871116015e-09 (<None) m2->gs BER=7.204362744958137e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESULT soak_l1 rejected (G2, failed g1 m1)
+LOAD soak_l2 t_link=48.1s ok=1 polls=1 gs RX_OFFSET=2 m2 RX_OFFSET=7
+AMP soak_l2 TX_AMP=12 both: gs TX_AMP=12 RX_TH_MON=12 | m2 TX_AMP=12 RX_TH_MON=14
+PEER soak_l2 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS | gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+BER soak_l2_A TOTAL secs=60.1 gs->m2 BER=4.776090095185412e-11 (<None) m2->gs BER=3.1044585425951923e-10 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+RESULT soak_l2 accepted=first
+SOAK start 03:10:19 load=soak_l2 accepted=1 secs=17261
+MON 03:10:19 gs RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=12 RX_OFFSET=2 RX_EQA_TAPW=0 RX_EN_EQA=1 | m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=14 RX_OFFSET=3 RX_EQA_TAPW=1 RX_EN_EQA=1 | temp=58.5'C throttled=0xd0000
+MON 03:25:34 gs RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=13 RX_OFFSET=2 RX_EQA_TAPW=1 RX_EN_EQA=1 | m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=14 RX_OFFSET=3 RX_EQA_TAPW=1 RX_EN_EQA=1 | temp=55.3'C throttled=0xd0005
+MON 03:40:47 gs RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=12 RX_OFFSET=1 RX_EQA_TAPW=0 RX_EN_EQA=1 | m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=14 RX_OFFSET=2 RX_EQA_TAPW=1 RX_EN_EQA=1 | temp=55.8'C throttled=0xd0000
+MON 03:56:02 gs RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=12 RX_OFFSET=2 RX_EQA_TAPW=0 RX_EN_EQA=1 | m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=14 RX_OFFSET=3 RX_EQA_TAPW=1 RX_EN_EQA=1 | temp=55.8'C throttled=0xd0000
+MON 04:11:19 gs RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=13 RX_OFFSET=2 RX_EQA_TAPW=1 RX_EN_EQA=1 | m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=14 RX_OFFSET=3 RX_EQA_TAPW=1 RX_EN_EQA=1 | temp=54.2'C throttled=0xd0005
+MON 04:26:33 gs RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=13 RX_OFFSET=1 RX_EQA_TAPW=1 RX_EN_EQA=1 | m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=14 RX_OFFSET=3 RX_EQA_TAPW=1 RX_EN_EQA=1 | temp=55.8'C throttled=0xd0000
+MON 04:41:48 gs RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=12 RX_OFFSET=1 RX_EQA_TAPW=0 RX_EN_EQA=1 | m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=14 RX_OFFSET=3 RX_EQA_TAPW=1 RX_EN_EQA=1 | temp=55.8'C throttled=0xd0000
+MON 04:57:02 gs RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=12 RX_OFFSET=1 RX_EQA_TAPW=1 RX_EN_EQA=1 | m2 RX_CDR_LOCKED=0 RX_EQA_LOCKED=1 RX_TH_MON=14 RX_OFFSET=3 RX_EQA_TAPW=1 RX_EN_EQA=1 | temp=55.8'C throttled=0xd0000
+MON 05:12:15 gs RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=13 RX_OFFSET=1 RX_EQA_TAPW=1 RX_EN_EQA=1 | m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=14 RX_OFFSET=3 RX_EQA_TAPW=1 RX_EN_EQA=1 | temp=55.8'C throttled=0xd0000
+MON 05:27:29 gs RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=12 RX_OFFSET=2 RX_EQA_TAPW=0 RX_EN_EQA=1 | m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=14 RX_OFFSET=2 RX_EQA_TAPW=1 RX_EN_EQA=1 | temp=55.8'C throttled=0xd0000
+MON 05:42:42 gs RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=12 RX_OFFSET=1 RX_EQA_TAPW=0 RX_EN_EQA=1 | m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=14 RX_OFFSET=2 RX_EQA_TAPW=1 RX_EN_EQA=1 | temp=55.8'C throttled=0xd0000
+MON 05:57:54 gs RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=12 RX_OFFSET=1 RX_EQA_TAPW=0 RX_EN_EQA=1 | m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=14 RX_OFFSET=2 RX_EQA_TAPW=1 RX_EN_EQA=1 | temp=55.8'C throttled=0xd0000
+MON 06:13:09 gs RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=12 RX_OFFSET=1 RX_EQA_TAPW=0 RX_EN_EQA=1 | m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=14 RX_OFFSET=3 RX_EQA_TAPW=1 RX_EN_EQA=1 | temp=53.7'C throttled=0xd0005
+MON 06:28:26 gs RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=13 RX_OFFSET=1 RX_EQA_TAPW=1 RX_EN_EQA=1 | m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=14 RX_OFFSET=2 RX_EQA_TAPW=1 RX_EN_EQA=1 | temp=55.8'C throttled=0xd0005
+MON 06:43:39 gs RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=13 RX_OFFSET=1 RX_EQA_TAPW=1 RX_EN_EQA=1 | m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=14 RX_OFFSET=3 RX_EQA_TAPW=1 RX_EN_EQA=1 | temp=55.3'C throttled=0xd0000
+MON 06:58:54 gs RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=12 RX_OFFSET=1 RX_EQA_TAPW=0 RX_EN_EQA=1 | m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=14 RX_OFFSET=2 RX_EQA_TAPW=1 RX_EN_EQA=1 | temp=54.8'C throttled=0xd0000
+MON 07:14:10 gs RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=12 RX_OFFSET=1 RX_EQA_TAPW=1 RX_EN_EQA=1 | m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=14 RX_OFFSET=3 RX_EQA_TAPW=1 RX_EN_EQA=1 | temp=54.8'C throttled=0xd0000
+MON 07:29:29 gs RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=12 RX_OFFSET=1 RX_EQA_TAPW=0 RX_EN_EQA=1 | m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=14 RX_OFFSET=3 RX_EQA_TAPW=1 RX_EN_EQA=1 | temp=54.8'C throttled=0xd0000
+MON 07:44:46 gs RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=12 RX_OFFSET=2 RX_EQA_TAPW=0 RX_EN_EQA=1 | m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_TH_MON=14 RX_OFFSET=2 RX_EQA_TAPW=1 RX_EN_EQA=1 | temp=55.8'C throttled=0xd0000
+SOAK TOTAL secs=17257.1 gs->m2 BER=4.1504063317910233e-10 (<None) m2->gs BER=8.272070879934056e-10 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=278
+PEER end m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS | gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+LAB39 DONE 07:59:38
