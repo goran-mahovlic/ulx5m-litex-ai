@@ -1,0 +1,8 @@
+== chain_k start 2026-10-16 19:13:13 throttled=0xd0000
+ATTEMPT k3_1 n=1 L3 t_link=17.7 Q=FAIL {'m2_to_gs': 13, 'gs_to_m2': 6} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT k3_1 n=2 L1 t_link=43.3 Q=FAIL {'m2_to_gs': 231, 'gs_to_m2': 9} C=None None FAIL (Q: errors > 8: m2_to_gs,gs_to_m2)
+ATTEMPT k3_2 n=1 L3 t_link=23.9 Q=FAIL {'m2_to_gs': 398, 'gs_to_m2': 1675} C=None None FAIL (Q: errors > 8: m2_to_gs,gs_to_m2)
+ATTEMPT k3_2 n=2 L1 t_link=27.9 Q=FAIL {'m2_to_gs': 340, 'gs_to_m2': 98} C=None None FAIL (Q: errors > 8: m2_to_gs,gs_to_m2)
+ATTEMPT k3_2 n=3 L1b t_link=42.3 Q=FAIL {'m2_to_gs': 443, 'gs_to_m2': 138} C=None None FAIL (Q: errors > 8: m2_to_gs,gs_to_m2)
+ATTEMPT k3_2 n=4 L2tx t_link=16.7 Q=FAIL {'m2_to_gs': 392, 'gs_to_m2': 27} C=None None FAIL (Q: errors > 8: m2_to_gs,gs_to_m2)
+ATTEMPT k3_2 n=5 L2rx t_link=18.6 Q=FAIL {'m2_to_gs': 164, 'gs_to_m2': 3} C=None None FAIL (Q: errors > 8: m2_to_gs)

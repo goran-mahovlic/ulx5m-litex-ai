@@ -1,0 +1,8 @@
+A A0             l1_1928 M2->GS 1228/6.63e+10 GS->M2 154/6.63e+10 done
+B cal0           l1_1928 M2->GS 42/5.50e+10 GS->M2 47/5.50e+10 done
+A A1             l1_1928 M2->GS 1121/3.88e+10 GS->M2 174/3.88e+10 done
+B rxcal0         l1_1928 M2->GS 98/5.63e+10 GS->M2 53/5.63e+10 done
+A A2             l1_1928 M2->GS 639/4.13e+10 GS->M2 146/4.13e+10 done
+B txcal0         l1_1928 M2->GS 1863/5.63e+10 GS->M2 79/5.63e+10 done
+A A3             l1_1928 M2->GS 1800/3.75e+10 GS->M2 312/3.75e+10 done
+LOAD l1_1928 done rx=gs

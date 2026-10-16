@@ -1,0 +1,2 @@
+GATE b1 PASS attempts=10 undecided=0
+GATE b2 GATE_FAILED attempts=10 undecided=0

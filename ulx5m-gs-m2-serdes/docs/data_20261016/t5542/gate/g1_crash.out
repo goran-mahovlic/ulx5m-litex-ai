@@ -1,0 +1,16 @@
+ATTEMPT g1 n=1 L3 t_link=16.8 Q=FAIL {'m2_to_gs': 16, 'gs_to_m2': 1} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT g1 n=2 L3 t_link=20.4 Q=None None C=None None FAIL (health: m2 RX_CDR_LOCKED=0)
+Traceback (most recent call last):
+  File "lab/link_gate.py", line 509, in <module>
+    sys.exit(main())
+  File "lab/link_gate.py", line 486, in main
+    recs, res = gate_loop(attempt, a.max_attempts, 3, a.ladder.split(','))
+  File "lab/link_gate.py", line 213, in gate_loop
+    rec = attempt(n + 1, level, prev)
+  File "lab/link_gate.py", line 477, in attempt
+    rec = rig.attempt(n, level, prev)
+  File "lab/link_gate.py", line 364, in attempt
+    rec['action'] = self.reconnect(level, prev)
+  File "lab/link_gate.py", line 343, in reconnect
+    rx = bad_rx((prev or {}).get('q', {}).get('err') or (prev or {}).get('c', {}).get('err') or {})
+AttributeError: 'NoneType' object has no attribute 'get'

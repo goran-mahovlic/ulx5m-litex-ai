@@ -1,0 +1,23 @@
+== campaign25 start 2026-10-16 18:29:32 throttled=0xd0000
+ATTEMPT b1 n=1 L3 t_link=21.4 Q=FAIL {'m2_to_gs': 10, 'gs_to_m2': 2} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT b1 n=2 L3 t_link=21.3 Q=FAIL {'m2_to_gs': 47, 'gs_to_m2': 4} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT b1 n=3 L3 t_link=20.3 Q=FAIL {'m2_to_gs': 16, 'gs_to_m2': 0} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT b1 n=4 L3 t_link=17.5 Q=FAIL {'m2_to_gs': 733, 'gs_to_m2': 0} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT b1 n=5 L3 t_link=17.7 Q=FAIL {'m2_to_gs': 10, 'gs_to_m2': 0} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT b1 n=6 L3 t_link=20.3 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} C=FAIL {'m2_to_gs': 202, 'gs_to_m2': 0} FAIL (C: burst > 20 in a 10 s window: m2_to_gs)
+ATTEMPT b1 n=7 L3 t_link=17.1 Q=FAIL {'m2_to_gs': 13, 'gs_to_m2': 0} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT b1 n=8 L3 t_link=20.6 Q=FAIL {'m2_to_gs': 7, 'gs_to_m2': 11} C=None None FAIL (Q: errors > 8: gs_to_m2)
+ATTEMPT b1 n=9 L3 t_link=18.2 Q=FAIL {'m2_to_gs': 19, 'gs_to_m2': 49} C=None None FAIL (Q: errors > 8: m2_to_gs,gs_to_m2)
+ATTEMPT b1 n=10 L3 t_link=18.5 Q=PASS {'m2_to_gs': 4, 'gs_to_m2': 0} C=PASS {'m2_to_gs': 21, 'gs_to_m2': 20} PASS
+GATE b1 PASS attempts=10 undecided=0
+ATTEMPT b2 n=1 L3 t_link=21.4 Q=None None C=None None FAIL (health: gs RX_CDR_LOCKED=0)
+ATTEMPT b2 n=2 L3 t_link=17.3 Q=FAIL {'m2_to_gs': 28, 'gs_to_m2': 11} C=None None FAIL (Q: errors > 8: m2_to_gs,gs_to_m2)
+ATTEMPT b2 n=3 L3 t_link=18.3 Q=FAIL {'m2_to_gs': 13, 'gs_to_m2': 0} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT b2 n=4 L3 t_link=18.6 Q=FAIL {'m2_to_gs': 19, 'gs_to_m2': 0} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT b2 n=5 L3 t_link=18.3 Q=FAIL {'m2_to_gs': 10, 'gs_to_m2': 0} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT b2 n=6 L3 t_link=17.9 Q=FAIL {'m2_to_gs': 30, 'gs_to_m2': 0} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT b2 n=7 L3 t_link=18.1 Q=FAIL {'m2_to_gs': 9, 'gs_to_m2': 0} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT b2 n=8 L3 t_link=18.2 Q=FAIL {'m2_to_gs': 22, 'gs_to_m2': 0} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT b2 n=9 L3 t_link=18.0 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} C=FAIL {'m2_to_gs': 5, 'gs_to_m2': 42} FAIL (C: burst > 20 in a 10 s window: gs_to_m2)
+ATTEMPT b2 n=10 L3 t_link=17.9 Q=FAIL {'m2_to_gs': 40, 'gs_to_m2': 0} C=None None FAIL (Q: errors > 8: m2_to_gs)
+GATE b2 GATE_FAILED attempts=10 undecided=0
