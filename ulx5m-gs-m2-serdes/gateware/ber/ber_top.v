@@ -26,6 +26,8 @@ module ber_top #(
     parameter integer OV_AFE_PEAK = -1, parameter integer OV_AFE_GAIN = -1, parameter integer OV_AFE_VCMSEL = -1,
     parameter integer OV_RTERM_VCMSEL = -1, parameter integer OV_CDR_CKP = -1, parameter integer OV_CDR_TRANS_TH = -1,
     parameter integer OV_TX_SEL_PRE = -1, parameter integer OV_TX_SEL_POST = -1, parameter integer OV_TX_AMP = -1,
+    parameter integer OV_CALIB = -1,       // R1/CAL0 (TASK-5542/5549): >= 0 forces RX+TX termination code (RX/TX_CALIB_OVR=1, VAL=OV_CALIB)
+    parameter integer OV_EQA_CKP_OFFSET = -1, // R1: RX_EQA_CKP_OFFSET (-1 = 1 as before)
     parameter integer EYE_CFG = 0          // RX_EYE_MEAS_CFG in the bitstream: Patrick's serdes_lb.v (15.10.) has {12'h800, 3'b0} = 2048
                                            // samples; 0 = every bit before TASK-5525 (rebuilt byte-identical)
 ) (
@@ -72,6 +74,9 @@ module ber_top #(
     localparam [4:0] A_TX_BR_POST   = P2 ? 5'h1F : P1 ? 5'hC  : 5'h0;
     localparam [6:0] A_TX_DC_ENABLE = P2 ? 7'h2F : P1 ? 7'h2B : 7'h3F;   // P1: (12+63+12)/2 = 43 as in ab7ce94
     localparam [0:0] A_TX_CALIB_EN  = TX_CALIB[0];
+    localparam [0:0] A_CALIB_OVR    = (OV_CALIB >= 0) ? 1'h1 : 1'h0;
+    localparam [3:0] A_CALIB_VAL    = (OV_CALIB >= 0) ? OV_CALIB : 4'h0;
+    localparam [7:0] A_EQA_CKP_OFFSET = (OV_EQA_CKP_OFFSET >= 0) ? OV_EQA_CKP_OFFSET : 8'h01;
 
     // ------------------------------------------------ CC_SERDES (parameters as serdes_lb_dut.v)
     parameter [27:0] kChar = {8'hBC, 10'h283, 10'h17C};
@@ -233,26 +238,28 @@ module top_gs #(parameter N1 = 1, N2 = 2, N3 = 3, OUTDIV = 4, parameter [5:0] FC
                 parameter RX_POL = 1'b1, parameter [2:0] LOOPBACK_SEL = 3'b000, parameter CLK_DIRECT = 0, parameter TX_NEG = 0, parameter RX_NEG = 0, parameter PROFILE = 0, parameter EYE_EN = 0,
                 parameter TX_DET_RX = 0, parameter TX_CALIB = 1, parameter PLL_RTERM = 1, parameter [7:0] CDR_CKI = 8'h00,
                 parameter integer OV_AFE_PEAK = -1, OV_AFE_GAIN = -1, OV_AFE_VCMSEL = -1, OV_RTERM_VCMSEL = -1, OV_CDR_CKP = -1,
-                parameter integer OV_CDR_TRANS_TH = -1, OV_TX_SEL_PRE = -1, OV_TX_SEL_POST = -1, OV_TX_AMP = -1, EYE_CFG = 0)
+                parameter integer OV_CDR_TRANS_TH = -1, OV_TX_SEL_PRE = -1, OV_TX_SEL_POST = -1, OV_TX_AMP = -1, EYE_CFG = 0,
+                parameter integer OV_CALIB = -1, OV_EQA_CKP_OFFSET = -1)
                (input wire clk_i, output wire uart_tx, input wire uart_rx);
     ber_top #(.ROLE(0), .N1(N1), .N2(N2), .N3(N3), .OUTDIV(OUTDIV), .FCNTRL(FCNTRL), .RX_POL(RX_POL),
               .LOOPBACK_SEL(LOOPBACK_SEL), .CLK_DIRECT(CLK_DIRECT), .TX_NEG(TX_NEG), .RX_NEG(RX_NEG), .PROFILE(PROFILE), .EYE_EN(EYE_EN),
               .TX_DET_RX(TX_DET_RX), .TX_CALIB(TX_CALIB), .PLL_RTERM(PLL_RTERM), .CDR_CKI(CDR_CKI),
               .OV_AFE_PEAK(OV_AFE_PEAK), .OV_AFE_GAIN(OV_AFE_GAIN), .OV_AFE_VCMSEL(OV_AFE_VCMSEL), .OV_RTERM_VCMSEL(OV_RTERM_VCMSEL),
               .OV_CDR_CKP(OV_CDR_CKP), .OV_CDR_TRANS_TH(OV_CDR_TRANS_TH), .OV_TX_SEL_PRE(OV_TX_SEL_PRE), .OV_TX_SEL_POST(OV_TX_SEL_POST),
-              .OV_TX_AMP(OV_TX_AMP), .EYE_CFG(EYE_CFG)) u (.clk_i(clk_i), .uart_tx(uart_tx), .uart_rx(uart_rx));
+              .OV_TX_AMP(OV_TX_AMP), .EYE_CFG(EYE_CFG), .OV_CALIB(OV_CALIB), .OV_EQA_CKP_OFFSET(OV_EQA_CKP_OFFSET)) u (.clk_i(clk_i), .uart_tx(uart_tx), .uart_rx(uart_rx));
 endmodule
 
 module top_m2 #(parameter N1 = 1, N2 = 2, N3 = 3, OUTDIV = 4, parameter [5:0] FCNTRL = 6'h3A,
                 parameter RX_POL = 1'b1, parameter [2:0] LOOPBACK_SEL = 3'b000, parameter CLK_DIRECT = 0, parameter TX_NEG = 0, parameter RX_NEG = 0, parameter PROFILE = 0, parameter EYE_EN = 0,
                 parameter TX_DET_RX = 0, parameter TX_CALIB = 1, parameter PLL_RTERM = 1, parameter [7:0] CDR_CKI = 8'h00,
                 parameter integer OV_AFE_PEAK = -1, OV_AFE_GAIN = -1, OV_AFE_VCMSEL = -1, OV_RTERM_VCMSEL = -1, OV_CDR_CKP = -1,
-                parameter integer OV_CDR_TRANS_TH = -1, OV_TX_SEL_PRE = -1, OV_TX_SEL_POST = -1, OV_TX_AMP = -1, EYE_CFG = 0)
+                parameter integer OV_CDR_TRANS_TH = -1, OV_TX_SEL_PRE = -1, OV_TX_SEL_POST = -1, OV_TX_AMP = -1, EYE_CFG = 0,
+                parameter integer OV_CALIB = -1, OV_EQA_CKP_OFFSET = -1)
                (input wire clk_i);
     ber_top #(.ROLE(1), .N1(N1), .N2(N2), .N3(N3), .OUTDIV(OUTDIV), .FCNTRL(FCNTRL), .RX_POL(RX_POL),
               .LOOPBACK_SEL(LOOPBACK_SEL), .CLK_DIRECT(CLK_DIRECT), .TX_NEG(TX_NEG), .RX_NEG(RX_NEG), .PROFILE(PROFILE), .EYE_EN(EYE_EN),
               .TX_DET_RX(TX_DET_RX), .TX_CALIB(TX_CALIB), .PLL_RTERM(PLL_RTERM), .CDR_CKI(CDR_CKI),
               .OV_AFE_PEAK(OV_AFE_PEAK), .OV_AFE_GAIN(OV_AFE_GAIN), .OV_AFE_VCMSEL(OV_AFE_VCMSEL), .OV_RTERM_VCMSEL(OV_RTERM_VCMSEL),
               .OV_CDR_CKP(OV_CDR_CKP), .OV_CDR_TRANS_TH(OV_CDR_TRANS_TH), .OV_TX_SEL_PRE(OV_TX_SEL_PRE), .OV_TX_SEL_POST(OV_TX_SEL_POST),
-              .OV_TX_AMP(OV_TX_AMP), .EYE_CFG(EYE_CFG)) u (.clk_i(clk_i), .uart_tx(), .uart_rx(1'b1));
+              .OV_TX_AMP(OV_TX_AMP), .EYE_CFG(EYE_CFG), .OV_CALIB(OV_CALIB), .OV_EQA_CKP_OFFSET(OV_EQA_CKP_OFFSET)) u (.clk_i(clk_i), .uart_tx(), .uart_rx(1'b1));
 endmodule

@@ -1,0 +1,8 @@
+build/gs_2g5_oss1016_s7.bit CFGRST hold_viol=0  'u.tclk': 71.31 MHz   'u.rclk': 44.98 MHz  Warning: Max frequency for clock 'u.clk_i': 38.21 MHz (FAIL at 40.00 MHz) 
+build/m2_2g5_oss1016_s2.bit CFGRST hold_viol=0  'u.clk_i': 125.63 MHz   'u.tclk': 80.70 MHz   'u.rclk': 63.08 MHz  
+build/gs_2g5_oss0923chk_s7.bit CFGRST hold_viol=0  'u.tclk': 85.77 MHz   'u.rclk': 50.92 MHz  Warning: Max frequency for clock 'u.clk_i': 34.85 MHz (FAIL at 40.00 MHz) 
+build/m2_2g5_oss0923chk_s2.bit CFGRST hold_viol=0  'u.clk_i': 123.03 MHz   'u.tclk': 79.65 MHz   'u.rclk': 77.46 MHz  
+build/gs_2g5r1_oss1016_s7.bit CFGRST hold_viol=0  'u.tclk': 74.08 MHz   'u.rclk': 43.42 MHz  Warning: Max frequency for clock 'u.clk_i': 33.72 MHz (FAIL at 40.00 MHz) 
+build/m2_2g5r1_oss1016_s2.bit CFGRST hold_viol=0  'u.clk_i': 125.63 MHz   'u.tclk': 80.70 MHz   'u.rclk': 63.08 MHz  
+build/gs_2g5_default_s7.bit CFGRST hold_viol=0  'u.tclk': 71.31 MHz   'u.rclk': 44.98 MHz  Warning: Max frequency for clock 'u.clk_i': 38.21 MHz (FAIL at 40.00 MHz) 
+build/m2_2g5_default_s2.bit CFGRST hold_viol=0  'u.clk_i': 125.63 MHz   'u.tclk': 80.70 MHz   'u.rclk': 63.08 MHz  

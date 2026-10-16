@@ -1,0 +1,40 @@
+gs oss0923 gs_2g5p1_txneg_amp12_s7 {'tclk': 85.77, 'rclk': 50.92, 'clk_i': 34.85, 'hold': 0}
+gs oss0923 gs_sw_o_s11 {'tclk': 66.12, 'rclk': 42.94, 'clk_i': 35.8, 'hold': 0}
+gs oss0923 gs_sw_o_s12 {'tclk': 72.46, 'rclk': 46.99, 'clk_i': 37.31, 'hold': 0}
+gs oss0923 gs_sw_o_s13 {'tclk': 67.66, 'rclk': 42.77, 'clk_i': 38.56, 'hold': 0}
+gs oss0923 gs_sw_o_s14 {'tclk': 85.22, 'rclk': 45.59, 'clk_i': 34.34, 'hold': 0}
+gs oss0923 gs_sw_o_s15 {'tclk': 76.32, 'rclk': 45.03, 'clk_i': 38.7, 'hold': 0}
+  SUM gs oss0923 rclk: n=6 min=42.8 median=45.3 max=50.9
+  SUM gs oss0923 tclk: n=6 min=66.1 median=74.4 max=85.8
+  SUM gs oss0923 clk_i: n=6 min=34.3 median=36.6 max=38.7
+  SUM gs oss0923 hold total=0
+gs oss1016 gs_2g5_oss1016_s7 {'tclk': 71.31, 'rclk': 44.98, 'clk_i': 38.21, 'hold': 0}
+gs oss1016 gs_sw_n_s11 {'tclk': 69.71, 'rclk': 47.96, 'clk_i': 36.09, 'hold': 0}
+gs oss1016 gs_sw_n_s12 {'tclk': 71.87, 'rclk': 47.04, 'clk_i': 37.4, 'hold': 0}
+gs oss1016 gs_sw_n_s13 {'tclk': 72.71, 'rclk': 46.4, 'clk_i': 36.47, 'hold': 0}
+gs oss1016 gs_sw_n_s14 {'tclk': 83.79, 'rclk': 40.99, 'clk_i': 34.88, 'hold': 0}
+gs oss1016 gs_sw_n_s15 {'tclk': 75.59, 'rclk': 45.44, 'clk_i': 39.05, 'hold': 0}
+  SUM gs oss1016 rclk: n=6 min=41.0 median=45.9 max=48.0
+  SUM gs oss1016 tclk: n=6 min=69.7 median=72.3 max=83.8
+  SUM gs oss1016 clk_i: n=6 min=34.9 median=36.9 max=39.0
+  SUM gs oss1016 hold total=0
+m2 oss0923 m2_2g5p1_txneg_amp12_s2 {'clk_i': 123.03, 'tclk': 79.65, 'rclk': 77.46, 'hold': 0}
+m2 oss0923 m2_sw_o_s11 {'clk_i': 119.89, 'tclk': 91.53, 'rclk': 71.73, 'hold': 0}
+m2 oss0923 m2_sw_o_s12 {'clk_i': 136.13, 'tclk': 85.88, 'rclk': 78.65, 'hold': 0}
+m2 oss0923 m2_sw_o_s13 {'clk_i': 145.31, 'tclk': 83.11, 'rclk': 74.49, 'hold': 0}
+m2 oss0923 m2_sw_o_s14 {'clk_i': 128.27, 'tclk': 77.39, 'rclk': 67.33, 'hold': 0}
+m2 oss0923 m2_sw_o_s15 {'clk_i': 129.58, 'tclk': 78.71, 'rclk': 70.13, 'hold': 0}
+  SUM m2 oss0923 rclk: n=6 min=67.3 median=73.1 max=78.7
+  SUM m2 oss0923 tclk: n=6 min=77.4 median=81.4 max=91.5
+  SUM m2 oss0923 clk_i: n=6 min=119.9 median=128.9 max=145.3
+  SUM m2 oss0923 hold total=0
+m2 oss1016 m2_2g5_oss1016_s2 {'clk_i': 125.63, 'tclk': 80.7, 'rclk': 63.08, 'hold': 0}
+m2 oss1016 m2_sw_n_s11 {'clk_i': 134.68, 'tclk': 67.93, 'rclk': 81.85, 'hold': 0}
+m2 oss1016 m2_sw_n_s12 {'clk_i': 131.98, 'tclk': 83.26, 'rclk': 74.8, 'hold': 0}
+m2 oss1016 m2_sw_n_s13 {'clk_i': 146.93, 'tclk': 84.37, 'rclk': 71.41, 'hold': 0}
+m2 oss1016 m2_sw_n_s14 {'clk_i': 154.46, 'tclk': 82.32, 'rclk': 67.72, 'hold': 0}
+m2 oss1016 m2_sw_n_s15 {'clk_i': 130.7, 'tclk': 73.41, 'rclk': 72.82, 'hold': 0}
+  SUM m2 oss1016 rclk: n=6 min=63.1 median=72.1 max=81.8
+  SUM m2 oss1016 tclk: n=6 min=67.9 median=81.5 max=84.4
+  SUM m2 oss1016 clk_i: n=6 min=125.6 median=133.3 max=154.5
+  SUM m2 oss1016 hold total=0

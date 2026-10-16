@@ -8,11 +8,11 @@
 #  - no -luttree: p_r 4.2 stops with exit 4 at "ROUTER started" on the -luttree netlist (L2T5 cells), every variant;
 #  - no seed (p_r has none, it is deterministic), no --freq (p_r has no clock target; -tm 3 = worst corner as nextpnr);
 #  - no --device: p_r 4.2 builds CCGM1A1 only; both boards are A1 (gs: 1 device in the JTAG chain, docs/PR_BUILD §1).
-# CC_TOOLCHAIN (env): cc-toolchain-linux dir. OSS_CAD_SUITE (env): for gmunpack/gmpack (default oss-cad-suite-20260923).
+# CC_TOOLCHAIN (env): cc-toolchain-linux dir. OSS_CAD_SUITE (env): for gmunpack/gmpack (default ~/app/raid/tools/oss-cad-suite, TASK-5549).
 set -e
 cd "$(dirname "$0")"
 CC=${CC_TOOLCHAIN:-/home/klaudio/app/raid/tools/cc-toolchain/cc-toolchain-linux}/bin
-export OSS_CAD_SUITE=${OSS_CAD_SUITE:-/home/klaudio/app/raid/tools/oss-cad-suite-20260923}
+export OSS_CAD_SUITE=${OSS_CAD_SUITE:-/home/klaudio/app/raid/tools/oss-cad-suite}
 B=$1; N=$2; shift 2; CP=""
 while [ $# -ge 2 ]; do CP="$CP chparam -set $1 $2 top_$B;"; shift 2; done
 S=$(cd ../gateware/ber && pwd); LINK=ber_link.v; [ "$B" = gs ] && LINK=ber_link_gs.v

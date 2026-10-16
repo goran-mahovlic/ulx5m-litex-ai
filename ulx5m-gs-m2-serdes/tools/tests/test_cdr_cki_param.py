@@ -8,7 +8,7 @@ import json, os, shutil, subprocess, tempfile, unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BER = os.path.join(HERE, '..', '..', 'gateware', 'ber')
-OSS = os.environ.get('OSS_CAD_SUITE', os.path.expanduser('~/app/raid/tools/oss-cad-suite-20260923'))
+OSS = os.environ.get('OSS_CAD_SUITE', os.path.expanduser('~/app/raid/tools/oss-cad-suite'))
 YOSYS = shutil.which('yosys') or os.path.join(OSS, 'bin', 'yosys')
 CELLS = os.path.join(os.path.dirname(os.path.dirname(YOSYS)), 'share', 'yosys', 'gatemate', 'cells_bb.v')
 

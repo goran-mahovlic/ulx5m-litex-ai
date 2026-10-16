@@ -1,0 +1,36 @@
+gs 44a6c739 (nightly) gs_2g5_oss1016_s7 {'tclk': 71.31, 'rclk': 44.98, 'clk_i': 38.21, 'hold': 0, 'combin': 0}
+gs 44a6c739 (nightly) gs_sw_n_s11 {'tclk': 69.71, 'rclk': 47.96, 'clk_i': 36.09, 'hold': 0, 'combin': 0}
+gs 44a6c739 (nightly) gs_sw_n_s12 {'tclk': 71.87, 'rclk': 47.04, 'clk_i': 37.4, 'hold': 0, 'combin': 0}
+gs 44a6c739 (nightly) gs_sw_n_s13 {'tclk': 72.71, 'rclk': 46.4, 'clk_i': 36.47, 'hold': 0, 'combin': 0}
+gs 44a6c739 (nightly) gs_sw_n_s14 {'tclk': 83.79, 'rclk': 40.99, 'clk_i': 34.88, 'hold': 0, 'combin': 0}
+gs 44a6c739 (nightly) gs_sw_n_s15 {'tclk': 75.59, 'rclk': 45.44, 'clk_i': 39.05, 'hold': 0, 'combin': 0}
+  SUM gs 44a6c739 (nightly) rclk: n=6 min=41.0 median=45.9 max=48.0
+  SUM gs 44a6c739 (nightly) tclk: n=6 min=69.7 median=72.3 max=83.8
+  SUM gs 44a6c739 (nightly) clk_i: n=6 min=34.9 median=36.9 max=39.0
+gs 7ba06cae8 (+#1849) gs_np7ba_s7 None
+gs 7ba06cae8 (+#1849) gs_np7ba_s11 {'tclk': 69.4, 'rclk': 46.44, 'clk_i': 35.06, 'hold': 0, 'combin': 2}
+gs 7ba06cae8 (+#1849) gs_np7ba_s12 {'tclk': 77.74, 'rclk': 45.22, 'clk_i': 35.41, 'hold': 0, 'combin': 0}
+gs 7ba06cae8 (+#1849) gs_np7ba_s13 {'tclk': 83.02, 'rclk': 46.94, 'clk_i': 32.82, 'hold': 0, 'combin': 0}
+gs 7ba06cae8 (+#1849) gs_np7ba_s14 {'tclk': 80.32, 'rclk': 41.64, 'clk_i': 34.56, 'hold': 0, 'combin': 0}
+gs 7ba06cae8 (+#1849) gs_np7ba_s15 {'tclk': 77.78, 'rclk': 44.73, 'clk_i': 31.73, 'hold': 0, 'combin': 2}
+  SUM gs 7ba06cae8 (+#1849) rclk: n=5 min=41.6 median=45.2 max=46.9
+  SUM gs 7ba06cae8 (+#1849) tclk: n=5 min=69.4 median=77.8 max=83.0
+  SUM gs 7ba06cae8 (+#1849) clk_i: n=5 min=31.7 median=34.6 max=35.4
+m2 44a6c739 (nightly) m2_2g5_oss1016_s2 {'clk_i': 125.63, 'tclk': 80.7, 'rclk': 63.08, 'hold': 0, 'combin': 0}
+m2 44a6c739 (nightly) m2_sw_n_s11 {'clk_i': 134.68, 'tclk': 67.93, 'rclk': 81.85, 'hold': 0, 'combin': 0}
+m2 44a6c739 (nightly) m2_sw_n_s12 {'clk_i': 131.98, 'tclk': 83.26, 'rclk': 74.8, 'hold': 0, 'combin': 0}
+m2 44a6c739 (nightly) m2_sw_n_s13 {'clk_i': 146.93, 'tclk': 84.37, 'rclk': 71.41, 'hold': 0, 'combin': 0}
+m2 44a6c739 (nightly) m2_sw_n_s14 {'clk_i': 154.46, 'tclk': 82.32, 'rclk': 67.72, 'hold': 0, 'combin': 0}
+m2 44a6c739 (nightly) m2_sw_n_s15 {'clk_i': 130.7, 'tclk': 73.41, 'rclk': 72.82, 'hold': 0, 'combin': 0}
+  SUM m2 44a6c739 (nightly) rclk: n=6 min=63.1 median=72.1 max=81.8
+  SUM m2 44a6c739 (nightly) tclk: n=6 min=67.9 median=81.5 max=84.4
+  SUM m2 44a6c739 (nightly) clk_i: n=6 min=125.6 median=133.3 max=154.5
+m2 7ba06cae8 (+#1849) m2_np7ba_s2 {'clk_i': 136.5, 'tclk': 80.25, 'rclk': 66.66, 'hold': 0, 'combin': 1}
+m2 7ba06cae8 (+#1849) m2_np7ba_s11 {'clk_i': 127.68, 'tclk': 85.65, 'rclk': 65.16, 'hold': 0, 'combin': 1}
+m2 7ba06cae8 (+#1849) m2_np7ba_s12 {'clk_i': 133.87, 'tclk': 76.76, 'rclk': 67.47, 'hold': 0, 'combin': 2}
+m2 7ba06cae8 (+#1849) m2_np7ba_s13 {'clk_i': 153.19, 'tclk': 79.9, 'rclk': 61.27, 'hold': 0, 'combin': 1}
+m2 7ba06cae8 (+#1849) m2_np7ba_s14 {'clk_i': 156.27, 'tclk': 83.75, 'rclk': 68.18, 'hold': 0, 'combin': 1}
+m2 7ba06cae8 (+#1849) m2_np7ba_s15 {'clk_i': 120.83, 'tclk': 78.71, 'rclk': 72.42, 'hold': 0, 'combin': 0}
+  SUM m2 7ba06cae8 (+#1849) rclk: n=6 min=61.3 median=67.1 max=72.4
+  SUM m2 7ba06cae8 (+#1849) tclk: n=6 min=76.8 median=80.1 max=85.7
+  SUM m2 7ba06cae8 (+#1849) clk_i: n=6 min=120.8 median=135.2 max=156.3
