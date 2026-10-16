@@ -1,0 +1,8 @@
+2,5G T=10s bita=1.25e+10 prag k<=8   (BER<=6.4e-10)  P(prolaz|BER) 1e-10:1.000  3e-10:0.985  5e-10:0.820  1e-09:0.125  2e-09:0.000
+2,5G T=60s bita=7.50e+10 prag k<=60  (BER<=8.0e-10)  P(prolaz|BER) 1e-10:1.000  3e-10:1.000  5e-10:1.000  1e-09:0.043  2e-09:0.000
+5G T=10s bita=2.50e+10 prag k<=16  (BER<=6.4e-10)  P(prolaz|BER) 1e-10:1.000  3e-10:0.998  5e-10:0.869  1e-09:0.038  2e-09:0.000
+5G T=60s bita=1.50e+11 prag k<=120 (BER<=8.0e-10)  P(prolaz|BER) 1e-10:1.000  3e-10:1.000  5e-10:1.000  1e-09:0.007  2e-09:0.000
+2,5G prozor 10 s, prag praska >20 gresaka: P(>20 | 5e-10) = 2.7e-06
+p(dobro ucitavanje)=0.25: ocekivano pokusaja 4.0, P(nijedan od 10) = 0.0563
+p(dobro ucitavanje)=0.33: ocekivano pokusaja 3.0, P(nijedan od 10) = 0.0182
+p(dobro ucitavanje)=0.48: ocekivano pokusaja 2.1, P(nijedan od 10) = 0.0014
