@@ -1,0 +1,3 @@
+Warning: Replacing memory \pb with list of registers. See /home/klaudio/app/raid/projekti/ulx5m-litex-ai/ulx5m-gs-m2-serdes/gateware/ber/ber_link.v:108, /home/klaudio/app/raid/projekti/ulx5m-litex-ai/ulx5m-gs-m2-serdes/gateware/ber/ber_link.v:107
+CFGRST       build/m2_2g5p1_txneg_amp12/m2_2g5p1_txneg_amp12_pr_CFGRST.bit
+build/m2_2g5p1_txneg_amp12/m2_2g5p1_txneg_amp12_pr_CFGRST.bit \u.rclk Fmax 81.79 MHz ? Fmax 105.61 MHz ? Fmax 122.40 MHz 

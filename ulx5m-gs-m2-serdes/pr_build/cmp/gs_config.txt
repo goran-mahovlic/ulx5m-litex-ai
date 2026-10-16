@@ -1,0 +1,21 @@
+# .config (non-tile chip config) nextpnr vs p_r; missing = 0 (gmunpack omits zero words)
+CLKIN.REF1             nextpnr=0 p_r=0
+CLKIN.REF1_INV         nextpnr=0 p_r=0
+GLBOUT.GLB0_CFG        nextpnr=0 p_r=0
+GLBOUT.GLB0_EN         nextpnr=1 p_r=1
+GLBOUT.GLB1_CFG        nextpnr=0 p_r=0
+GLBOUT.GLB1_EN         nextpnr=1 p_r=1
+GLBOUT.GLB2_CFG        nextpnr=0 p_r=0
+GLBOUT.GLB2_EN         nextpnr=1 p_r=1
+GLBOUT.USR_GLB0_EN     nextpnr=1 p_r=1
+GLBOUT.USR_GLB2_EN     nextpnr=1 p_r=1
+GPIO.BANK_CFG          nextpnr=0 p_r=0
+GPIO.BANK_E1           nextpnr=1 p_r=1
+GPIO.BANK_E2           nextpnr=1 p_r=1
+GPIO.BANK_N1           nextpnr=0 p_r=1   DIFF
+GPIO.BANK_N2           nextpnr=0 p_r=1   DIFF
+GPIO.BANK_S1           nextpnr=0 p_r=1   DIFF
+GPIO.BANK_S2           nextpnr=0 p_r=1   DIFF
+GPIO.BANK_W1           nextpnr=0 p_r=1   DIFF
+GPIO.BANK_W2           nextpnr=1 p_r=1
+PLL1.USR_CLK_OUT       nextpnr=0 p_r=0

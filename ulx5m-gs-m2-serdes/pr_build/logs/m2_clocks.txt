@@ -1,0 +1,3 @@
+CLK 2737 (2737/3) = \u.rclk      Fmax 81.79 MHz  longest 12.23 ns
+CLK 2037 (2037/3) = \u.tclk      Fmax 105.61 MHz  longest 9.47 ns
+CLK 2037 (2037/2) = \u.clk_i     Fmax 122.40 MHz  longest 8.17 ns

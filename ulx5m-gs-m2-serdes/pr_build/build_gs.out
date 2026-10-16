@@ -1,0 +1,2 @@
+CFGRST       build/gs_2g5p1_txneg_amp12/gs_2g5p1_txneg_amp12_pr_CFGRST.bit
+build/gs_2g5p1_txneg_amp12/gs_2g5p1_txneg_amp12_pr_CFGRST.bit \u.rclk Fmax 40.71 MHz \u.clk_i Fmax 30.80 MHz \u.tclk Fmax 126.84 MHz 
