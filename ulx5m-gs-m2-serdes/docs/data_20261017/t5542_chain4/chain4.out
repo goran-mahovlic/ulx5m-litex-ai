@@ -1,0 +1,65 @@
+== chain4 start 2026-10-16 22:55:08 throttled=0xd0000
+ATTEMPT r1_1 n=1 L3 t_link=84.7 Q=FAIL {'m2_to_gs': 10, 'gs_to_m2': 1} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT r1_1 n=2 L3 t_link=81.4 Q=PASS {'m2_to_gs': 5, 'gs_to_m2': 3} C=PASS {'m2_to_gs': 19, 'gs_to_m2': 0} PASS
+GATE r1_1 PASS attempts=2 undecided=0
+ATTEMPT r1_2 n=1 L3 t_link=75.7 Q=PASS {'m2_to_gs': 5, 'gs_to_m2': 4} C=PASS {'m2_to_gs': 23, 'gs_to_m2': 0} PASS
+GATE r1_2 PASS attempts=1 undecided=0
+ATTEMPT r1_3 n=1 L3 t_link=70.0 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} C=PASS {'m2_to_gs': 3, 'gs_to_m2': 4} PASS
+GATE r1_3 PASS attempts=1 undecided=0
+ATTEMPT k3r_1 n=1 L3 t_link=68.7 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} C=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} PASS
+GATE k3r_1 PASS attempts=1 undecided=0
+ATTEMPT k3r_2 n=1 L3 t_link=76.5 Q=FAIL {'m2_to_gs': 9, 'gs_to_m2': 6} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT k3r_2 n=2 L1 t_link=63.7 Q=FAIL {'m2_to_gs': 10, 'gs_to_m2': 0} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT k3r_2 n=3 L1b t_link=39.6 Q=FAIL {'m2_to_gs': 14, 'gs_to_m2': 5} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT k3r_2 n=4 L2tx t_link=42.4 Q=FAIL {'m2_to_gs': 10, 'gs_to_m2': 4} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT k3r_2 n=5 L2rx t_link=43.7 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} C=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} PASS
+GATE k3r_2 PASS attempts=5 undecided=0
+ATTEMPT soak_r1 n=1 L3 t_link=74.8 Q=FAIL {'m2_to_gs': 46, 'gs_to_m2': 8} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT soak_r1 n=2 L3 t_link=70.0 Q=None None C=None None FAIL (health: m2 RX_CDR_LOCKED=0)
+ATTEMPT soak_r1 n=3 L3 t_link=72.6 Q=FAIL {'m2_to_gs': 9, 'gs_to_m2': 0} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT soak_r1 n=4 L3 t_link=69.1 Q=FAIL {'m2_to_gs': 10, 'gs_to_m2': 0} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT soak_r1 n=5 L3 t_link=73.2 Q=FAIL {'m2_to_gs': 10, 'gs_to_m2': 0} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT soak_r1 n=6 L3 t_link=69.2 Q=FAIL {'m2_to_gs': 0, 'gs_to_m2': 43} C=None None FAIL (Q: errors > 8: gs_to_m2)
+ATTEMPT soak_r1 n=7 L3 t_link=71.9 Q=FAIL {'m2_to_gs': 13, 'gs_to_m2': 3} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT soak_r1 n=8 L3 t_link=67.4 Q=FAIL {'m2_to_gs': 6, 'gs_to_m2': 9} C=None None FAIL (Q: errors > 8: gs_to_m2)
+ATTEMPT soak_r1 n=9 L3 t_link=71.1 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} C=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} PASS
+GATE soak_r1 PASS attempts=9 undecided=0
+SOAK soak_r1 done secs=1801.0 kept={'m2_to_gs': {'words': 55969054107, 'errb': 50, 'dloss': 0, 'errw': 19, 'code': 40}, 'gs_to_m2': {'words': 55969054112, 'errb': 2, 'dloss': 0, 'errw': 2, 'code': 4}} bursts={'m2_to_gs': 0, 'gs_to_m2': 0} sync={'m2_to_gs': 1.0, 'gs_to_m2': 1.000000000089335}
+== 2.5G done 2026-10-17 00:26:20
+ATTEMPT p2_cal0 n=1 L3 t_link=57.6 Q=None None C=None None FAIL (health: gs RX_CDR_LOCKED=0; gs PEER TIMEOUT; m2 PEER TIMEOUT)
+ATTEMPT p2_cal0 n=2 L3 t_link=54.1 Q=None None C=None None FAIL (health: gs RX_CDR_LOCKED=0; gs PEER OTHER 52/1000 PEER 948/1000 distinct=1000  expect=peer -> FAIL; m2 PEER OTHER 75/1000 PEER 925/1000 distinct=1000  expect=peer -> FAIL)
+ATTEMPT p2_cal0 n=3 L3 t_link=64.2 Q=None None C=None None FAIL (health: gs RX_CDR_LOCKED=0; gs PEER OTHER 86/1000 PEER 914/1000 distinct=1000  expect=peer -> FAIL; m2 PEER OTHER 84/1000 PEER 916/1000 distinct=1000  expect=peer -> FAIL)
+GATE p2_cal0 GATE_FAILED attempts=3 undecided=0
+ATTEMPT p2_r1_amp12 n=1 L3 t_link=158.2 Q=None None C=None None FAIL (health: gs PEER OTHER 124/1000 PEER 876/1000 distinct=1000  expect=peer -> FAIL; m2 PEER OTHER 267/1000 PEER 733/1000 distinct=1000  expect=peer -> FAIL)
+ATTEMPT p2_r1_amp12 n=2 L3 t_link=95.8 Q=None None C=None None FAIL (health: gs RX_CDR_LOCKED=0; gs PEER OTHER 113/1000 PEER 887/1000 distinct=1000  expect=peer -> FAIL; m2 PEER OTHER 224/1000 PEER 775/1000 SELF 1/1000 distinct=1000  expect=peer -> FAIL)
+ATTEMPT p2_r1_amp12 n=3 L3 t_link=98.0 Q=None None C=None None FAIL (health: gs PEER OTHER 73/1000 PEER 927/1000 distinct=1000  expect=peer -> FAIL; m2 PEER OTHER 226/1000 PEER 774/1000 distinct=1000  expect=peer -> FAIL)
+GATE p2_r1_amp12 GATE_FAILED attempts=3 undecided=0
+ATTEMPT p2_r1_amp16 n=1 L3 t_link=112.0 Q=None None C=None None FAIL (health: gs RX_CDR_LOCKED=0; m2 RX_CDR_LOCKED=0; gs PEER OTHER 117/1000 PEER 883/1000 distinct=1000  expect=peer -> FAIL; m2 PEER OTHER 168/1000 PEER 832/1000 distinct=1000  expect=peer -> FAIL)
+ATTEMPT p2_r1_amp16 n=2 L3 t_link=110.0 Q=None None C=None None FAIL (health: gs RX_CDR_LOCKED=0; m2 RX_CDR_LOCKED=0; gs PEER OTHER 75/1000 PEER 925/1000 distinct=1000  expect=peer -> FAIL; m2 PEER OTHER 130/1000 PEER 870/1000 distinct=1000  expect=peer -> FAIL)
+ATTEMPT p2_r1_amp16 n=3 L3 t_link=120.9 Q=None None C=None None FAIL (health: gs RX_CDR_LOCKED=0; m2 RX_CDR_LOCKED=0; gs PEER OTHER 91/1000 PEER 909/1000 distinct=1000  expect=peer -> FAIL; m2 PEER OTHER 157/1000 PEER 843/1000 distinct=1000  expect=peer -> FAIL)
+GATE p2_r1_amp16 GATE_FAILED attempts=3 undecided=0
+== 5G done 2026-10-17 01:35:12
+empty
+Jtag frequency : requested 6000000 Hz -> real 6000000 Hz
+Load SRAM via JTAG: [==================================================] 100.00%
+
+Done
+empty
+Jtag frequency : requested 6000000 Hz -> real 6000000 Hz
+Load SRAM via JTAG: [=============================================     ] 88.27%
+Load SRAM via JTAG: [==================================================] 100.00%
+
+Done
+INFO:  Found 1 device in JTAG chain.
+board=m2 set RX_CALIB_OVR=1 RX_CALIB_VAL=0 TX_CALIB_OVR=1 TX_CALIB_VAL=0 TX_SEL_PRE=0 RX_EQA_CKP_OFFSET=1
+INFO:  Found 1 device in JTAG chain.
+board=m2 set RX_EQA_RESET_OVR=0 RX_EQA_RESET=0
+INFO:  Found 1 device in JTAG chain.
+board=m2 set RX_EQA_RESET_OVR=0 RX_EQA_RESET=0
+INFO:  Found 1 device in JTAG chain.
+board=gs set RX_CALIB_OVR=1 RX_CALIB_VAL=0 TX_CALIB_OVR=1 TX_CALIB_VAL=0 TX_SEL_PRE=0 RX_EQA_CKP_OFFSET=1
+INFO:  Found 1 device in JTAG chain.
+board=gs set RX_EQA_RESET_OVR=0 RX_EQA_RESET=0
+INFO:  Found 1 device in JTAG chain.
+board=gs set RX_EQA_RESET_OVR=0 RX_EQA_RESET=0
+== chain4 done, 2.5 G auto bits + R1 left loaded 2026-10-17 01:35:52
