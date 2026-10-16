@@ -1636,3 +1636,47 @@ Only reads (`eyescan.py get`, read-only `ber_jtag_check`, gs UART `ber_long`). R
   = words / (t25 s × sender word rate), Δloss summed mod 32 per 60 s interval); 4 new tests in `test_ber_long.py`.
 - Correction (REVIEW_INIT 🟢): the §19.2 "t_link 31.8–39.3 s" is the duration of the first PEER poll pair (polls = 1), i.e.
   the link was already up when it was asked; it is an upper bound, not the link-up time.
+
+## 20. TASK-5538 — 2.5 G quick test after the M.2 HAT+ PWR_EN rework (16.10.2026, Goran 15:26)
+
+Goran enabled the HAT regulator (PWR_EN: FFC pin 13 → TP13 → R5 100k → EN AP3441 was floating because GS does not drive CM
+pin 106), so 3V3_M2 now comes from the HAT regulator. Also recorded (uputa #345): **R105/R106 = 2 Ω** (VDD_SER ≈ 1.02 V by
+Goran's calculation). TP10/TP8 were **not measured** — there is no voltage readback on the JTAG path, a multimeter is needed.
+Raw: `docs/data_20261016/t5538/` (`q60/`, `b900.*`, `lab41.sh/.out`, `log41/`); windows by the new
+`tools/lab/ber_windows.py` (BER from snapshot **deltas** only, first window after link-up dropped, exact Poisson 95 %
+interval; 4 tests in `tests/test_ber_windows.py`). Bits unchanged: gs `99d80788` / m2 `3f4857df` (`*_auto.bit`, TX_AMP 12).
+
+**Health (read-only, 15:28):** both probes enumerate (m2 E6613008… at 15:22:32 = the M2 power-up, gs E6605838… re-enumerated
+15:26:22 `port4 disabled by hub (EMI?)`); both boards already run the amp12 bits (TX_AMP 12 read back), CDR+EQA locked,
+FREQ_ACC_VAL 0, PEER 20/20 and 200/200 both — the link was up with **no load and no write by us**. Who loaded the bits and
+whether from flash or SRAM is not visible over JTAG (the GS SRAM held np1817 at 10:05, §19.4; the flash cannot be read while a ber
+design is configured). The gs counters date the link-up to **15:23:08** (21.8·10⁹ words at 31.25 M words/s before the first read)
+= 36 s after the M2 USB power-up, consistent with the M2 booting on the new 3V3_M2. Cumulative since then (link-up errors
+included, **note only**): M2→GS 2.9·10⁻⁸, GS→M2 5.2·10⁻⁹, loss 0/0.
+
+**gs UART:** silent 0 B / 180 s right after the 15:26 re-enumeration (same signature as lab14 §13), then back intermittently:
+5 of 17 snapshots NOUART in the 900 s run, 1 of 7 in the 300 s run. ber_long uses cumulative counters, so a gap only merges two
+windows into one longer one; it costs data, not correctness.
+
+| Load (16.10.) | link up | windows kept | M2→GS BER (95 %) | M2→GS 30 s windows median / max | GS→M2 BER (95 %) | Δloss | synced share |
+|---|---|---|---|---|---|---|---|
+| as left by Goran, 900 s (15:43–15:58) | yes, before 15:28 | 10 (848 s) | **1.56·10⁻⁸** (1.54–1.59) | 1.0·10⁻⁸ / 4.9·10⁻⁸ | **3.0·10⁻¹⁰** (2.6–3.3) | 0 / 0 | 0.99999999 / 0.99999998 |
+| lab41 l1 `-r` | ≤ 17.5 s | 1 (19 s) | 5.2·10⁻⁸ | — | 6.2·10⁻⁹ | 0 / 0 | ≈ 1 |
+| lab41 l2 `-r` | ≤ 18.9 s | 0 (UART: one 150 s window incl. link-up: 2.8·10⁻⁸ / 4.0·10⁻⁹) | — | — | — | 0 / 0 | ≈ 1 |
+| lab41 l3 `-r`, 150 s | ≤ 18.7 s | 4 (112 s) | 5.6·10⁻⁹ (5.2–6.0) | **1.9·10⁻¹⁰** / 1.7·10⁻⁸ (one 35 s burst, 762 err) | 2.9·10⁻¹¹ (0.8–7.4) | 0 / 0 | ≈ 1 |
+| lab41 l3, +300 s run (203.5 s measured, last read NOUART) | — | 6 (204 s) | **1.5·10⁻¹⁰** (1.1–2.1) | 1.4·10⁻¹⁰ / 2.8·10⁻¹⁰ | **0** (< 1.4·10⁻¹¹) | 0 / 0 | ≈ 1 |
+| *ref. lab39 soak (15./16.10., 4.8 h, one accepted load)* | | 278 | *8.3·10⁻¹⁰* | | *4.2·10⁻¹⁰* | | 1 |
+| *ref. morning 15.10. TASK-5522/5523, 300 s median* | | | *4.1·10⁻⁹* | | *3.6·10⁻¹⁰* | | |
+
+("link up" = the first PEER 10/10 poll on both already passed; an upper bound, §19.4.)
+
+**Reading:**
+- The link comes up and holds on every load (4/4), **0 restarts, Δloss 0, synced share ≥ 0.99999998** in both directions on every run.
+- **M2→GS is not fixed by the HAT supply change.** It still depends on the load: 1 of 4 loads is good (l3), 3 are
+  1.6–5.2·10⁻⁸ — lab39 had 48 % good loads, so 1/4 is within the old scatter (not evidence either way at n = 4).
+- The good load l3 is the best 2.5 G result so far over its 316 s of kept windows (M2→GS 1.5·10⁻¹⁰ in the last 204 s, GS→M2
+  4 errors in 3.96·10¹¹ bits), but it had one 35 s burst (M2→GS 1.7·10⁻⁸); including it l3 is 2.1·10⁻⁹ (815 errors /
+  3.96·10¹¹ bits) on M2→GS. Bursts also showed in the 900 s run (windows ×15 apart). A single 5 min run cannot say whether the
+  bursts are new (supply) or the lab39 worst-minute behaviour (1.1·10⁻⁸ vs 8.3·10⁻¹⁰ mean); that needs a soak on l3.
+- GS→M2 also scatters with the load this time (l1/l2 4–8·10⁻⁹, as-left 3·10⁻¹⁰, l3 ≈ 0).
+- Current state of the boards: l3 loaded (`-r`), CDR+EQA locked, PEER 200/200 both, gs owner file removed.

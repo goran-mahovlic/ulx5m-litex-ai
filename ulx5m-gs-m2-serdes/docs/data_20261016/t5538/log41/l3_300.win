@@ -1,0 +1,9 @@
+snapshots ok=7 nouart=1 windows=6 skip=0
+     w00    0.0-  33.5 s  m2->gs 4.44e-11 (e=2 dl=0)  gs->m2 0.00e+00 (e=0 dl=0)  synced=(1, 1)
+     w01   33.5-  67.5 s  m2->gs 7.06e-11 (e=3 dl=0)  gs->m2 0.00e+00 (e=0 dl=0)  synced=(1, 1)
+     w02   67.5- 101.5 s  m2->gs 2.82e-10 (e=12 dl=0)  gs->m2 0.00e+00 (e=0 dl=0)  synced=(1, 1)
+     w03  101.5- 135.6 s  m2->gs 1.18e-10 (e=5 dl=0)  gs->m2 0.00e+00 (e=0 dl=0)  synced=(1, 1)
+     w04  135.6- 169.4 s  m2->gs 1.41e-10 (e=6 dl=0)  gs->m2 0.00e+00 (e=0 dl=0)  synced=(1, 1)
+     w05  169.4- 203.5 s  m2->gs 2.59e-10 (e=11 dl=0)  gs->m2 0.00e+00 (e=0 dl=0)  synced=(1, 1)
+TOTAL m2_to_gs secs=203.5 n=6 errb=39 bits=2.575e+11 BER=1.51e-10 CI95=[1.08e-10, 2.07e-10] dloss=0 restarts=0 win median=1.41e-10 min=4.44e-11 max=2.82e-10
+TOTAL gs_to_m2 secs=203.5 n=6 errb=0 bits=2.575e+11 BER=0.00e+00 CI95=[0.00e+00, 1.43e-11] dloss=0 restarts=0 win median=0.00e+00 min=0.00e+00 max=0.00e+00

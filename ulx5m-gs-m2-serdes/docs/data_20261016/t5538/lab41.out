@@ -1,0 +1,31 @@
+== lab41 2026-10-16 16:01:00 throttled=0xd0000 temp=57.5'C m2=3f4857df gs=99d80788
+Done
+Done
+LOAD l1 t_link<=17.5s ok=1 polls=1
+S l1 gs RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_CDR_FREQ_ACC_VAL=0 TX_AMP=12 RX_TH_MON=13 RX_OFFSET=2 PLL_LOCKED=1 | m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_CDR_FREQ_ACC_VAL=0 TX_AMP=12 RX_TH_MON=14 RX_OFFSET=2 PLL_LOCKED=1
+PEER l1 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS | gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+TOTAL secs=49.2 gs->m2 BER=7.3097637803591495e-09 (<None) m2->gs BER=3.0541008660321353e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=2
+SYNC t25=51.0s m2->gs frac=0.9999999905882871 dloss=0 gs->m2 frac=0.9999999874510495 dloss=0
+WIN l1 m2->gs(after skip)=5.16e-08
+TOTAL m2_to_gs secs=19.2 n=1 errb=839 bits=1.625e+10 BER=5.16e-08 CI95=[4.82e-08, 5.52e-08] dloss=0 restarts=0 win median=5.16e-08 min=5.16e-08 max=5.16e-08
+TOTAL gs_to_m2 secs=19.2 n=1 errb=101 bits=1.625e+10 BER=6.22e-09 CI95=[5.06e-09, 7.55e-09] dloss=0 restarts=0 win median=6.22e-09 min=6.22e-09 max=6.22e-09
+Done
+Done
+LOAD l2 t_link<=18.9s ok=1 polls=1
+S l2 gs RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_CDR_FREQ_ACC_VAL=0 TX_AMP=12 RX_TH_MON=13 RX_OFFSET=2 PLL_LOCKED=1 | m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_CDR_FREQ_ACC_VAL=0 TX_AMP=12 RX_TH_MON=14 RX_OFFSET=3 PLL_LOCKED=1
+PEER l2 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS | gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+TOTAL secs=150.0 gs->m2 BER=4.021746589299411e-09 (<None) m2->gs BER=2.7629780012758198e-08 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=1
+SYNC t25=147.0s m2->gs frac=0.9999999958639684 dloss=0 gs->m2 frac=0.9999999956462825 dloss=0
+WIN l2 m2->gs(after skip)=
+Done
+Done
+LOAD l3 t_link<=18.7s ok=1 polls=1
+S l3 gs RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_CDR_FREQ_ACC_VAL=0 TX_AMP=12 RX_TH_MON=13 RX_OFFSET=2 PLL_LOCKED=1 | m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_CDR_FREQ_ACC_VAL=0 TX_AMP=12 RX_TH_MON=14 RX_OFFSET=2 PLL_LOCKED=1
+PEER l3 m2: rx: PEER 200/200 distinct=200  expect=peer -> PASS | gs: rx: PEER 200/200 distinct=200  expect=peer -> PASS
+TOTAL secs=145.79999999999998 gs->m2 BER=2.2068844186693213e-11 (<None) m2->gs BER=4.308941836010253e-09 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=5
+SYNC t25=145.0s m2->gs frac=0.9999999993379347 dloss=0 gs->m2 frac=0.9999999938207237 dloss=0
+WIN l3 m2->gs(after skip)=5.59e-09
+TOTAL m2_to_gs secs=111.7 n=4 errb=776 bits=1.388e+11 BER=5.59e-09 CI95=[5.21e-09, 6.00e-09] dloss=0 restarts=0 win median=1.88e-10 min=0.00e+00 max=1.74e-08
+TOTAL gs_to_m2 secs=111.7 n=4 errb=4 bits=1.388e+11 BER=2.88e-11 CI95=[7.85e-12, 7.38e-11] dloss=0 restarts=0 win median=0.00e+00 min=0.00e+00 max=9.41e-11
+S end gs RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_CDR_FREQ_ACC_VAL=0 TX_AMP=12 RX_TH_MON=12 RX_OFFSET=2 PLL_LOCKED=1 | m2 RX_CDR_LOCKED=1 RX_EQA_LOCKED=1 RX_CDR_FREQ_ACC_VAL=0 TX_AMP=12 RX_TH_MON=14 RX_OFFSET=2 PLL_LOCKED=1
+LAB41 DONE 16:15:01

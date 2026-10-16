@@ -1,0 +1,3 @@
+TOTAL secs=203.5 gs->m2 BER=0.0 (<1.1650421327452411e-11) m2->gs BER=1.5145547735098908e-10 (<None) restarts={'m2_to_gs': 0, 'gs_to_m2': 0} snaps=6
+SYNC t25=206.0s m2->gs frac=0.9999999981359325 dloss=0 gs->m2 frac=0.9999999987572884 dloss=0
+L3300 DONE

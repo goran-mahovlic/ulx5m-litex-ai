@@ -1,0 +1,3 @@
+snapshots ok=2 nouart=1 windows=1 skip=1
+skip w00    0.0- 150.0 s  m2->gs 2.76e-08 (e=5077 dl=0)  gs->m2 4.02e-09 (e=739 dl=0)  synced=(1, 1)
+NO WINDOW after skip (gs UART gave too few snapshots)
