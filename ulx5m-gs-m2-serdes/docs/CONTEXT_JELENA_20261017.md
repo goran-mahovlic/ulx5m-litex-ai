@@ -70,7 +70,7 @@ gatemate-zadani-lanac, gatemate-pr-flow-zamke).
 - Prekinut `k1_func` može ostaviti prijamnik zamrznut (EN_EQA 0, TAPW pin) → uvijek `restore` + `get RX_EN_EQA_EXT_VALUE` prije mjerenja.
 - BER samo iz delta snimaka, prvi prozor odbačen, 95 % Garwood; trajanje soaka fiksno unaprijed.
 
-## 7. Unaprijed zapisano pravilo za K2 (zapisano 17.10. 11:48, nakon 1. kruga, prije ostalih podataka)
+## 7. Unaprijed zapisano pravilo za K2 (zapisano 17.10. 13:48 CEST, nakon 1. kruga, prije ostalih podataka)
 
 Krug (B0′, B1, B2 po jedno vrata) traje ~28 min (JTAG režija ~2 min po pokušaju, link ~60 s), pa 20 krugova = ~9 h.
 **Međuanaliza nakon 10. kruga:** ako nijedan krak nema ≥ 8/10 prolaza iz 1. pokušaja, K2 staje. Takav krak ni uz
