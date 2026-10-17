@@ -1,0 +1,20 @@
+ucitavanje | prethodni korak BER(M2->GS) | korak s eqarst | BER M2->GS | BER GS->M2 | oba < 1e-9
+l1_1938 | 1.86e-05 (A A17) | B eqa_off0 | 3.07e-10 | 1.02e-10 | DA
+l1_1938 | 3.07e-10 (B eqa_off0) | A A18 | 1.13e-07 | 4.30e-08 | ne
+l1_1938 | 1.13e-07 (A A18) | B eqa_lfhf83 | 3.89e-10 | 2.05e-11 | DA
+l1_1938 | 3.89e-10 (B eqa_lfhf83) | A A19 | 3.46e-08 | 4.16e-08 | ne
+l1_1938 | 3.46e-08 (A A19) | B eqa_ctrl | 2.58e-10 | 1.55e-10 | DA
+l1_1938 | 2.58e-10 (B eqa_ctrl) | A A20 | 1.86e-07 | 3.00e-09 | ne
+l2_2032 | 1.22e-06 (A A17) | B eqa_off0 | 4.95e-09 | 5.46e-10 | ne
+l2_2032 | 4.95e-09 (B eqa_off0) | A A18 | 3.68e-09 | 3.73e-10 | ne
+l2_2032 | 3.68e-09 (A A18) | B eqa_lfhf83 | 3.23e-09 | 4.51e-08 | ne
+l2_2032 | 3.23e-09 (B eqa_lfhf83) | A A19 | 3.04e-09 | 1.03e-10 | ne
+l2_2032 | 3.04e-09 (A A19) | B eqa_ctrl | 2.72e-09 | 4.42e-10 | ne
+l2_2032 | 2.72e-09 (B eqa_ctrl) | A A20 | 2.38e-09 | 1.73e-10 | ne
+l3_2127 | 1.70e-06 (A A17) | B eqa_off0 | 1.46e-08 | 3.24e-10 | ne
+l3_2127 | 1.46e-08 (B eqa_off0) | A A18 | 1.51e-08 | 4.36e-08 | ne
+l3_2127 | 1.51e-08 (A A18) | B eqa_lfhf83 | 8.15e-09 | 2.29e-10 | ne
+l3_2127 | 8.15e-09 (B eqa_lfhf83) | A A19 | 2.12e-08 | 4.02e-08 | ne
+l3_2127 | 2.12e-08 (A A19) | B eqa_ctrl | 1.64e-08 | 1.02e-09 | ne
+l3_2127 | 1.64e-08 (B eqa_ctrl) | A A20 | 3.08e-08 | 2.07e-09 | ne
+ukupno: 3/18 koraka s eqarst zavrsi s oba smjera < 1e-9

@@ -1,0 +1,28 @@
+# 1) nula gresaka -> gornja granica BER (95 %): bitovi = 3.0/BER
+BER<1e-11 2g5: 3.00e+11 bit =      240 s =   0.07 h
+BER<1e-11 5g: 3.00e+11 bit =      120 s =   0.03 h
+BER<1e-12 2g5: 3.00e+12 bit =     2400 s =   0.67 h
+BER<1e-12 5g: 3.00e+12 bit =     1200 s =   0.33 h
+BER<1e-13 2g5: 3.00e+13 bit =    24000 s =   6.67 h
+BER<1e-13 5g: 3.00e+13 bit =    12000 s =   3.33 h
+# 2) usporedba dviju tocaka, omjer BER x2 / x3, 95 % dvostrano, snaga 80 %: potrebne greske po kraku
+omjer x2: ~33 gresaka po kraku; pri BER 2e-11 (2,5G) = 1307 s po kraku
+omjer x2: ~33 gresaka po kraku; pri BER 5e-10 (2,5G) = 52 s po kraku
+omjer x3: ~13 gresaka po kraku; pri BER 2e-11 (2,5G) = 520 s po kraku
+omjer x3: ~13 gresaka po kraku; pri BER 5e-10 (2,5G) = 21 s po kraku
+omjer x5: ~6 gresaka po kraku; pri BER 2e-11 (2,5G) = 242 s po kraku
+omjer x5: ~6 gresaka po kraku; pri BER 5e-10 (2,5G) = 10 s po kraku
+# 3) udio dobrih ucitavanja p0 -> p1 (Fisher/2-proporcije, 95 %/80 %): ucitavanja po kraku
+p 0.33 -> 0.66: n = 35 po kraku
+p 0.33 -> 0.80: n = 17 po kraku
+p 0.33 -> 0.90: n = 11 po kraku
+p 0.50 -> 0.90: n = 20 po kraku
+# 4) "iz 1. pokusaja": najmanji k/n s Clopper-Pearson donjom 95 % granicom >= 0.8
+n=15: k>=15 prolaza iz 1. -> donja 95 % granica 0.819
+n=20: k>=20 prolaza iz 1. -> donja 95 % granica 0.861
+n=30: k>=28 prolaza iz 1. -> donja 95 % granica 0.805
+# 5) soak "bez gresaka" 1800 s: P(0 gresaka) ako je BER ...
+BER 1.00e-13: ocekivano 0.23 gresaka, P(0) = 0.799
+BER 4.00e-13: ocekivano 0.90 gresaka, P(0) = 0.407
+BER 1.00e-12: ocekivano 2.25 gresaka, P(0) = 0.105
+BER 2.23e-11: ocekivano 50.18 gresaka, P(0) = 0.000

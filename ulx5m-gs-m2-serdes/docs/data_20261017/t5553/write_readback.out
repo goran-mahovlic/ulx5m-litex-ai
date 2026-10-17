@@ -1,0 +1,18 @@
+polje | adresa[bitovi] | readback = upis | readback != upis | primjeri (upis->readback)
+RX_CALIB_VAL | 0x02[6:3] | 22 | 0 | 
+RX_CALIB_OVR | 0x02[2:2] | 4 | 0 | 
+RX_EQA_CKP_LF | 0x03[7:0] | 0 | 6 | 0x83->163
+RX_EQA_CKP_HF | 0x03[15:8] | 0 | 6 | 0x83->163
+RX_EQA_CKP_OFFSET | 0x04[7:0] | 0 | 6 | 0->1
+RX_EN_EQA | 0x04[8:8] | 8 | 0 | 
+RX_AFE_GAIN | 0x09[8:5] | 6 | 0 | 
+RX_AFE_PEAK | 0x09[4:0] | 12 | 0 | 
+RX_CDR_CKP | 0x0A[7:0] | 12 | 0 | 
+RX_CDR_TRANS_TH | 0x0B[14:8] | 6 | 0 | 
+RX_EQA_RESET_OVR | 0x2B[2:2] | 16 | 40 | 0->1, 1->0
+RX_RESET_OVR | 0x2B[10:10] | 1 | 1 | 1->0
+TX_AMP | 0x30[14:10] | 24 | 0 | 
+TX_SEL_PRE | 0x30[4:0] | 18 | 0 | 
+TX_SEL_POST | 0x30[9:5] | 18 | 0 | 
+TX_CALIB_VAL | 0x3C[6:3] | 16 | 0 | 
+TX_CALIB_OVR | 0x3C[2:2] | 4 | 0 | 
