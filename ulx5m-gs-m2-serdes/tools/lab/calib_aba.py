@@ -19,7 +19,7 @@ import sys
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from link_gate import DIRS, PAYLOAD_BITS, Uart, measure, sum_dir, bad_rx  # noqa: E402
+from link_gate import DIRS, PAYLOAD_BITS, Uart, measure, sum_dir, bad_rx, readapt_cmds  # noqa: E402
 
 BOTH = ('gs', 'm2')
 # (K, name, who, B command). who: '*' both boards, 'rx' the worse receiver of A0 ('both' -> both). The revert is
@@ -46,6 +46,10 @@ PLAN = [
     ('K12', 'rxval1', '*', 'RX_CALIB_VAL=1'), ('K12', 'rxval2', '*', 'RX_CALIB_VAL=2'),
     ('K12', 'rxval4', '*', 'RX_CALIB_VAL=4'), ('K12', 'txval2', '*', 'TX_CALIB_VAL=2'),
     ('K12', 'txval4', '*', 'TX_CALIB_VAL=4'),
+    # TASK-5559 K3 (CALIBRATION_OPTIONS_20261017_v2 §3.1): is the floor crosstalk of the board's own TX? Idle one TX and
+    # read the OTHER direction (gs idle -> M2->GS; the idled direction is dead in B by design). Then 2x2 TX_AMP 12/16.
+    ('K3', 'gs_txidle', 'gs', 'TX_ELEC_IDLE_OVR=1 TX_ELEC_IDLE=1'), ('K3', 'm2_txidle', 'm2', 'TX_ELEC_IDLE_OVR=1 TX_ELEC_IDLE=1'),
+    ('K3', 'amp_g16', 'gs', 'TX_AMP=16'), ('K3', 'amp_m16', 'm2', 'TX_AMP=16'), ('K3', 'amp_both16', '*', 'TX_AMP=16'),
 ]
 CAL0 = 'RX_CALIB_OVR=1 RX_CALIB_VAL=0 TX_CALIB_OVR=1 TX_CALIB_VAL=0'
 # DFE (EQA) reset only - NOT eyescan 'recal', which also strobes TX/RX_CALIB_EN (that is what left CAL 9/7)
@@ -55,6 +59,8 @@ CAL_FIELDS = ['RX_CALIB_CAL', 'TX_CALIB_CAL', 'RX_CALIB_OVR', 'RX_CALIB_VAL', 'T
 
 
 def boards(who, rx):
+    if who in BOTH:
+        return (who,)
     if who == 'rx' and rx != 'both':
         return (rx,)
     return BOTH
@@ -224,6 +230,11 @@ class Rig:
     def run_cmd(self, b, cmd):
         return ['%s:%s' % (b, self.g.jtag(b, c)[-120:]) for c in commands(cmd)]
 
+    def readapt(self):
+        """TASK-5559: 0x2B reset (--readapt level) on both RX, so A and B are both freshly adapted (v1 §1.2)."""
+        return [] if self.a.readapt == 'none' else \
+            ['%s:%s' % (b, self.g.jtag(b, c)[-60:]) for b in BOTH for c in readapt_cmds(self.a.readapt)]
+
 
 def main():
     ap = argparse.ArgumentParser()
@@ -240,6 +251,8 @@ def main():
     ap.add_argument('--read', default='RX_EN_EQA RX_EQA_RESET_OVR RX_EQA_RESET RX_EQA_LOCKED RX_TH_MON RX_EQA_TAPW RX_OFFSET')
     ap.add_argument('--base', default='', help="fields written on both boards after every load ('F=v ...'), part of A; "
                                              "'cal0' = %s" % CAL0)
+    ap.add_argument('--readapt', choices=('none', 'eqa', 'cdr', 'rx', 'pma'), default='none',
+                    help='TASK-5559: this 0x2B reset on both RX after the base, after every B change and every revert')
     ap.add_argument('--bits-gs', default='/home/pi/fpga/gs_2g5_auto.bit')
     ap.add_argument('--bits-m2', default='/home/pi/fpga/m2_2g5_auto.bit')
     a = ap.parse_args()
@@ -284,6 +297,7 @@ def main():
                     print('STEP %s %s read=%s' % (name, cmd, {b: v[1] for b, v in rd.items()}), flush=True)
                     rig.state('S', name, load, f)
                 continue
+            rig.readapt()
             a0 = rig.state('A', 'A0', load, f)
             rx = bad_rx(a0['err'])
             for i, (K, name, who, cmd) in enumerate(plan):
@@ -292,10 +306,12 @@ def main():
                     fl = fields_of(cmd)
                     undo[bd] = revert_cmd(cmd, rig.g.get(bd, fl) if fl else {})
                     act += rig.run_cmd(bd, cmd)
+                act += rig.readapt()
                 f.write(json.dumps({'kind': 'act', 'load': load, 'name': name, 'act': act, 'undo': undo}) + '\n')
                 rig.state('B', name, load, f)
                 for bd, u in undo.items():
                     rig.run_cmd(bd, u)
+                rig.readapt()
                 rig.state('A', 'A%d' % (i + 1), load, f)
             print('LOAD %s done rx=%s' % (load, rx), flush=True)
     finally:

@@ -88,3 +88,19 @@ class T(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class K3(unittest.TestCase):
+    """TASK-5559 K3: points on one named board, readapt of both RX after every change."""
+    def test_named_board(self):
+        self.assertEqual(C.boards('gs', 'm2'), ('gs',))
+        self.assertEqual(C.boards('m2', 'both'), ('m2',))
+
+    def test_k3_points(self):
+        k3 = {p[1]: p for p in C.PLAN if p[0] == 'K3'}
+        self.assertEqual(k3['gs_txidle'][2:], ('gs', 'TX_ELEC_IDLE_OVR=1 TX_ELEC_IDLE=1'))
+        self.assertEqual(k3['m2_txidle'][2], 'm2')
+        self.assertEqual({k3[n][2] for n in ('amp_g16', 'amp_m16', 'amp_both16')}, {'gs', 'm2', '*'})
+
+    def test_readapt_commands(self):
+        self.assertEqual(C.readapt_cmds('eqa'), ['set RX_EQA_RESET_OVR=1 RX_EQA_RESET=1', 'set RX_EQA_RESET_OVR=0 RX_EQA_RESET=0'])

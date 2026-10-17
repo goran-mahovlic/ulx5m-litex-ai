@@ -20,7 +20,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from link_gate import EOF, KEYS, M32, Uart, readapt_cmds  # noqa: E402
 
 RXDIR = {'gs': 'm2_to_gs', 'm2': 'gs_to_m2'}
-POINT = ['RX_CDR_LOCKED', 'RX_EQA_LOCKED', 'RX_EQA_TAPW', 'RX_TH_MON', 'RX_OFFSET']
+# null controls: a 0x2B write that changes nothing (RX_8B10B_EN_OVR is 0 and stays 0), and a same-value write to 0x01
+NULL = {'null2b': ['set RX_8B10B_EN_OVR=0', 'set RX_8B10B_EN_OVR=0'],
+        'null01': ['set RX_EQA_RESET_TIME=%d', 'set RX_EQA_RESET_TIME=%d']}
+POINT = ['RX_CDR_LOCKED', 'RX_EQA_LOCKED', 'RX_EQA_TAPW', 'RX_TH_MON', 'RX_OFFSET', 'RX_EQA_RESET_TIME']
 
 
 def deltas(l0, ls, k):
@@ -45,7 +48,7 @@ def verdict(recs):
     for key, o in out.items():
         b = key.split(':')[0]
         ctl = out.get(b + ':none', {'disturbed': 0})
-        o['executes'] = o['reps'] > 0 and o['disturbed'] == o['reps'] and ctl['disturbed'] == 0 and not key.endswith(':none')
+        o['executes'] = o['reps'] > 0 and o['disturbed'] == o['reps'] and ctl['disturbed'] == 0 and key.split(':')[1] not in ('none', 'null2b', 'null01')
     return out
 
 
@@ -76,7 +79,11 @@ def one(board, level, follow):
     u = Uart()
     try:
         l0 = first_line(u)
-        rec['out'] = [sh('fpga-jtag %s run python3 eyescan.py %s' % (board, c))[0][:100] for c in readapt_cmds(level)]
+        if level == 'null01':
+            cmds = [c % int(rec['pt0'].get('RX_EQA_RESET_TIME', 3)) for c in NULL[level]]
+        else:
+            cmds = NULL.get(level) or readapt_cmds(level)
+        rec['out'] = [sh('fpga-jtag %s run python3 eyescan.py %s' % (board, c))[0][:100] for c in cmds]
         ls, t = [], time.time()
         while time.time() - t < follow:
             l = u.next_line()

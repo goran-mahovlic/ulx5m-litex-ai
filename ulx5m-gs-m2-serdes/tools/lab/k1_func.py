@@ -9,6 +9,7 @@ the damaged point; aba2 left 1e-6..2e-5 this way), measure --secs (first 10 s wi
 A level WORKS if the received direction drops >= 2 decades on every repetition (v2 §3.1: >= 2 decades on 3/3).
 --table prints the verdict per level from the JSONL."""
 import argparse
+import signal
 import json
 import math
 import os
@@ -72,10 +73,12 @@ def one(level, rx, secs, settle, dwell=0):
     k = RXDIR[rx]
     rec = {'level': level, 'rx': rx, 't': time.strftime('%Y-%m-%dT%H:%M:%S%z')}
     rec['damage'] = [sh('fpga-jtag %s run python3 eyescan.py freeze RX_TAPW=3' % rx)[1][0][:120]]
-    if dwell:                                   # aba2 held the pin ~48 s (3 s settle + 45 s measured) before restore
-        p = meas(dwell)
-        rec['pinned'] = {'ber': p['ber'].get(k), 'err': p['err'].get(k), 'bits': p['bits'].get(k)}
-    rec['damage'].append(sh('fpga-jtag %s run python3 eyescan.py restore' % rx)[1][0][:160])
+    try:
+        if dwell:                               # aba2 held the pin ~48 s (3 s settle + 45 s measured) before restore
+            p = meas(dwell)
+            rec['pinned'] = {'ber': p['ber'].get(k), 'err': p['err'].get(k), 'bits': p['bits'].get(k)}
+    finally:                                    # a kill during the dwell left gs frozen at TAPW 3 (k1p_b0p_frozen_invalid)
+        rec['damage'].append(sh('fpga-jtag %s run python3 eyescan.py restore' % rx)[1][0][:160])
     time.sleep(2)
     rec['point_before'] = get(rx, POINT)
     m0 = meas(secs)
@@ -100,6 +103,7 @@ def main():
     ap.add_argument('--out')
     ap.add_argument('--table')
     a = ap.parse_args()
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(143))   # run the finally (restore) on kill
     if a.table:
         print(json.dumps(table([json.loads(l) for l in open(a.table) if l.strip()]), indent=1))
         return 0

@@ -1,0 +1,71 @@
+# CONTEXT_JELENA_20261017 — GS↔M2 SerDes: što je utvrđeno, što je pretpostavka, što je otvoreno (TASK-5559)
+
+**Za koga:** za mene (Jelena, trajni agent PRJ-051) i za svakog tko nastavlja. **Stanje:** 17.10.2026. popodne.
+Oznake: **UTVRĐENO** (mjereno ili pročitano u izvoru, s putanjom), **PRETPOSTAVKA**, **OTVORENO**.
+Izvori pročitani za ovaj sažetak: `SERDES_KNOWLEDGE.md`, `CALIBRATION_REVIEW_20261016.md`, `CALIBRATION_OPTIONS_20261017.md` (v1)
+i `_v2.md` (konačni plan K0–K8), `SOAK_R1_2G5_20261017.md`, `CHAIN4_5G_P2_20261017.md`, `TOOLCHAIN_20261017.md`,
+`OPENCOLOGNE_PCIE_PREGLED_20261017.md` §0–5, `RESEARCH_SERDES_USPOREDBA_20261017.md` §0/§4, git log repoa,
+TaskManager PRJ-051 (50 zadataka), RAG (FPGA, agent_jelena, agent_kosjenka, agent_manda), memorija (fpga-lab-dva-dirtyjtaga,
+feedback-fpga-task-pravila, lab-watch-dugi-lab-na-piju, ulx5m-gs-napajanje-i-pll-kanal, serdes-gs-m2-2g5-profile1,
+gatemate-zadani-lanac, gatemate-pr-flow-zamke).
+
+---
+
+## 1. Postav (UTVRĐENO)
+
+| Stavka | Vrijednost | Izvor |
+|---|---|---|
+| Ploče | gs = ULX5M-GS v005 (Waveshare CM5-IO-BASE-A), m2 = ULX5M-M2 (M.2 kartica) | memorija fpga-lab-dva-dirtyjtaga, SERDES_KNOWLEDGE §1 |
+| Kanal | gs → IO ploča → PCIe utor → PCIe-M.2 adapter (FFC) → m2. P/N zamijenjen u adapteru → `RX_POL=1` na obje | 7875d14 (TASK-5524) |
+| Refclk | jedan Si511 100 MHz na gs, m2 prima isti takt kroz lanac, 0,0 ppm | SERDES_KNOWLEDGE §1 |
+| Napajanje | Vcore J3 = 2-3 (1,1 V) na obje; VDD_SER preko R105/R106 1–2 Ω; gs ima 1 µF na C127/C128/C42 (27.09.); **TP10/TP8 nikad izmjereni** | SERDES_KNOWLEDGE §1.1, VERIFY §20 |
+| Lab | Pi 192.168.10.14, `fpga-jtag gs|m2 <bit> -r` (dva DirtyJTAG-a, lookup po serijskom), gs UART = jedini BER izlaz, alati u `/home/pi/ulx5m-serdes/tools`, `/home/pi/gs.owner` brava | memorija |
+| Lanac | `oss-cad-suite-20261016` zadani (yosys 0.70+145, nextpnr 0.11.1-63, gmpack v1.13-6); `build_ber.sh`, seed gs 7 / m2 2; gs seed 7 + router2 ponekad ne konvergira → seed 1 | TOOLCHAIN_20261017, ovaj zadatak (B2) |
+| Bit 2,5G | N 1·5·5, OUTDIV 2, PROFILE 1 (EQA adaptivni, PEAK 24, GAIN 0, CDR CKP 0x3E), TX_NEG 1, TX_AMP 12, CFGRST | TOOLCHAIN §3 |
+
+## 2. Što je utvrđeno o linku do 17.10. jutro
+
+1. **2,5G radi s greškama, 5G ne radi.** Zadnji soak (R1, 1800 s, jedno učitavanje): M2→GS 2,23·10⁻¹¹ [1,66; 2,94]·10⁻¹¹,
+   GS→M2 8,9·10⁻¹³ [1,1·10⁻¹³; 3,2·10⁻¹²], 0 gubitaka sinkr. (SOAK_R1). 5G P2: 9/9 pokušaja bez locka, PEER OTHER 6,9–23,9 % (CHAIN4).
+2. **Greške su linijske** (8b10b kodne greške na 56/56 zapisa), Poissonove, bez praska → pod margine, ne fabric (REVIEW_20261016 §2).
+3. **Lutrija učitavanja:** vrata L3 prolaze iz 1. pokušaja ≈ 1/3 (5/15, chain4); isti bit daje 10⁻⁸ … 10⁻¹¹ ovisno o učitavanju.
+4. **CC_SERDES iz p_r i nextpnr bajtno isti** (TASK-5546) → p_r nije poluga.
+5. **JTAG recal (CALIB_EN strob) ostavlja CAL 9/7 koji preživi `-r`**; CAL0 (OVR=1 VAL=0) je ispravno stanje (TASK-5542).
+6. **Eye brojači (0x14–0x1D) nikad ne broje** na ovim pločama (TASK-5525/5529).
+7. **R1 bit (gs 79b07795 / m2 4a94fc99) ima upečen CKP_OFFSET 0 koji nikad nije bio izmjeren** (v2 §0 t. 2) → nije osnovica.
+8. Cologne Chip nema objavljen BER za 2,5/5G (TASK-5554). Dokaz 10⁻¹² @ 95 %: k ≤ 2 u 5040 s po smjeru (v2 §2.1).
+9. Reset slijed: CC PIPE drži `RX_WAIT_CDR_LOCK 0` ali sa statičkim RX-om; mi imamo adaptivni EQA + WAIT 0 — bez referentnog
+   izvora; u modelu `rx_resetdone` raste 14,4 µs prije CDR locka (TASK-5557).
+
+## 3. Što je utvrđeno u ovom zadatku (TASK-5559) — K0/K1
+
+| # | Nalaz | Dokaz |
+|---|---|---|
+| T1 | WIP TASK-5542 commitan; Pi `link_gate.py` (c4c27f3c) je repo verzija bez `--diag-secs` (Pi stariji), ostali alati sha256 isti | commit 89ec0af |
+| T2 | Novi parametri `OV_WAIT_CDR_LOCK`, `OV_EQA/CDR/PMA_RESET_TIME`, `OV_EN_EQA`, `OV_EQA_CKP_LF/HF`; zadano bajtno isto (gs ed04be04, m2 ec045992) | `test_reset_bake.py` 5/5, `data_20261017/t5559/k0/serdes_cmp_k0.txt` |
+| T3 | B0′ / B1 / B2 izgrađeni; `serdes_cmp`: B0′ − oss1016 = 3 polja, B1 − B0′ = 1, B2 − B1 = 3 (obje ploče) | isto |
+| T4 | **H-a potvrđen na siliciju (obje ploče):** `RX_EQA_CKP_OFFSET` i `RX_EQA_CKP_LF` se ne upisuju dok je `RX_EN_EQA=1` (tiho odbačeno, i sirovi upis 0x04 maska 0x00FF); uz `RX_EN_EQA=0` upis prolazi i **drži** nakon `RX_EN_EQA=1` (10 čitanja kroz 5 s) | `k1/k1w_b0p_{gs,m2}.json` |
+| T5 | 0x01 (reset vremena, WAIT_CDR_LOCK) je upisiv uz EN_EQA=1 (kontrola) | isto |
+| T6 | **Readback 0x2B nije upisana riječ** (upis 0x0004 → čita 0x0001, 0x0000 → 0x0400, 0x000C → 0x0041); readback 0x2B nije dokaz ni za ni protiv | isto |
+| T7 | Na B0′ (učitavanje 12:47): M2→GS 0 grešaka u 1,5·10¹¹ bita (6 × 20 s); TAPW pin +3 držan 45 s daje 1,0·10⁻⁷, a nakon `restore` adaptacija se sama vraća na 0 grešaka → test „oštećenje → razina” iz plana na B0′ ne može dati oštećenje | `k1/k1c_b0p*.jsonl` |
+
+## 4. Pretpostavke (nisu dokazane)
+
+- P1: CKP polja iz bita su aktivna (put kroz bit) — provjera K1-d (R1 bit → čita li 0).
+- P2: `RX_WAIT_CDR_LOCK 1` smanjuje lutriju jer EQA ne kreće na nezaključanom taktu — K2.
+- P3: pod M2→GS je kanal/RX margina, ne preslušavanje vlastitog TX-a — K3.
+- P4: TP10/TP8 su ≥ 1,03 V (DS 1,00–1,10 V) — nije izmjereno.
+
+## 5. Otvoreno
+
+- Koja 0x2B razina se stvarno izvrši (K1-c, sonda `k1_probe.py`).
+- K2 (B0′/B1/B2 × 20 vrata), K3, K4, K6 (§3.3 kriteriji D1–D4), K7 (5G, tek nakon TP10/TP8 od Gorana), K8 flash.
+- Pi je na mekom temperaturnom limitu (`throttled=0xd0005`) — može usporiti JTAG.
+
+## 6. Pravila koja si ponavljam
+
+- Učitavanje samo `fpga-jtag gs|m2 … -r`, bez power-cyclea, nikad `Z`. JTAG readback/ILA umjesto pitanja Goranu.
+- Svaki `set` provjerava readback + izlazni kod (`link_gate` → `SET_FAIL`). CKP polja: `EN_EQA 0 → upis → EN_EQA 1`.
+- Na Piju ne koristiti `pkill -f <uzorak>` iz ssh naredbe koja sadrži isti uzorak (ubije vlastitu ljusku); koristiti `[p]attern`.
+- Prekinut `k1_func` može ostaviti prijamnik zamrznut (EN_EQA 0, TAPW pin) → uvijek `restore` + `get RX_EN_EQA_EXT_VALUE` prije mjerenja.
+- BER samo iz delta snimaka, prvi prozor odbačen, 95 % Garwood; trajanje soaka fiksno unaprijed.

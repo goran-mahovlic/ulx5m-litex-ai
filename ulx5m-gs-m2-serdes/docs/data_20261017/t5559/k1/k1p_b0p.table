@@ -1,0 +1,52 @@
+{
+ "gs:cdr": {
+  "disturbed": 1,
+  "executes": false,
+  "reps": 1
+ },
+ "gs:eqa": {
+  "disturbed": 1,
+  "executes": false,
+  "reps": 1
+ },
+ "gs:none": {
+  "disturbed": 1,
+  "executes": false,
+  "reps": 1
+ },
+ "gs:pma": {
+  "disturbed": 1,
+  "executes": false,
+  "reps": 1
+ },
+ "gs:rx": {
+  "disturbed": 1,
+  "executes": false,
+  "reps": 1
+ },
+ "m2:cdr": {
+  "disturbed": 1,
+  "executes": true,
+  "reps": 1
+ },
+ "m2:eqa": {
+  "disturbed": 1,
+  "executes": true,
+  "reps": 1
+ },
+ "m2:none": {
+  "disturbed": 0,
+  "executes": false,
+  "reps": 1
+ },
+ "m2:pma": {
+  "disturbed": 1,
+  "executes": true,
+  "reps": 1
+ },
+ "m2:rx": {
+  "disturbed": 1,
+  "executes": true,
+  "reps": 1
+ }
+}
