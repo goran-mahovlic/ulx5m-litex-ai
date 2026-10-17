@@ -69,3 +69,11 @@ gatemate-zadani-lanac, gatemate-pr-flow-zamke).
 - Na Piju ne koristiti `pkill -f <uzorak>` iz ssh naredbe koja sadrži isti uzorak (ubije vlastitu ljusku); koristiti `[p]attern`.
 - Prekinut `k1_func` može ostaviti prijamnik zamrznut (EN_EQA 0, TAPW pin) → uvijek `restore` + `get RX_EN_EQA_EXT_VALUE` prije mjerenja.
 - BER samo iz delta snimaka, prvi prozor odbačen, 95 % Garwood; trajanje soaka fiksno unaprijed.
+
+## 7. Unaprijed zapisano pravilo za K2 (zapisano 17.10. 11:48, nakon 1. kruga, prije ostalih podataka)
+
+Krug (B0′, B1, B2 po jedno vrata) traje ~28 min (JTAG režija ~2 min po pokušaju, link ~60 s), pa 20 krugova = ~9 h.
+**Međuanaliza nakon 10. kruga:** ako nijedan krak nema ≥ 8/10 prolaza iz 1. pokušaja, K2 staje. Takav krak ni uz
+10/10 u preostalim krugovima ne bi dao ≥ 19/20, a uz stvarni udio ≤ 0,8 ne može proći ni D2 (28/30). Ako neki krak
+ima ≥ 8/10, K2 ide do 20 krugova. Pobjednik je i dalje krak s Fisher p < 0,05 prema B0′. Inače ostaje B0′ (najmanje
+promjena), a lutrija se rješava kroz K3/K4 (margina).
