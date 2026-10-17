@@ -9,6 +9,10 @@ Manda u TASK-5554 (`RESEARCH_SERDES_USPOREDBA_20261017.md`). Izvedbu plana radi 
 
 Oznake su iste kao u reviziji: **UTVRĐENO** (izmjereno, ≥ 3 učitavanja ili izvor), **POJEDINAČNO**, **PRETPOSTAVKA**, **IZVEDENO**.
 
+> **Dopuna 17.10. (TASK-5558):** `CALIBRATION_OPTIONS_20261017_v2.md` uključuje nalaze TASK-5554/5557, reviziju zadataka i
+> **konačni plan izvedbe (K0–K8)**. Gdje se razlikuju, vrijedi v2: osnovica je B0′ (R1 bit ima neprovjeren `CKP_OFFSET 0`),
+> soak je 3 × 5040 s s k ≤ 2 po smjeru, a „iz 1. pokušaja” je 28/30 (16/20 iz F3 daje donju granicu 0,60, ne 0,8).
+
 ---
 
 ## 0. Kratki odgovor

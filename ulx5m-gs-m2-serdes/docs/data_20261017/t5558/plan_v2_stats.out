@@ -1,0 +1,36 @@
+== 1. soak length for BER <= 1e-12 @95 % (one-sided), per direction
+k<=0  N=2.996e+12 bits  2.5G 2397 s (39.9 min)  5G 1198 s (20.0 min)
+k<=1  N=4.744e+12 bits  2.5G 3795 s (63.3 min)  5G 1898 s (31.6 min)
+k<=2  N=6.296e+12 bits  2.5G 5037 s (83.9 min)  5G 2518 s (42.0 min)
+
+== 2. true BER needed for P(pass) >= 0.8 / 0.9 in a fixed-length soak
+rule k<=0 in 2400 s (N=3.00e+12): P>=0.8 needs mean <= 0.223 -> BER <= 7.44e-14
+rule k<=0 in 2400 s (N=3.00e+12): P>=0.9 needs mean <= 0.105 -> BER <= 3.51e-14
+rule k<=2 in 5040 s (N=6.30e+12): P>=0.8 needs mean <= 1.535 -> BER <= 2.44e-13
+rule k<=2 in 5040 s (N=6.30e+12): P>=0.9 needs mean <= 1.102 -> BER <= 1.75e-13
+
+== 3. where we are (soak R1 1800 s): improvement factor needed for P(pass 84 min, k<=2) >= 0.8
+M2->GS BER 2.23e-11: expected errors in 5040 s 140.5, P(k<=2) 9.69e-58, needs x92 better (to 2.44e-13)
+GS->M2 BER 8.93e-13: expected errors in 5040 s 5.6, P(k<=2) 0.0809, needs x4 better (to 2.44e-13)
+
+== 4. first-attempt gate pass: one-sided 95 % CP lower bound
+15/15  lower 0.819
+14/15  lower 0.721
+20/20  lower 0.861
+19/20  lower 0.784
+28/30  lower 0.805
+27/30  lower 0.761
+30/30  lower 0.905
+16/20  lower 0.599
+
+== 5. probability that a link with true first-attempt p passes the 28/30 rule
+p=0.80  P(>=28/30)=0.044   P(15/15)=0.035
+p=0.90  P(>=28/30)=0.411   P(15/15)=0.206
+p=0.95  P(>=28/30)=0.812   P(15/15)=0.463
+p=0.98  P(>=28/30)=0.978   P(15/15)=0.739
+
+== 6. soak 3 loads x rule: P(all 3 pass) if each load has the same true BER
+BER 1e-13: P(one load k<=2 in 5040 s)=0.974  P(3/3)=0.923
+BER 2e-13: P(one load k<=2 in 5040 s)=0.866  P(3/3)=0.650
+BER 3e-13: P(one load k<=2 in 5040 s)=0.706  P(3/3)=0.353
+BER 5e-13: P(one load k<=2 in 5040 s)=0.390  P(3/3)=0.060
