@@ -49,18 +49,31 @@ gatemate-zadani-lanac, gatemate-pr-flow-zamke).
 | T6 | **Readback 0x2B nije upisana riječ** (upis 0x0004 → čita 0x0001, 0x0000 → 0x0400, 0x000C → 0x0041); readback 0x2B nije dokaz ni za ni protiv | isto |
 | T7 | Na B0′ (učitavanje 12:47): M2→GS 0 grešaka u 1,5·10¹¹ bita (6 × 20 s); TAPW pin +3 držan 45 s daje 1,0·10⁻⁷, a nakon `restore` adaptacija se sama vraća na 0 grešaka → test „oštećenje → razina” iz plana na B0′ ne može dati oštećenje | `k1/k1c_b0p*.jsonl` |
 
+| T8 | **K1-c:** 0x2B razine eqa/cdr/rx/pma se izvršavaju: svaka daje 1417–2978 bitnih grešaka samo u vlastitom RX smjeru (eqa 6/6, obje ploče); prazni upis u 0x2B ili 0x01 daje 0–16 (pozadina). Readapt = `eqa` | `k1/k1p_b0p*.jsonl`, `.table` |
+| T9 | **K1-d:** R1 bit čita `RX_EQA_CKP_OFFSET=0` (0x04=0x3900) na obje → CKP put kroz bit radi | `k1/k1d_r1bit.txt` |
+| T10 | **K2** (7 isprepletenih krugova, novo učitavanje po vratima, readapt eqa): prolaz iz 1. pokušaja B0′ 4/7, B1 4/7 (Fisher p 0,70), B2 1/7 (3,9 pokušaja). Zaustavljeno unaprijed zapisanim pravilom (§7). Osnovica = B0′ | `k2/k2_table.md` |
+| T11 | **K3** (3 učitavanja, prvi prozor odbačen): gs TX idle → M2→GS ×2,9 / ×47 / ×7,8; AMP 16 gori na gotovo svim ćelijama (gs 16: M2→GS ×0,01–0,18 na 3/3). Svaki EQA readapt = novo izvlačenje (A stanja ×10–×100) i prasak ~2500 u prvom prozoru | `k3/k3_table_drop1.md` |
+| T12 | **K4a** AMP parovi (2 učitavanja × 3 izvlačenja): gs 8 / m2 12 najbolji, M2→GS medijan 3,1·10⁻¹¹ prema 6,5·10⁻¹¹ (12/12), skupno ×2,4, bolji na svakom učitavanju; m2 AMP 10 jasno gori | `k4/k4amp_table.md` |
+| T13 | **K4b** na gs 8 / m2 12: m2 POST 8/12, gs POST 0, gs/m2 PEAK 16, B-static (EN_EQA 0, PEAK 15, GAIN 8) — **nijedna točka ne pobjeđuje osnovicu**; B-static ×300–3000 gori, m2 POST 12 ×15 gori M2→GS, gs POST 0 ×20 gori GS→M2 | `k4/k4b_table.md` |
+| T14 | **B-final** = gs `gs_2g5_bf_amp8_s7.bit` 9a9d4c0f (B0′ + OV_TX_AMP 8; serdes_cmp prema B0′ = 1 polje TX_AMP 12→8) + m2 `m2_2g5_b0p_s2.bit` e4251f4b (B0′). **D1: 46/46 polja readback = namjera** na 3 učitavanja | `k6/intent.json`, `k6/d1_*.json` |
+
 ## 4. Pretpostavke (nisu dokazane)
 
-- P1: CKP polja iz bita su aktivna (put kroz bit) — provjera K1-d (R1 bit → čita li 0).
-- P2: `RX_WAIT_CDR_LOCK 1` smanjuje lutriju jer EQA ne kreće na nezaključanom taktu — K2.
-- P3: pod M2→GS je kanal/RX margina, ne preslušavanje vlastitog TX-a — K3.
-- P4: TP10/TP8 su ≥ 1,03 V (DS 1,00–1,10 V) — nije izmjereno.
+- P2 (oborena K2-om): `RX_WAIT_CDR_LOCK 1` ne smanjuje lutriju.
+- P3 (djelomično oborena K3-om): dio poda M2→GS je sprega vlastitog gs TX-a (NEXT ili napajanje), ali i s ugašenim gs TX-om
+  M2→GS ostaje ~6·10⁻¹¹ … 3·10⁻¹⁰ na tim učitavanjima → ostatak je kanal/RX.
+- P4: TP10/TP8 su ≥ 1,03 V (DS 1,00–1,10 V) — nije izmjereno; uz K3 nalaz (sprega TX → RX na gs) H1/H2 od Gorana su sada
+  najvrjednije mjerenje.
 
-## 5. Otvoreno
+## 5. Otvoreno / stanje u 20:00 CEST
 
-- Koja 0x2B razina se stvarno izvrši (K1-c, sonda `k1_probe.py`).
-- K2 (B0′/B1/B2 × 20 vrata), K3, K4, K6 (§3.3 kriteriji D1–D4), K7 (5G, tek nakon TP10/TP8 od Gorana), K8 flash.
-- Pi je na mekom temperaturnom limitu (`throttled=0xd0005`) — može usporiti JTAG.
+- **K4 nije pomaknuo pod ×10** (najviše ×2,4, gs AMP 8) → plan §3.4: B-final + vrata (D1, D2) kao operativni link,
+  izmjereni BER po smjeru s CI kao specifikacija, zaštita protokolom, hardverska lista (H1–H5, M2 v0.2).
+- **K6 radi na Piju od 19:50** (`lab/k6_chain.sh`, PID 6273): 30 vrata (D2, `k2_k6_NN`), pa 3 × 5040 s soak (`soak_k6_N`),
+  log `~/ulx5m-serdes/t5559/k6/k6.out`, kraj = redak `== k6 done`. Očekivani kraj ~04:00.
+- **Za nastavak:** `python3 lab/k2_table.py ../t5559/k6 --arms k6 --ref k6` (D2), `python3 lab/gate_table.py ../t5559/k6`
+  i `ber_windows.py` nad `soak_k6_N_soak.jsonl` (D3/D4), pa izvještaj + PDF + Telegram (FAZA 3).
+- K7 (5G) tek nakon Goranovog H1 (TP10/TP8). K8 (flash) otpada (uputa #354).
 
 ## 6. Pravila koja si ponavljam
 
