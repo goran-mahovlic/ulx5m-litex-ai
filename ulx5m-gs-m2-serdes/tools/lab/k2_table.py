@@ -12,13 +12,15 @@ import math
 import os
 import re
 
+comb = getattr(math, 'comb', None) or (lambda n, k: math.factorial(n) // (math.factorial(k) * math.factorial(n - k)))  # Pi: py3.7
+
 
 def lbeta_cdf_lower(k, n, conf=0.95):
     """One-sided lower Clopper-Pearson bound for k/n (bisection on the binomial tail)."""
     if k == 0:
         return 0.0
     def tail(p):                                        # P(X >= k | n, p)
-        return sum(math.comb(n, i) * p ** i * (1 - p) ** (n - i) for i in range(k, n + 1))
+        return sum(comb(n, i) * p ** i * (1 - p) ** (n - i) for i in range(k, n + 1))
     lo, hi = 0.0, 1.0
     for _ in range(60):
         mid = (lo + hi) / 2
@@ -33,7 +35,7 @@ def fisher_greater(a, n1, b, n2):
     """One-sided Fisher exact p: arm 1 (a of n1) has a higher success share than arm 2 (b of n2)."""
     K, N = a + b, n1 + n2
     def h(x):
-        return math.comb(K, x) * math.comb(N - K, n1 - x) / math.comb(N, n1)
+        return comb(K, x) * comb(N - K, n1 - x) / comb(N, n1)
     return sum(h(x) for x in range(a, min(K, n1) + 1))
 
 
@@ -75,7 +77,7 @@ def main():
     a = ap.parse_args()
     st = {arm: arm_stats(runs(a.dir, arm)) for arm in a.arms.split(',')}
     ref = st.get(a.ref)
-    lines = ['| arm | runs | 1st-attempt pass | share | CP 95 % low | mean attempts | gate failed | set fail | Fisher p vs %s |' % a.ref,
+    lines = ['| arm | runs | 1st-attempt pass | share | CP 95 %% low | mean attempts | gate failed | set fail | Fisher p vs %s |' % a.ref,
              '|---|---|---|---|---|---|---|---|---|']
     for arm, s in st.items():
         p = fisher_greater(s['first'], s['n'], ref['first'], ref['n']) if (ref and arm != a.ref and s['n'] and ref['n']) else None
