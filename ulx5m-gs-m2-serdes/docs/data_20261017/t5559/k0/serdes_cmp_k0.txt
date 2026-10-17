@@ -1,0 +1,38 @@
+== gs_2g5_oss1016_s7 -> gs_2g5_b0p_s7
+- raw CMD_SERDES block: 186 B, differing bytes: **3**
+- fields in table: 252, explicit in cc_serdes_params.vh: 203, differing fields: **3**, unknown bits set: A 0, B 0
+  DIFF RX_CALIB_OVR (CALIB, explicit): 0 -> 1
+  DIFF TX_CALIB_OVR (CALIB, explicit): 0 -> 1
+  DIFF TX_SEL_PRE (TX, explicit): 5 -> 0
+== gs_2g5_b0p_s7 -> gs_2g5_b1_s7
+- raw CMD_SERDES block: 186 B, differing bytes: **1**
+- fields in table: 252, explicit in cc_serdes_params.vh: 203, differing fields: **1**, unknown bits set: A 0, B 0
+  DIFF RX_WAIT_CDR_LOCK (CDR, explicit): 0 -> 1
+== gs_2g5_b1_s7 -> gs_2g5_b2_s1
+- raw CMD_SERDES block: 186 B, differing bytes: **2**
+- fields in table: 252, explicit in cc_serdes_params.vh: 203, differing fields: **3**, unknown bits set: A 0, B 0
+  DIFF RX_CDR_RESET_TIME (CDR, explicit): 3 -> 16
+  DIFF RX_EQA_RESET_TIME (EQA, explicit): 3 -> 16
+  DIFF RX_PMA_RESET_TIME (RX, explicit): 3 -> 8
+== m2_2g5_oss1016_s2 -> m2_2g5_b0p_s2
+- raw CMD_SERDES block: 186 B, differing bytes: **3**
+- fields in table: 252, explicit in cc_serdes_params.vh: 203, differing fields: **3**, unknown bits set: A 0, B 0
+  DIFF RX_CALIB_OVR (CALIB, explicit): 0 -> 1
+  DIFF TX_CALIB_OVR (CALIB, explicit): 0 -> 1
+  DIFF TX_SEL_PRE (TX, explicit): 5 -> 0
+== m2_2g5_b0p_s2 -> m2_2g5_b1_s2
+- raw CMD_SERDES block: 186 B, differing bytes: **1**
+- fields in table: 252, explicit in cc_serdes_params.vh: 203, differing fields: **1**, unknown bits set: A 0, B 0
+  DIFF RX_WAIT_CDR_LOCK (CDR, explicit): 0 -> 1
+== m2_2g5_b1_s2 -> m2_2g5_b2_s2
+- raw CMD_SERDES block: 186 B, differing bytes: **2**
+- fields in table: 252, explicit in cc_serdes_params.vh: 203, differing fields: **3**, unknown bits set: A 0, B 0
+  DIFF RX_CDR_RESET_TIME (CDR, explicit): 3 -> 16
+  DIFF RX_EQA_RESET_TIME (EQA, explicit): 3 -> 16
+  DIFF RX_PMA_RESET_TIME (RX, explicit): 3 -> 8
+5676e06029f3761fd485cca5ba95709bf2cadbb8bfb99bed656e260fb66e159b  gs_2g5_b0p_s7.bit
+c918d7957152c41118bfe1abb12aafec950a525534d4a7174b883b3b168550e7  gs_2g5_b1_s7.bit
+e4251f4b9f06c363fbfb4bb2f8d69713cadf1826d9c5ca8401ebcef78f95f7d2  m2_2g5_b0p_s2.bit
+fa464a3c19418a0d3b7470418a8df54279cd2a650147eadc7777470e17eec180  m2_2g5_b1_s2.bit
+8d2f7757f05e6158c65adb32796576ab781722044776c33b9007352043ec2b47  gs_2g5_b2_s1.bit
+67455359e3f6b128bf98f7addcc83c8a4bc8cd26889b0d734914704b2c5a67e5  m2_2g5_b2_s2.bit

@@ -1,0 +1,1 @@
+K1C eqa rep=1 rx=gs pinned=1.0203372561326758e-07 before=0.0 (0) after=0.0 (0) dec=None pt_after={'RX_CDR_LOCKED': '1', 'RX_EQA_LOCKED': '1', 'RX_EQA_TAPW': '1', 'RX_TH_MON': '14', 'RX_OFFSET': '2', 'RX_EN_EQA': '1'}

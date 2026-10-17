@@ -38,7 +38,46 @@ PAYLOAD_BITS = 40
 EOF = object()
 # power-up termination state (CAL 0/0) forced over the override: a JTAG recal leaves CAL 9/7 that -r does not clear
 CAL0 = 'RX_CALIB_OVR=1 RX_CALIB_VAL=0 TX_CALIB_OVR=1 TX_CALIB_VAL=0'
-EQARST = ['set RX_EQA_RESET_OVR=1 RX_EQA_RESET=1', 'set RX_EQA_RESET_OVR=0 RX_EQA_RESET=0']
+# 0x2B reset strobes (corrected map, prjpeppercorn PR #20): OVR R/W + W/C pulse, then release. W/C reads back 0, so
+# these writes are never readback-checked (CALIBRATION_OPTIONS_20261017 §1.1); their effect is checked by BER (K1-c).
+READAPT = {'eqa': 'RX_EQA_RESET', 'cdr': 'RX_CDR_RESET', 'rx': 'RX_RESET', 'pma': 'RX_PMA_RESET'}
+
+
+def readapt_cmds(level):
+    if level in (None, 'none'):
+        return []
+    f = READAPT[level]
+    return ['set %s_OVR=1 %s=1' % (f, f), 'set %s_OVR=0 %s=0' % (f, f)]
+
+
+EQARST = readapt_cmds('eqa')
+RAW = ('0x01', '0x03', '0x04', '0x2B')      # TASK-5559 K0-b: reset times/WAIT_CDR_LOCK, CKP_LF/HF, CKP_OFFSET/EN_EQA, resets
+
+
+def set_check(last, rc, fields):
+    """TASK-5559 K0-b: problems of one 'eyescan.py set' (its last output line + exit code) against the asked
+    'F=v ...' (values may be hex). [] = every field reads back what was written."""
+    got = {}
+    for kv in last.split():
+        if '=' in kv and not kv.startswith('board='):
+            k, v = kv.split('=', 1)
+            try:
+                got[k] = int(v, 0)
+            except ValueError:
+                got[k] = v
+    bad = []
+    for kv in fields.split():
+        k, v = kv.split('=', 1)
+        if got.get(k) != int(v, 0):
+            bad.append('%s want %d got %s' % (k, int(v, 0), got.get(k)))
+    if not bad and rc:
+        bad.append('exit %d' % rc)
+    return bad
+
+
+def parse_raw(last):
+    """'board=gs RAW 0x01=0063 ...' -> {'0x01': 0x63, ...} (hex words)."""
+    return {k: int(v, 16) for k, v in (kv.split('=', 1) for kv in last.split() if kv.startswith('0x') and '=' in kv)}
 # TASK-5542 recipe R1 (K5 + K8 winners over 3 loads, on top of CAL0): TX pre-cursor off, slower EQA offset loop
 R1 = ['TX_SEL_PRE=0', 'RX_EQA_CKP_OFFSET=0']
 
@@ -287,6 +326,8 @@ def gate_loop(attempt, max_attempts=10, max_undecided=3, ladder=('L3',)):
         rec = attempt(n + 1, level, prev)
         recs.append(rec)
         prev = rec
+        if rec['verdict'] == 'SET_FAIL':                 # TASK-5559 K0-b: a write did not hold -> the point is invalid
+            return recs, {'verdict': 'SET_FAIL', 'attempts': n + 1, 'undecided': und, 'set_fail': rec.get('set_fail')}
         if rec['verdict'] == 'UNDECIDED':
             und += 1
             if und >= max_undecided:
@@ -308,7 +349,7 @@ def stats(runs, recs):
 
 
 # ------------------------------------------------------------------ the rig (Pi: fpga-jtag + gs UART)
-HEALTH = ['PLL_LOCKED', 'PLL_CAP_FT_OF', 'PLL_CAP_FT_UF', 'PLL_CAP_FT', 'RX_CALIB_CAL', 'TX_CALIB_CAL', 'RX_CALIB_OVR',
+HEALTH = ['TX_RESET_DONE', 'RX_RESET_DONE', 'RX_WAIT_CDR_LOCK', 'RX_EN_EQA', 'RX_EQA_CKP_OFFSET', 'PLL_LOCKED', 'PLL_CAP_FT_OF', 'PLL_CAP_FT_UF', 'PLL_CAP_FT', 'RX_CALIB_CAL', 'TX_CALIB_CAL', 'RX_CALIB_OVR',
           'RX_CALIB_VAL', 'TX_CALIB_OVR', 'TX_CALIB_VAL', 'RX_CDR_LOCKED',
           'RX_EQA_LOCKED', 'RX_TH_MON', 'RX_EQA_TAPW', 'RX_OFFSET', 'TX_AMP']
 
@@ -373,11 +414,35 @@ class Rig:
         self.a, self.tools = a, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 
     def sh(self, cmd, timeout=180):
+        return self.sh_rc(cmd, timeout)[1]
+
+    def sh_rc(self, cmd, timeout=180):
         try:
             p = subprocess.run(cmd, shell=True, cwd=self.tools, capture_output=True, text=True, timeout=timeout)
-            return p.stdout + p.stderr
+            return p.returncode, p.stdout + p.stderr
         except subprocess.TimeoutExpired:
-            return 'TIMEOUT'
+            return -1, 'TIMEOUT'
+
+    def set_checked(self, board, fields):
+        """eyescan set with readback + exit code; problems go to self.set_fail (the attempt becomes SET_FAIL)."""
+        rc, out = self.sh_rc('fpga-jtag %s run python3 eyescan.py set %s' % (board, fields))
+        last = out.strip().splitlines()[-1] if out.strip() else ''
+        bad = set_check(last, rc, fields)
+        if bad:
+            self.set_fail.append({'board': board, 'set': fields, 'problems': bad, 'line': last[:160]})
+        return last
+
+    def raw(self, board):
+        return parse_raw(self.jtag(board, 'raw ' + ' '.join(RAW)))
+
+    def wait_tx(self, boards, polls=20):
+        """PLL_LOCKED and TX_RESET_DONE on every board (v2 §3.0: readapt only after both TX are up)."""
+        for i in range(polls):
+            st = {b: self.get(b, ['PLL_LOCKED', 'TX_RESET_DONE']) for b in boards}
+            if all(s.get('PLL_LOCKED') == 1 and s.get('TX_RESET_DONE') == 1 for s in st.values()):
+                return {'polls': i + 1, 'ok': True}
+            time.sleep(0.5)
+        return {'polls': polls, 'ok': False, 'state': st}
 
     def jtag(self, board, args):
         out = self.sh('fpga-jtag %s run python3 eyescan.py %s' % (board, args))
@@ -407,16 +472,21 @@ class Rig:
     def after_load(self, boards):
         for b in boards:
             if self.a.cal0:
-                self.jtag(b, 'set ' + CAL0)
+                self.set_checked(b, CAL0)
             if self.a.set_acc:
                 self.jtag(b, 'set RX_CDR_SET_ACC_CONFIG=2')
                 self.jtag(b, 'set RX_CDR_SET_ACC_CONFIG=0')
             if self.a.set:
-                self.jtag(b, 'set ' + ' '.join(self.a.set))
+                self.set_checked(b, ' '.join(self.a.set))
                 if self.a.recal:
                     self.jtag(b, 'recal')
             if self.a.eqarst:                       # re-adapt the DFE with the new loop settings (no CALIB strobe)
                 for c in EQARST:
+                    self.jtag(b, c)
+        if self.a.readapt != 'none':                # TASK-5559: both TX up first, then the K1-c level on both RX
+            self.last_wait = self.wait_tx(boards)
+            for b in boards:
+                for c in readapt_cmds(self.a.readapt):
                     self.jtag(b, c)
 
     def reconnect(self, level, prev):
@@ -446,7 +516,12 @@ class Rig:
         rec = {'run': a.run, 'rate': a.rate, 'attempt': n, 'level': level, 'metric': a.metric,
                't': time.strftime('%Y-%m-%dT%H:%M:%S%z'), 'bits': a.sha, 'set': a.set}
         t0 = time.time()
+        self.set_fail, self.last_wait = [], None
         rec['action'] = self.reconnect(level, prev)
+        rec['readapt'] = {'level': a.readapt, 'wait_tx': self.last_wait}
+        if self.set_fail:
+            rec.update(verdict='SET_FAIL', reason='readback != write', set_fail=self.set_fail, q=None, c=None)
+            return rec
         ok, polls = False, 0
         need = int(10 * a.peer_min)                  # 2.5 G 10/10 (as lab39-41), 5 G 9/10
         while polls < a.link_polls:
@@ -457,6 +532,7 @@ class Rig:
         rec['t_link_s'] = round(time.time() - t0, 1) if ok else None
         rec['link_polls'] = polls
         rec['health'] = {b: self.get(b, HEALTH) for b in ('gs', 'm2')}
+        rec['raw'] = {b: self.raw(b) for b in ('gs', 'm2')}
         rec['peer'] = {b: self.peer(b, a.peer_n) for b in ('gs', 'm2')}
         rec['pi'] = self.sh('vcgencmd get_throttled; vcgencmd measure_temp').split()
         prob = []
@@ -541,6 +617,8 @@ def main():
     ap.add_argument('--recal', action='store_true', help='eyescan recal after --set (strobes CALIB: avoid)')
     ap.add_argument('--eqarst', action='store_true', help='DFE reset (0x2B override) after --set, no CALIB strobe')
     ap.add_argument('--r1', action='store_true', help='recipe R1 = --cal0 --set %s --eqarst' % ' '.join(R1))
+    ap.add_argument('--readapt', choices=('none',) + tuple(READAPT), default='none',
+                    help='after every reconnect: wait PLL+TX done on the loaded boards, then this 0x2B reset on them')
     ap.add_argument('--cal0', action='store_true', help='force termination code 0/0 after every load (K12): ' + CAL0)
     ap.add_argument('--set-acc', action='store_true', help='RX_CDR_SET_ACC_CONFIG 2->0 after a load (old bits, CKI != 0)')
     ap.add_argument('--bits-gs')

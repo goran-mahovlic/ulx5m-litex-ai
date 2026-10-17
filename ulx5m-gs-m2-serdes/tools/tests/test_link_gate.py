@@ -237,3 +237,45 @@ class TestBursts(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class TestK0SetCheck(unittest.TestCase):
+    """TASK-5559 K0-b: a JTAG set must read back what was asked, else the attempt is SET_FAIL and the gate stops."""
+    def test_set_ok(self):
+        self.assertEqual(G.set_check('board=gs set TX_AMP=12 TX_SEL_PRE=0', 0, 'TX_AMP=12 TX_SEL_PRE=0'), [])
+
+    def test_set_readback_differs(self):
+        self.assertEqual(G.set_check('board=gs set RX_EQA_CKP_OFFSET=1', 1, 'RX_EQA_CKP_OFFSET=0'),
+                         ['RX_EQA_CKP_OFFSET want 0 got 1'])
+
+    def test_set_hex_and_rc(self):
+        self.assertEqual(G.set_check('board=m2 set RX_EQA_CKP_LF=131', 0, 'RX_EQA_CKP_LF=0x83'), [])
+        self.assertEqual(G.set_check('board=m2 set RX_EQA_CKP_LF=131', 1, 'RX_EQA_CKP_LF=0x83'), ['exit 1'])
+
+    def test_set_no_output(self):
+        self.assertEqual(G.set_check('TIMEOUT', 0, 'TX_AMP=12'), ['TX_AMP want 12 got None'])
+
+    def test_gate_stops_on_set_fail(self):
+        recs, res = G.gate_loop(lambda n, lv, p: {'verdict': 'SET_FAIL'}, 10, 3, ['L3'])
+        self.assertEqual((res['verdict'], len(recs)), ('SET_FAIL', 1))
+
+
+class TestK0Readapt(unittest.TestCase):
+    def test_levels(self):
+        self.assertEqual(G.readapt_cmds('eqa'), ['set RX_EQA_RESET_OVR=1 RX_EQA_RESET=1', 'set RX_EQA_RESET_OVR=0 RX_EQA_RESET=0'])
+        self.assertEqual(G.readapt_cmds('cdr')[0], 'set RX_CDR_RESET_OVR=1 RX_CDR_RESET=1')
+        self.assertEqual(G.readapt_cmds('rx')[0], 'set RX_RESET_OVR=1 RX_RESET=1')
+        self.assertEqual(G.readapt_cmds('none'), [])
+        self.assertEqual(G.EQARST, G.readapt_cmds('eqa'))
+
+    def test_raw_parse(self):
+        self.assertEqual(G.parse_raw('board=gs RAW 0x01=0063 0x03=A3A3 0x04=2101 0x2B=0000'),
+                         {'0x01': 0x63, '0x03': 0xA3A3, '0x04': 0x2101, '0x2B': 0})
+
+
+class TestK0RawRoundTrip(unittest.TestCase):
+    def test_eyescan_raw_line_parses(self):
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+        import eyescan
+        line_ = eyescan.fmt_raw('gs', [(0x01, 0x63), (0x03, 0xA3A3), (0x2B, 0)])
+        self.assertEqual(G.parse_raw(line_), {'0x01': 0x63, '0x03': 0xA3A3, '0x2B': 0})

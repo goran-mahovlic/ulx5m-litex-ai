@@ -240,6 +240,19 @@ def cmd_set(a):
     return 0 if all(got[k] == v for k, v in vals.items()) else 1
 
 
+def fmt_raw(board, words):
+    """TASK-5559 K0-b: one line of raw regfile words (hex), parsed by link_gate.parse_raw."""
+    return 'board=%s RAW %s' % (board, ' '.join('0x%02X=%04X' % (ad, w) for ad, w in words))
+
+
+def cmd_raw(a):
+    from serdes_jtag import Serdes
+    sd = Serdes()
+    print(fmt_raw(sd.board, [(int(x, 0), int(sd.s.rd_regfile(addr=int(x, 0)))) for x in a.addrs]))
+    sd.close()
+    return 0
+
+
 def cmd_get(a):
     from serdes_jtag import Serdes
     sd = Serdes()
@@ -569,6 +582,7 @@ def main(argv=None):
     pl = sp.add_parser('plot'); pl.add_argument('file'); pl.add_argument('png')
     st = sp.add_parser('set'); st.add_argument('fields', nargs='+')
     g = sp.add_parser('get'); g.add_argument('fields', nargs='+')
+    rw = sp.add_parser('raw'); rw.add_argument('addrs', nargs='+')
     rc = sp.add_parser('recal'); rc.add_argument('--rx', action='store_true', help='reset the whole RX, not only the DFE')
     h = sp.add_parser('health'); h.add_argument('-n', type=int, default=10); h.add_argument('--interval', type=float, default=1.0)
     h.add_argument('--label', default=''); h.add_argument('--out')
@@ -585,7 +599,7 @@ def main(argv=None):
     fz = sp.add_parser('freeze'); fz.add_argument('fields', nargs='*'); fz.add_argument('--ext', type=parse_ext, default=0b0111)
     sp.add_parser('restore')
     a = p.parse_args(argv)
-    fn = {'scan': cmd_scan, 'margin': cmd_margin, 'plot': cmd_plot, 'set': cmd_set, 'get': cmd_get, 'recal': cmd_recal,
+    fn = {'scan': cmd_scan, 'margin': cmd_margin, 'plot': cmd_plot, 'set': cmd_set, 'get': cmd_get, 'raw': cmd_raw, 'recal': cmd_recal,
           'health': cmd_health, 'capture': cmd_capture, 'diagnose': cmd_diagnose, 'eye': cmd_eye, 'freeze': cmd_freeze,
           'restore': cmd_restore}.get(a.cmd)
     if fn is None:

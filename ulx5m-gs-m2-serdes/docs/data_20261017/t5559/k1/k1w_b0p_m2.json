@@ -1,0 +1,439 @@
+{
+ "start": {
+  "0x03": "0xA3A3",
+  "0x04": "0x3901",
+  "f04": {
+   "CKP_OFFSET": 1,
+   "EN_EQA": 1,
+   "LOCK_CFG": 12,
+   "EQA_LOCKED": 1
+  },
+  "0x01": "0x0C63",
+  "0x2B": "0x0000"
+ },
+ "steps": [
+  {
+   "step": "a_offset2_eqa1",
+   "addr": "0x04",
+   "data": "0x0002",
+   "mask": "0x00FF",
+   "before": "0x3901",
+   "after": "0x3901",
+   "want": "0x3902",
+   "ok": false,
+   "series": [
+    "0x3901",
+    "0x3901",
+    "0x3901",
+    "0x3901",
+    "0x3901",
+    "0x3901",
+    "0x3901",
+    "0x3901",
+    "0x3901",
+    "0x3901"
+   ],
+   "hold": "never"
+  },
+  {
+   "step": "b1_raw55_eqa1",
+   "addr": "0x04",
+   "data": "0x0055",
+   "mask": "0x00FF",
+   "before": "0x3901",
+   "after": "0x3901",
+   "want": "0x3955",
+   "ok": false,
+   "series": [
+    "0x3901",
+    "0x3901",
+    "0x3901",
+    "0x3901",
+    "0x3901",
+    "0x3901",
+    "0x3901",
+    "0x3901",
+    "0x3901",
+    "0x3901"
+   ],
+   "hold": "never"
+  },
+  {
+   "step": "ctl_0x01_eqa_time7",
+   "addr": "0x01",
+   "data": "0x00E0",
+   "mask": "0x03E0",
+   "before": "0x0C63",
+   "after": "0x0CE3",
+   "want": "0x0CE3",
+   "ok": true,
+   "series": [
+    "0x0CE3",
+    "0x0CE3",
+    "0x0CE3",
+    "0x0CE3",
+    "0x0CE3",
+    "0x0CE3",
+    "0x0CE3",
+    "0x0CE3",
+    "0x0CE3",
+    "0x0CE3"
+   ],
+   "hold": "held"
+  },
+  {
+   "step": "ctl_0x01_back",
+   "addr": "0x01",
+   "data": "0x0060",
+   "mask": "0x03E0",
+   "before": "0x0CE3",
+   "after": "0x0C63",
+   "want": "0x0C63",
+   "ok": true
+  },
+  {
+   "step": "b_en_eqa0",
+   "addr": "0x04",
+   "data": "0x0000",
+   "mask": "0x0100",
+   "before": "0x3901",
+   "after": "0x3801",
+   "want": "0x3801",
+   "ok": true,
+   "series": [
+    "0x3801",
+    "0x3801",
+    "0x3801",
+    "0x3801",
+    "0x3801",
+    "0x3801",
+    "0x3801",
+    "0x3801",
+    "0x3801",
+    "0x3801"
+   ],
+   "hold": "held"
+  },
+  {
+   "step": "b_offset2_eqa0",
+   "addr": "0x04",
+   "data": "0x0002",
+   "mask": "0x00FF",
+   "before": "0x3801",
+   "after": "0x3802",
+   "want": "0x3802",
+   "ok": true,
+   "series": [
+    "0x3802",
+    "0x3802",
+    "0x3802",
+    "0x3802",
+    "0x3802",
+    "0x3802",
+    "0x3802",
+    "0x3802",
+    "0x3802",
+    "0x3802"
+   ],
+   "hold": "held"
+  },
+  {
+   "step": "b_lf83_eqa0",
+   "addr": "0x03",
+   "data": "0x0083",
+   "mask": "0x00FF",
+   "before": "0xA3A3",
+   "after": "0xA383",
+   "want": "0xA383",
+   "ok": true,
+   "series": [
+    "0xA383",
+    "0xA383",
+    "0xA383",
+    "0xA383",
+    "0xA383",
+    "0xA383",
+    "0xA383",
+    "0xA383",
+    "0xA383",
+    "0xA383"
+   ],
+   "hold": "held"
+  },
+  {
+   "step": "b_raw55_eqa0",
+   "addr": "0x04",
+   "data": "0x0055",
+   "mask": "0x00FF",
+   "before": "0x3802",
+   "after": "0x3855",
+   "want": "0x3855",
+   "ok": true,
+   "series": [
+    "0x3855",
+    "0x3855",
+    "0x3855",
+    "0x3855",
+    "0x3855",
+    "0x3855",
+    "0x3855",
+    "0x3855",
+    "0x3855",
+    "0x3855"
+   ],
+   "hold": "held"
+  },
+  {
+   "step": "b_offset2_again_eqa0",
+   "addr": "0x04",
+   "data": "0x0002",
+   "mask": "0x00FF",
+   "before": "0x3855",
+   "after": "0x3802",
+   "want": "0x3802",
+   "ok": true,
+   "series": [
+    "0x3802",
+    "0x3802",
+    "0x3802",
+    "0x3802",
+    "0x3802",
+    "0x3802",
+    "0x3802",
+    "0x3802",
+    "0x3802",
+    "0x3802"
+   ],
+   "hold": "held"
+  },
+  {
+   "step": "b_en_eqa1",
+   "addr": "0x04",
+   "data": "0x0100",
+   "mask": "0x0100",
+   "before": "0x3802",
+   "after": "0x3902",
+   "want": "0x3902",
+   "ok": true,
+   "series": [
+    "0x3902",
+    "0x3902",
+    "0x3902",
+    "0x3902",
+    "0x3902",
+    "0x3902",
+    "0x3902",
+    "0x3902",
+    "0x3902",
+    "0x3902"
+   ],
+   "hold": "held"
+  },
+  {
+   "step": "b_after_en1_0x03",
+   "series": [
+    "0xA383",
+    "0xA383",
+    "0xA383",
+    "0xA383",
+    "0xA383",
+    "0xA383",
+    "0xA383",
+    "0xA383",
+    "0xA383",
+    "0xA383"
+   ],
+   "hold": "held"
+  },
+  {
+   "step": "b_after_en1_0x04",
+   "series": [
+    "0x3902",
+    "0x3902",
+    "0x3902",
+    "0x3902",
+    "0x3902",
+    "0x3902",
+    "0x3902",
+    "0x3902",
+    "0x3902",
+    "0x3902"
+   ],
+   "hold": "held"
+  },
+  {
+   "step": "x2b_eqa_ovr1",
+   "addr": "0x2B",
+   "data": "0x0004",
+   "mask": "0x0004",
+   "before": "0x0000",
+   "after": "0x0001",
+   "want": "0x0004",
+   "ok": false,
+   "series": [
+    "0x0001",
+    "0x0001",
+    "0x0001",
+    "0x0001",
+    "0x0001",
+    "0x0001",
+    "0x0001",
+    "0x0001",
+    "0x0001",
+    "0x0001"
+   ],
+   "hold": "never"
+  },
+  {
+   "step": "x2b_eqa_ovr0",
+   "addr": "0x2B",
+   "data": "0x0000",
+   "mask": "0x0004",
+   "before": "0x0001",
+   "after": "0x0400",
+   "want": "0x0001",
+   "ok": true,
+   "series": [
+    "0x0400",
+    "0x0400",
+    "0x0400",
+    "0x0400",
+    "0x0400",
+    "0x0400",
+    "0x0400",
+    "0x0400",
+    "0x0400",
+    "0x0400"
+   ],
+   "hold": "held"
+  },
+  {
+   "step": "x2b_pol_ovr_same",
+   "addr": "0x2B",
+   "data": "0x0000",
+   "mask": "0x3000",
+   "before": "0x0400",
+   "after": "0x0100",
+   "want": "0x0400",
+   "ok": true,
+   "series": [
+    "0x0100",
+    "0x0100",
+    "0x0100",
+    "0x0100",
+    "0x0100",
+    "0x0100",
+    "0x0100",
+    "0x0100",
+    "0x0100",
+    "0x0100"
+   ],
+   "hold": "held"
+  },
+  {
+   "step": "x2b_eqa_ovr1_rst1",
+   "addr": "0x2B",
+   "data": "0x000C",
+   "mask": "0x000C",
+   "before": "0x0100",
+   "after": "0x0041",
+   "want": "0x010C",
+   "ok": false,
+   "series": [
+    "0x0041",
+    "0x0041",
+    "0x0041",
+    "0x0041",
+    "0x0041",
+    "0x0041",
+    "0x0041",
+    "0x0041",
+    "0x0041",
+    "0x0041"
+   ],
+   "hold": "never"
+  },
+  {
+   "step": "x2b_eqa_ovr0_rst0",
+   "addr": "0x2B",
+   "data": "0x0000",
+   "mask": "0x000C",
+   "before": "0x0041",
+   "after": "0x0410",
+   "want": "0x0041",
+   "ok": true,
+   "series": [
+    "0x0410",
+    "0x0410",
+    "0x0410",
+    "0x0410",
+    "0x0410",
+    "0x0410",
+    "0x0410",
+    "0x0410",
+    "0x0410",
+    "0x0410"
+   ],
+   "hold": "held"
+  },
+  {
+   "step": "restore_en0",
+   "addr": "0x04",
+   "data": "0x0000",
+   "mask": "0x0100",
+   "before": "0x3902",
+   "after": "0x3802",
+   "want": "0x3802",
+   "ok": true
+  },
+  {
+   "step": "restore_offset",
+   "addr": "0x04",
+   "data": "0x0001",
+   "mask": "0x00FF",
+   "before": "0x3802",
+   "after": "0x3801",
+   "want": "0x3801",
+   "ok": true
+  },
+  {
+   "step": "restore_lf",
+   "addr": "0x03",
+   "data": "0x00A3",
+   "mask": "0x00FF",
+   "before": "0xA383",
+   "after": "0xA3A3",
+   "want": "0xA3A3",
+   "ok": true
+  },
+  {
+   "step": "restore_en1",
+   "addr": "0x04",
+   "data": "0x0100",
+   "mask": "0x0100",
+   "before": "0x3801",
+   "after": "0x3901",
+   "want": "0x3901",
+   "ok": true
+  }
+ ],
+ "end": {
+  "0x03": "0xA3A3",
+  "0x04": "0x3901"
+ },
+ "verdict": {
+  "offset_writable_eqa1": false,
+  "offset_hold_eqa1": "never",
+  "raw55_writable_eqa1": false,
+  "ctl_0x01_writable": true,
+  "offset_writable_eqa0": true,
+  "lf_writable_eqa0": true,
+  "offset_after_en1": "held",
+  "lf_after_en1": "held",
+  "H_a": true,
+  "x2b_ovr_alone": false,
+  "x2b_ovr_with_strobe": false
+ },
+ "board": "m2",
+ "t": "2026-10-17T12:50:54+0200"
+}
