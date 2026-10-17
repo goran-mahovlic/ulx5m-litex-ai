@@ -97,6 +97,17 @@ def commands(cmd):
     return out
 
 
+def parse_steps(spec):
+    """'name=cmd | name=cmd' (cmd as in PLAN; '-' = measure only) -> [(name, cmd)]."""
+    out = []
+    for part in spec.split('|'):
+        part = part.strip()
+        if part:
+            name, cmd = part.split('=', 1) if '=' in part.split()[0] else (part, '-')
+            out.append((name.strip(), cmd.strip()))
+    return out
+
+
 def gmean(xs):
     xs = [x for x in xs if x is not None]
     return math.exp(sum(math.log(x) for x in xs) / len(xs)) if xs else None
@@ -183,7 +194,7 @@ class Rig:
         import link_gate
         self.a = a
         self.g = link_gate.Rig(argparse.Namespace(peer_min=1.0, bits={'gs': a.bits_gs, 'm2': a.bits_m2},
-                                                  set=[], set_acc=False, recal=False, cal0=False))
+                                                  set=[], set_acc=False, recal=False, cal0=False, eqarst=False))
 
     def state(self, kind, name, load, f):
         time.sleep(self.a.settle)
@@ -224,6 +235,9 @@ def main():
     ap.add_argument('--settle', type=float, default=3)
     ap.add_argument('--only', default='', help='comma list of K groups or point names')
     ap.add_argument('--points', action='store_true', help='read TH_MON/TAPW/OFFSET after every state (+~10 s)')
+    ap.add_argument('--steps', default='', help="'name=cmd|name=cmd' on both boards, no revert, after one load "
+                                                "(each step measured; --read fields read twice after it)")
+    ap.add_argument('--read', default='RX_EN_EQA RX_EQA_RESET_OVR RX_EQA_RESET RX_EQA_LOCKED RX_TH_MON RX_EQA_TAPW RX_OFFSET')
     ap.add_argument('--base', default='', help="fields written on both boards after every load ('F=v ...'), part of A; "
                                              "'cal0' = %s" % CAL0)
     ap.add_argument('--bits-gs', default='/home/pi/fpga/gs_2g5_auto.bit')
@@ -261,6 +275,14 @@ def main():
                                 'health': h, 'base': base}) + '\n')
             if not ok:
                 print('LOAD %s no link' % load, flush=True)
+                continue
+            if a.steps:
+                for name, cmd in parse_steps(a.steps):
+                    act = [] if cmd == '-' else [x for bd in BOTH for x in rig.run_cmd(bd, cmd)]
+                    rd = {bd: [rig.g.get(bd, a.read.split()), rig.g.get(bd, a.read.split())] for bd in BOTH}
+                    f.write(json.dumps({'kind': 'step', 'load': load, 'name': name, 'cmd': cmd, 'act': act, 'read': rd}) + '\n')
+                    print('STEP %s %s read=%s' % (name, cmd, {b: v[1] for b, v in rd.items()}), flush=True)
+                    rig.state('S', name, load, f)
                 continue
             a0 = rig.state('A', 'A0', load, f)
             rx = bad_rx(a0['err'])

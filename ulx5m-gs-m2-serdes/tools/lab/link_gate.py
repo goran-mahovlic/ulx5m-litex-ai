@@ -25,6 +25,9 @@ import subprocess
 import sys
 import time
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from ber_windows import poisson_ci  # noqa: E402
+
 M32, M48 = 0xFFFFFFFF, (1 << 48) - 1
 DIRS = ('m2_to_gs', 'gs_to_m2')
 KEYS = {'m2_to_gs': ('words', 'errb', 'loss', 'synced', 'rcnt', 'errw', 'code'),       # gs checker; sender m2
@@ -35,6 +38,9 @@ PAYLOAD_BITS = 40
 EOF = object()
 # power-up termination state (CAL 0/0) forced over the override: a JTAG recal leaves CAL 9/7 that -r does not clear
 CAL0 = 'RX_CALIB_OVR=1 RX_CALIB_VAL=0 TX_CALIB_OVR=1 TX_CALIB_VAL=0'
+EQARST = ['set RX_EQA_RESET_OVR=1 RX_EQA_RESET=1', 'set RX_EQA_RESET_OVR=0 RX_EQA_RESET=0']
+# TASK-5542 recipe R1 (K5 + K8 winners over 3 loads, on top of CAL0): TX pre-cursor off, slower EQA offset loop
+R1 = ['TX_SEL_PRE=0', 'RX_EQA_CKP_OFFSET=0']
 
 
 # ------------------------------------------------------------------ window accounting (pure, tested)
@@ -231,6 +237,47 @@ def prev_err(prev):
     return (prev.get('q') or {}).get('err') or (prev.get('c') or {}).get('err') or {}
 
 
+def peer_err(prev):
+    """PEER misses of the previous attempt as error counts per direction (PEER read on gs = what gs receives =
+    m2_to_gs); {} without PEER data. TASK-5550: 5 G attempts fail on health before Q, this still names the bad RX."""
+    p = (prev or {}).get('peer') or {}
+    if 'gs' not in p or 'm2' not in p:
+        return {}
+    return {'m2_to_gs': p['gs']['n'] - p['gs']['peer'], 'gs_to_m2': p['m2']['n'] - p['m2']['peer']}
+
+
+def rx_err(prev):
+    """Errors that pick the bad receiver for L2rx/L2tx/L1: Q/C counts, else PEER misses."""
+    return prev_err(prev) or peer_err(prev)
+
+
+def ci95(k):
+    """95 % interval on a Poisson count: exact Garwood up to 1000, normal above (5 G counts reach 1e8)."""
+    if k <= 1000:
+        return poisson_ci(k)
+    d = 1.96 * k ** 0.5
+    return k - d, k + d
+
+
+def diag_summary(r, dirs):
+    """BER per direction from measure() windows with the first one dropped (ber_windows rule), 95 % interval.
+    Diagnostic only (an attempt that failed health): never part of a verdict."""
+    ws = r['windows'][1:]
+    out = {'status': r['status'], 'secs': round(r.get('secs', 0), 1), 'windows_used': len(ws),
+           'restart': r.get('restart', False), 'err': {}, 'bits': {}, 'ber': {}, 'ci95': {}, 'sync_frac': {}}
+    for k in dirs:
+        sd = sum_dir(ws, k)
+        bits = sd['words'] * PAYLOAD_BITS
+        out['err'][k], out['bits'][k] = sd['errb'], bits
+        out['sync_frac'][k] = sync_frac(ws, k)
+        if bits:
+            lo, hi = ci95(sd['errb'])
+            out['ber'][k], out['ci95'][k] = sd['errb'] / float(bits), [lo / bits, hi / bits]
+        else:
+            out['ber'][k], out['ci95'][k] = None, None
+    return out
+
+
 def gate_loop(attempt, max_attempts=10, max_undecided=3, ladder=('L3',)):
     """attempt(n, level, prev_record) -> record with 'verdict' PASS|FAIL|UNDECIDED. UNDECIDED is not counted and
     is retried with L0 (measure again); max_undecided of them stop the gate (STOP_UART)."""
@@ -368,9 +415,12 @@ class Rig:
                 self.jtag(b, 'set ' + ' '.join(self.a.set))
                 if self.a.recal:
                     self.jtag(b, 'recal')
+            if self.a.eqarst:                       # re-adapt the DFE with the new loop settings (no CALIB strobe)
+                for c in EQARST:
+                    self.jtag(b, c)
 
     def reconnect(self, level, prev):
-        rx = bad_rx(prev_err(prev))
+        rx = bad_rx(rx_err(prev))
         boards = ['m2', 'gs'] if rx == 'both' else [rx]
         act = {'level': level}
         if level == 'L3':
@@ -424,6 +474,12 @@ class Rig:
             prob.append('no link (PEER 10) after %d polls' % polls)
         if prob:
             rec.update(verdict='FAIL', reason='health: ' + '; '.join(prob), q=None, c=None)
+            if a.diag_secs:                          # TASK-5550: still a BER for the table (5G-2), not a verdict
+                u = Uart()
+                try:
+                    rec['diag'] = diag_summary(measure(u, a.diag_secs, 10, a.wps, dirs=a.dirs), a.dirs)
+                finally:
+                    u.close()
             return rec
         time.sleep(a.settle)
         u = Uart()
@@ -483,6 +539,8 @@ def main():
     ap.add_argument('--soak', type=int, default=0)
     ap.add_argument('--set', nargs='*', default=[], help='regfile fields written on both boards after each load')
     ap.add_argument('--recal', action='store_true', help='eyescan recal after --set (strobes CALIB: avoid)')
+    ap.add_argument('--eqarst', action='store_true', help='DFE reset (0x2B override) after --set, no CALIB strobe')
+    ap.add_argument('--r1', action='store_true', help='recipe R1 = --cal0 --set %s --eqarst' % ' '.join(R1))
     ap.add_argument('--cal0', action='store_true', help='force termination code 0/0 after every load (K12): ' + CAL0)
     ap.add_argument('--set-acc', action='store_true', help='RX_CDR_SET_ACC_CONFIG 2->0 after a load (old bits, CKI != 0)')
     ap.add_argument('--bits-gs')
@@ -492,11 +550,15 @@ def main():
     ap.add_argument('--c-secs', type=float, default=60)
     ap.add_argument('--sync-min', type=float, default=0.999999)
     ap.add_argument('--link-polls', type=int, default=20)
+    ap.add_argument('--diag-secs', type=float, default=0,
+                    help='on a health FAIL still measure this long (10 s windows, first dropped) -> rec diag BER')
     ap.add_argument('--metric', choices=('errb', 'errw'), default='errb',
                     help='errb = bit errors (CALIBRATION_REVIEW §4.2), errw = bad words (error events)')
     a = ap.parse_args()
     for k, v in RATES[a.rate].items():
         setattr(a, k, v)
+    if a.r1:
+        a.cal0, a.eqarst, a.set = True, True, list(R1) + list(a.set)
     a.bits = dict(a.bits)
     if a.bits_gs:
         a.bits['gs'] = a.bits_gs

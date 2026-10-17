@@ -36,6 +36,13 @@ class T(unittest.TestCase):
         for p in C.PLAN:
             self.assertNotIn('recal', p[3], p)
 
+    def test_parse_steps(self):
+        st = C.parse_steps('a0 | hold=RX_EQA_RESET_OVR=1 RX_EQA_RESET=1 | rel=RX_EQA_RESET=0 | dfe_off=RX_EN_EQA=0')
+        self.assertEqual(st[0], ('a0', '-'))
+        self.assertEqual(st[1], ('hold', 'RX_EQA_RESET_OVR=1 RX_EQA_RESET=1'))
+        self.assertEqual(st[3], ('dfe_off', 'RX_EN_EQA=0'))
+        self.assertEqual(C.commands(st[1][1]), ['set RX_EQA_RESET_OVR=1 RX_EQA_RESET=1'])
+
     def test_boards(self):
         self.assertEqual(C.boards('*', 'gs'), ('gs', 'm2'))
         self.assertEqual(C.boards('rx', 'gs'), ('gs',))

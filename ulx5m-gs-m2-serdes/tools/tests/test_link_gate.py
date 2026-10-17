@@ -89,6 +89,13 @@ class TestMetric(unittest.TestCase):
         self.assertEqual((q['verdict'], q['err']['m2_to_gs'], q['all']['m2_to_gs']['errb']), ('PASS', 1, 40))
 
 
+class TestRecipe(unittest.TestCase):
+    def test_r1_and_eqarst_have_no_calib_strobe(self):
+        self.assertEqual(G.R1, ['TX_SEL_PRE=0', 'RX_EQA_CKP_OFFSET=0'])
+        self.assertTrue(all('CALIB' not in c and 'recal' not in c for c in G.EQARST))
+        self.assertIn('RX_CALIB_VAL=0', G.CAL0)
+
+
 class TestVerdicts(unittest.TestCase):
     def w(self, e_m2gs, e_gsm2=0, dloss=0, n=1):
         return [{'t0': i * 10, 't1': i * 10 + 10, 'syncmin': 1,
@@ -133,6 +140,16 @@ class TestVerdicts(unittest.TestCase):
         self.assertEqual((r['pass'], r['peer']), (True, 995))
         self.assertFalse(G.peer_parse('rx: PEER 199/200 -> FAIL', 200, 1.0)['pass'])
         self.assertEqual(G.peer_parse('TIMEOUT', 200)['peer'], 0)
+
+    def test_peer_err_picks_bad_receiver_after_health_fail(self):
+        # TASK-5550: at 5 G attempts fail on health (no Q), so L2rx must pick the receiver from the PEER misses:
+        # PEER read on gs = what gs receives = m2_to_gs
+        rec = {'q': None, 'c': None, 'peer': {'gs': {'peer': 990, 'n': 1000}, 'm2': {'peer': 774, 'n': 1000}}}
+        self.assertEqual(G.peer_err(rec), {'m2_to_gs': 10, 'gs_to_m2': 226})
+        self.assertEqual(G.bad_rx(G.rx_err(rec)), 'm2')
+        self.assertEqual(G.peer_err({'q': None}), {})
+        self.assertEqual(G.rx_err({'q': {'err': {'m2_to_gs': 30, 'gs_to_m2': 1}}, 'peer': rec['peer']}),
+                         {'m2_to_gs': 30, 'gs_to_m2': 1})
 
     def test_bad_receiver(self):
         self.assertEqual(G.bad_rx({'m2_to_gs': 50, 'gs_to_m2': 2}), 'gs')
@@ -189,6 +206,24 @@ class TestLoop(unittest.TestCase):
         self.assertEqual(s['runs_pass'], 2)
         self.assertEqual(s['attempts_to_pass'], [1, 3])
         self.assertAlmostEqual(s['attempt_pass_frac'], 2 / 14)
+
+
+class TestDiag(unittest.TestCase):
+    def test_diag_ber_from_windows_first_dropped(self):
+        # TASK-5550: a FAILED-health attempt still gets a BER from delta windows (first window dropped)
+        src = Source(lines(0, 30, err_at=[2, 2, 2] + [15] * 4, perr_at=[25]))
+        d = G.diag_summary(G.measure(src, 30, 10, WPS), ('gs_to_m2', 'm2_to_gs'))
+        self.assertEqual(d['err']['m2_to_gs'], 4)
+        self.assertEqual(d['err']['gs_to_m2'], 1)
+        self.assertEqual(d['windows_used'], 2)
+        self.assertAlmostEqual(d['ber']['m2_to_gs'], 4 / (20 * WPS * 40), places=15)
+        lo, hi = d['ci95']['m2_to_gs']
+        self.assertTrue(lo < d['ber']['m2_to_gs'] < hi)
+
+    def test_diag_without_windows(self):
+        d = G.diag_summary({'status': 'nouart', 'windows': []}, ('gs_to_m2',))
+        self.assertEqual(d['status'], 'nouart')
+        self.assertIsNone(d['ber']['gs_to_m2'])
 
 
 class TestBursts(unittest.TestCase):
