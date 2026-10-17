@@ -1,0 +1,10 @@
+==> vendor model NOT compiled in; running behavioural self-check only
+==> compiling
+/home/klaudio/app/raid/projekti/openCologne-PCIE/5.sim/tb_serdes_equiv.v:130: error: Unable to bind wire/reg/memory `bhv_aligned' in `tb_serdes_equiv'
+/home/klaudio/app/raid/projekti/openCologne-PCIE/5.sim/tb_serdes_equiv.v:152:      : A symbol with that name was declared here. Check for declaration after use.
+/home/klaudio/app/raid/projekti/openCologne-PCIE/5.sim/tb_serdes_equiv.v:130: error: Unable to elaborate r-value: bhv_aligned
+2 error(s) during elaboration.
+
+real	0m0.151s
+user	0m0.048s
+sys	0m0.070s

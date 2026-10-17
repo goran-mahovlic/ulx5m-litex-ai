@@ -1,0 +1,29 @@
+
+=============================================================
+  Formal verification - open 8b/10b codec
+  source under proof: /home/klaudio/app/raid/projekti/openCologne-PCIE/4.build/formal/../../2.rtl/1.phy/2.serdes-model/ccfpga_serdes_8b10b.vh
+  (the exact same file the simulation model includes)
+=============================================================
+
+--- SAT proofs (yosys) --------------------------------------
+  fv_enc_disparity       encoder never emits an illegal disparity
+      PROVED (unsat: no input makes the property fail)
+  fv_enc_rd_tracking     reported running disparity matches the symbol
+      PROVED (unsat: no input makes the property fail)
+  fv_comma_format        K28.5 encodings match the vendor comma constants
+      PROVED (unsat: no input makes the property fail)
+  fv_injective           encoding is injective (decode table well defined)
+      PROVED (unsat: no input makes the property fail)
+  fv_run_length          no run of more than five identical bits on the wire
+      PROVED (unsat: no input makes the property fail)
+
+--- exhaustive enumeration (icarus) -------------------------
+  the decode table is a procedurally initialised memory, which SAT
+  cannot take. Its input space is small enough to enumerate in full,
+  which is an equally complete argument.
+
+
+=============================================================
+  6 proved, 0 failed
+=============================================================
+

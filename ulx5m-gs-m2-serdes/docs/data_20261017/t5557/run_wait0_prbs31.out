@@ -1,0 +1,18 @@
+=== TASK-5557 tb_gsm2_model: RX_WAIT_CDR_LOCK=0, GS delay 20000 ns, M2 ref +250 ppm ===
+R1 0x03 before any write             : 0x0000  (param CKP_LF/HF = 0xa3a3)
+R1 0x03 write 0x8383 -> readback     : 0x8383  == write
+R1 0x04 write [8]=1,[7:0]=0x00 -> rb : 0x0100  == write
+R1 0x2B write EQA OVR+RST [3:2]=11   : 0x000c  == write
+R1 0x2B write [3:2]=00 -> readback   : 0x0000
+R2 GS PLL locked @ 23112.0 ns (GS TX starts toggling)
+R2 M2 rx_resetdone @ 12890.7 ns, M2 CDR lock @ 27403.0 ns -> resetdone BEFORE lock by 14512.3 ns
+R2 GS rx_resetdone @ 33368.0 ns, GS CDR lock @ 23145.8 ns -> resetdone  AFTER lock by 10222.2 ns
+R3 PRBS sel=4 100 us (250 kbit/dir): M2->GS errors 29457, GS->M2 errors 59151 (16-bit counters since sync: GS 29458, M2 3604), GS EI-idle events after 30 us: 15, GS CDR lock drops so far: 8
+R4 GS EQA reset (pin 8 clk + regfile 0x2B pulse): CDR lock drops 1, rx_resetdone drops 0, new errors 25669
+R5 GS CDR reset (pin 8 clk): CDR lock drops 1, rx_resetdone drops 1, relocked=1, new errors 25181
+=== END @ 176248.0 ns ===
+tb_gsm2_model.v:191: $finish called at 1762480000 (100fs)
+
+real	0m14.864s
+user	0m14.839s
+sys	0m0.025s

@@ -1,0 +1,30 @@
+[  152388.0 ns] EP LTSSM : Config.Idle
+[  152772.0 ns] EP LTSSM : L0
+[  153860.0 ns] RC LTSSM : L0
+[  153862.0 ns] LINK : both MACs in L0, LinkUp
+=== Step 1: DLL initialisation, InitFC1/InitFC2 across the link ===
+[  158788.0 ns]   both DLLs DL_Active
+=== Step 2: EP -> RC, three TLPs ===
+[  161732.0 ns]   RC received 3 words, checked
+[  166916.0 ns]   RC received 4 words, checked
+[  172420.0 ns]   RC received 6 words, checked
+=== Step 3: RC -> EP, two TLPs ===
+[  175428.0 ns]   EP received 3 words, checked
+[  180612.0 ns]   EP received 4 words, checked
+=== Step 4: TLP corrupted on the EP -> RC wire, expect NAK and replay ===
+[  188228.0 ns]   RC received 3 words, checked
+[  190276.0 ns]   RC 8b/10b decoder flagged 1 symbol beats
+[  190276.0 ns]   EP sent the TLP 2 times, NAK and replay worked
+=== Step 5: UpdateFC-P DLLP, EP -> RC ===
+[  192516.0 ns]   RC received UpdateFC hdr=10 data=200
+
+=============================================================
+  SUMMARY: 0 errors
+  TEST PASSED
+=============================================================
+
+/home/klaudio/app/raid/projekti/openCologne-PCIE/5.sim/tb_dll_phy.v:521: $finish called at 1925160000 (100fs)
+
+real	0m15.552s
+user	0m15.392s
+sys	0m0.127s

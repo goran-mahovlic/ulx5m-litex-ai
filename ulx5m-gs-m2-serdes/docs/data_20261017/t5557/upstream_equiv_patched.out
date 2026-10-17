@@ -1,0 +1,30 @@
+
+=============================================================
+  GateMate SerDes model equivalence test
+  mode: BHV vs EXPECTED only (vendor model not compiled in)
+=============================================================
+[19400000] BHV: tx_resetdone asserted
+[23060000] BHV: rx_byte_is_aligned asserted
+[126600000] BHV: marker word received, payload capture armed
+[250000000] trace BHV: pll_rst_n=1 txdone=1 rxdone=1 align=1 st=4 cap=384
+        BHV cdr_locked=1 rst_cnt=20 ei_filt=0 ui=0.4000
+
+-------------------------------------------------------------
+  CHECK 1 : behavioural model vs expected payload
+-------------------------------------------------------------
+  400 words checked, 0 mismatches
+
+-------------------------------------------------------------
+  LATENCY (TX parallel word in -> same word out at RX)
+-------------------------------------------------------------
+  BHV : marker tx @ 11924.0 ns, rx @ 12660.0 ns  ==>  736.0 ns
+
+=============================================================
+  RESULT: PASSED
+=============================================================
+
+/home/klaudio/app/tmp/zadaci/TASK-5557_cjelovit-pregled-repozitorija/patch/tb_serdes_equiv.v:853: $finish called at 264920000 (100fs)
+
+real	0m1.057s
+user	0m1.017s
+sys	0m0.064s
