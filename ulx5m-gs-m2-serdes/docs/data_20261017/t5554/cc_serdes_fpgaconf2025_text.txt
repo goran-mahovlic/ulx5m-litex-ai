@@ -1,0 +1,842 @@
+=== slide 1
+ 
+ 
+GateMateTM FPGA
+High-Speed Transceiver (SerDes)
+July 3rd 2025
+Patrick Urban, M.Sc.
+Research & Development
+Cologne Chip AG
+
+=== slide 2
+ 
+ 
+Agenda
+ 
+1. Introduction to GateMate FPGA
+Architecture & Toolchain
+2. Detailled look into the GateMate SerDes
+Features & Tools
+3. 1000BASE-X Implementation & Example
+SerDes Wizard & Loopback Example
+© 2025 Cologne Chip AG
+Slide 2 of 21
+GateMateTM FPGA: High-speed Transceiver (SerDes)
+
+=== slide 3
+ 
+ 
+Company Overview
+ 
+© 2025 Cologne Chip AG
+GateMateTM FPGA: High-speed Transceiver (SerDes)
+Slide 3 of 21
+1994
+Founding year of Cologne Chip Designs GmbH.
+ 
+1996
+Presentation of world's first single-chip-solution for ISDN.
+ 
+2000
+Rebranding to Cologne Chip AG and sales in millions of units
+after annual growth rates by 100%
+ 
+2007
+Establishment of the XHFC-Series with open access to
+drivers and software; part of Linux Kernel since v. 2.6.27.
+ 
+2020
+Introduction of a new product line: GateMate FPGA.
+> 30 Years
+Experience in
+Semiconductor
+Business
+Certified Quality
+Always on-time
+Same-Day Deliveries
+100 %
+Reliable Supply Chain
+
+=== slide 4
+ 
+ 
+GateMate FPGA
+Features at a glance
+●
+GlobalfoundriesTM 28nm SLP process (Fab 1 Dresden, Germany)
+●
+20,480 programmable elements per FPGA-die
+–
+8 inputs or 4+4 inputs + 2 flip-flops
+–
+2-bit full adder or 2x2-bit multiplier
+●
+All 162 GPIO configurable as single-ended or 
+LVDS differential pairs with DDR support
+(MIPI D-PHY compatible)
+●
+32x 40 Kbit RAM cells (Total 1,280 Kbit)
+●
+4 Clock Generators (PLLs)
+●
+5 Gbit/s SerDes Controller
+●
+Temperature range from -40°C to +125°C
+●
+Core voltage from 0.9V to 1.1V
+I/O voltage from 1.2V to 2.5V (3.3V proven)
+●
+Open Source Toolchain using yosys and nextpnr
+●
+A1, A2, A4: Patented Multi-Die concept
+© 2025 Cologne Chip AG
+GateMateTM FPGA: High-speed Transceiver (SerDes)
+Slide 4 of 21
+GM1A2/4
+Config Bank
+(SPI, JTAG, Quad I/O SPI flash)
+Block RAM
+PLLs
+SerDes
+Die-to-die
+Connections
+(1,088 TX+RX
+ signals in silicon)
+GM1A4
+Logic Tiles
+8x8 CPE
+9 I/O Banks
+(18 pads per bank)
+
+=== slide 5
+ 
+ 
+GateMate FPGA Series
+Feature Summary by Device
+Device
+CPEs
+FFs
+Block RAM
+PLL
+SerDes
+GPIO
+Package
+20K
+40K
+Single
+-
+ended
+Diff. 
+Pairs
+(LVDS)
+A1
+20,480
+40,960
+64
+32
+4
+1
+162
+81
+324 FBGA
+15x15 mm
+A2
+40,960
+81,920
+128
+64
+8
+2
+162
+81
+324 FBGA
+15x15 mm
+A4
+81,920
+163,840
+256
+128
+16
+4
+154
+77
+324 FBGA
+15x15 mm
+...
+A25
+512,000
+1,240,000
+1600
+800
+100
+25
+tba
+tba
+tba
+© 2025 Cologne Chip AG
+Slide 5 of 21
+     Mass Production
+     Avaliable soon
+* Patented Technology
+GateMateTM FPGA: High-speed Transceiver (SerDes)
+
+=== slide 6
+ 
+ 
+Toolchain
+Open-Source at Every Step
+[1]  https://github.com/enjoy-digital/litex
+[2]  https://github.com/YosysHQ/yosys
+[3]  https://github.com/YosysHQ/nextpnr
+[4]  https://github.com/trabucayre/openFPGALoader
+Slide 6 of 21
+© 2025 Cologne Chip AG
+[5]  https://github.com/ghdl/ghdl
+[6]  https://github.com/YosysHQ/prjpeppercorn
+yosys
++
+ABC
+nextpnr
+prjpeppercorn
+GHDL
+Verilog
+TCL
+JSON
+Verilog
+VHDL
+Python
+SDC
+*.bit
+open
+FPGA
+Loader
+JTAG/SPI/
+flash
+Verilog
+Library
+VHDL
+Library
+Synthesis
+Implementation
+Configuration
+GateMateTM FPGA: High-speed Transceiver (SerDes)
+
+=== slide 7
+ 
+ 
+GateMate in Action
+What is it capable of?
+Slide 7 of 21
+© 2025 Cologne Chip AG
+GateMateTM FPGA: High-speed Transceiver (SerDes)
+Boot Linux
+with RISC-V
+Soft Cores
+Open Source Community
+& Huge IP Catalogue
+Rad-Hard
+Envionments
+& Space
+MIPI Cameras
+
+=== slide 8
+ 
+ 
+High-Speed Serial
+The Role of Serializer/Deserializers
+© 2025 Cologne Chip AG
+Slide 8 of 21
+GateMateTM FPGA: High-speed Transceiver (SerDes)
+
+=== slide 9
+ 
+ 
+Why High-Speed Serial?
+The Role of Serializer/Deserializers
+Slide 9 of 21
+© 2025 Cologne Chip AG
+GateMateTM FPGA: High-speed Transceiver (SerDes)
+●
+Bandwidth Demand Outpaces Parallel I/O
+–
+Parallel buses limited by crosstalk, skew, and physical pin count
+–
+Difficult to scale beyond a few hundred MHz per line
+●
+High-Speed Serial Advantages
+–
+Higher Data Rates with fewer pins
+–
+Lower Power and EMI due to differential signaling and fewer traces
+●
+SerDes: The Enabler
+–
+Serializer: Converts wide parallel data into high-speed serial stream
+–
+Deserializer: Recovers original parallel data from serial stream
+–
+Integrated clock recovery and data alignment logic
+
+=== slide 10
+ 
+ 
+Serializer/Deserializer (SerDes)
+Full featured, low power consumption
+Slide 10 of 21
+© 2025 Cologne Chip AG
+GateMateTM FPGA: High-speed Transceiver (SerDes)
+RX PMA
+TX PCS
+8B/10B
+Encoder
+RX PCS
+PRBS
+Generator
+Phase
+Adjust
+Polarity
+PRBS
+Checker
+Elastic
+Buffer
+Comma
+Detect &
+Alignment
+Polarity
+FPGA TX
+Interface
+8B/10B
+Decoder
+FPGA RX
+Interface
+TX PMA
+PISO
+SIPO
+RX
+EQ DFE
+Register File
+FPGA CPE
+Interface
+JTAG
+Interface
+TX
+Registers
+RX
+Registers
+PLL
+Registers
+Far-End PCS
+Loopback
+Far-End PMA
+Loopback
+Near-End PCS
+Loopback
+Near-End PMA
+Loopback
+Eye Scan
+CDR
+80
+ADPLL
+Phase &
+Frequency
+Detector
+Osc.
+1/M3
+1/M4
+1/M2
+1/M3
+1/M1
+1/M3
+1/M2
+1/M1
+Data Path
+Clock
+Bit Rate
+Clock
+80
+TX Datapath
+RX Datapath
+64
+64
+TX
+Emph.
+40
+32
+20
+16
+40
+32
+20
+16
+
+=== slide 11
+ 
+ 
+Serializer/Deserializer (SerDes)
+ADPLL Settings
+Slide 11 of 21
+© 2025 Cologne Chip AG
+GateMateTM FPGA: High-speed Transceiver (SerDes)
+Bitrate Clock [MHz]
+Datapath Clock [MHz]
+#
+100M refclk
+125M refclk
+80 Bit
+40 Bit
+20 Bit
+1
+300
+375
+3.75
+7.50
+15.00
+2
+400
+500
+5.00
+10.00
+20.00
+3
+450
+563
+5.63
+11.25
+22.50
+4
+500
+625
+6.25
+12.50
+25.00
+5
+600
+750
+7.50
+15.00
+30.00
+6
+750
+938
+9.38
+18.75
+37.50
+7
+800
+1,000
+10.00
+20.00
+40.00
+8
+900
+1,125
+11.25
+22.50
+45.00
+9
+1,000
+1,250
+12.50
+25.00
+50.00
+10
+1,200
+1,500
+15.00
+30.00
+60.00
+11
+1,250
+1,563
+15.63
+31.25
+62.50
+12
+1,500
+1,875
+18.75
+37.50
+75.00
+13
+1,600
+2,000
+20.00
+40.00
+80.00
+14
+1,800
+2,250
+22.50
+45.00
+90.00
+15
+2,000
+2,500
+25.00
+50.00
+100.00
+16
+2,400
+3,000
+30.00
+60.00
+120.00
+17
+2,500
+3,125
+31.25
+62.50
+125.00
+18
+3,000
+3,750
+37.50
+75.00
+150.00
+19
+3,200
+4,000
+40.00
+80.00
+160.00
+20
+3,600
+4,500
+45.00
+90.00
+180.00
+21
+4,000
+5,000
+50.00
+100.00
+200.00
+22
+4,800
+6,000
+60.00
+120.00
+240.00
+23
+5,000
+6,250
+62.50
+125.00
+250.00
+24
+6,000
+7,500
+75.00
+150.00
+300.00
+25
+6,400
+8,000
+80.00
+160.00
+320.00
+26
+8,000
+10,000
+100.00
+200.00
+400.00
+27
+10,000
+12,500
+125.00
+250.00
+500.00
+In Spec.
+Not in Spec.
+BRC: Bit Rate Clock
+DPC: Data Path Clock
+SER_CLK:
+[100e6, 125e6]
+N1:
+[1, 2]
+N2:
+[2, 3, 4, 5]
+N3:
+[3, 4, 5]
+M3:
+[1, 2, 4]
+
+=== slide 12
+ 
+ 
+5G Serializer/Deserializer (SerDes)
+TX Configurable Driver
+Slide 12 of 21
+© 2025 Cologne Chip AG
+GateMateTM FPGA: High-speed Transceiver (SerDes)
+
+=== slide 13
+ 
+ 
+5G Serializer/Deserializer (SerDes)
+RX PMA+PCS Features
+Slide 13 of 21
+© 2025 Cologne Chip AG
+GateMateTM FPGA: High-speed Transceiver (SerDes)
+64-Bit Datapath
+8-Bit
+8-Bit
+8-Bit
+8-Bit
+8-Bit
+8-Bit
+8-Bit
+8-Bit
+8-Bit
+8-Bit
+8-Bit
+8-Bit
+8-Bit
+8-Bit
+8-Bit
+8-Bit
+8-Bit
+8-Bit
+8-Bit
+8-Bit
+8-Bit
+8-Bit
+8-Bit
+8-Bit
+63    56
+55    48
+47    40
+39    32
+31    24
+23    16
+15    8
+7    0
+Alignment
+32-Bit
+16-Bit
+8-Bit
+fields with a gray background indicate
+the possible positioning of the comma value
+●
+3-tap decision feedback equalizer (DFE)
+●
+Calibratable termination resistor
+●
+Common-mode control
+●
+Electrical idle detector, receiver 
+detection
+●
+Receiver margin analysis with eye 
+measurement
+●
+Clock and data recovery (CDR)
+●
+Comma alignment unit
+
+=== slide 14
+ 
+ 
+SerDes Wizard
+Access to the Register File
+Slide 14 of 21
+© 2025 Cologne Chip AG
+GateMateTM FPGA: High-speed Transceiver (SerDes)
+
+=== slide 15
+ 
+ 
+GateMate SerDes in Action
+And why it is so easy to use
+© 2025 Cologne Chip AG
+Slide 15 of 21
+GateMateTM FPGA: High-speed Transceiver (SerDes)
+GateMate SerDes in Action
+And why it is so easy to use
+
+=== slide 16
+ 
+ 
+Massive IP Catalogue: LiteX
+„Build your hardware, easily!“
+Slide 16 of 21
+© 2025 Cologne Chip AG
+GateMateTM FPGA: High-speed Transceiver (SerDes)
+[1]  https://github.com/enjoy-digital/litex
+LiteX
+Migen
+LiteX Cores Ecosystem
+liteeth
+litepcie
+litesata
+litedram
+litespi
+...
+AXI, AXI-lite,
+Wishbone
+CPU
+Toolchains
+FPGA
+Toolchains
+Board
+Files
+Platform
+Files
+Your design
+ready to be used
+
+=== slide 17
+ 
+ 
+1000BASE-X Implementation
+Liteeth Implementation
+Slide 17 of 21
+© 2025 Cologne Chip AG
+GateMateTM FPGA: High-speed Transceiver (SerDes)
+●
+Build on top of Litex’ PCS-1000BASE-X
+●
+SerDes PCS: bypassed
+(see next slide)
+●
+Uses 20/16-bit datapath
+●
+Requires TX+RX gearboxes for 10-bit 
+datapath
+●
+Fabric speed: 125 MHz
+
+=== slide 18
+ 
+ 
+1000BASE-X Implementation
+Liteeth Implementation
+Slide 18 of 21
+© 2025 Cologne Chip AG
+GateMateTM FPGA: High-speed Transceiver (SerDes)
+[1] https://github.com/enjoy-digital/liteeth/tree/master/liteeth/phy
+125 MHz
+20
+10
+RX PMA
+TX PCS
+8B/10B
+Encoder
+RX PCS
+PRBS
+Generator
+Phase
+Adjust
+Polarity
+PRBS
+Checker
+Elastic
+Buffer
+Comma
+Detect &
+Alignment
+Polarity
+FPGA TX
+Interface
+8B/10B
+Decoder
+FPGA RX
+Interface
+TX PMA
+PISO
+SIPO
+RX
+EQ DFE
+Far-End PCS
+Loopback
+Far-End PMA
+Loopback
+Near-End PCS
+Loopback
+Near-End PMA
+Loopback
+Eye Scan
+CDR
+80
+80
+TX Datapath
+RX Datapath
+64
+64
+TX
+Emph.
+40
+32
+40
+32
+20
+16
+20
+16
+PCS 1000BASE-X
+(liteeth)
+TX GEARBOX
+RX GEARBOX
+÷2
+62.5 MHz
+125 MHz
+20
+10
+TX / RX FSM
+CRC
+ARP
+IP / UDP
+ICMP
+DHCP
+...
+Wishbone
+PLL
+x2
+62.5 MHz
+
+=== slide 19
+ 
+ 
+1000BASE-X Implementation
+Resource Utilization
+Slide 19 of 21
+© 2025 Cologne Chip AG
+GateMateTM FPGA: High-speed Transceiver (SerDes)
+●
+Configuration:
+–
+VexRiscv (RV32I)
+–
+HyperRAM memory controller
+–
+UART interface
+–
+ROM (for bootloader)
+–
+1000BASE-X PCS + MAC
+●
+Processing time: 1m 18s
+(litex + gcc + yosys + nextpnr)
+
+=== slide 20
+ 
+ 
+GateMate SerDes in Action
+And why it is so easy to use
+© 2025 Cologne Chip AG
+Slide 20 of 21
+GateMateTM FPGA: High-speed Transceiver (SerDes)
+GateMate SerDes Demo
+
+=== slide 21
+ 
+ 
+Patrick Urban, M.Sc.
+Cologne Chip AG
+Eintrachtstr. 113
+50668 Köln
+https://colognechip.com
+patrick.urban@colognechip.com
+Contact
+Add me on LinkedIn!

@@ -1,0 +1,16 @@
+   parameter        OUT_CLK                  = DPC * PLL_MUL;
+
+   // Constant Port Value Assignments
+
+   assign o_tx_reset     = 1'b0;
+   assign o_tx_pcs_reset = 1'b0;
+   assign o_tx_pma_reset = 1'b0;
+
+   assign o_rx_reset     = 1'b0;
+   assign o_rx_pcs_reset = 1'b0;
+   assign o_rx_pma_reset = 1'b0;
+   assign o_rx_cdr_reset = 1'b0;
+   assign o_rx_eqa_reset = 1'b0;
+
+   assign o_tx_8b10b_bypass    = 8'b0000_0000;
+   assign o_rx_8b10b_bypass    = 8'b0000_0000;

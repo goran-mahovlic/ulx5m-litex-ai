@@ -1,0 +1,101 @@
+CCGM1A1
+CCGM1A2
+Electrical Characteristics
+Cologne
+Chip
+Table 4.3: Serializer / deserializer (SerDes) electrical characteristics
+Symbol
+Min
+Typ
+Max
+Unit
+Description
+TSER
+−40
+25
+125
+°C
+SerDes operating temperature
+VDDSER
+1.00
+1.0
+1.1
+V
+VDD_SER supply voltage range
+VDDSER_PLL
+1.00
+1.0
+1.1
+V
+VDD_SER_PLL supply voltage range
+ISER,leakage
+0.324
+mA
+VDD_SER supply leakage at 1.15 V and 25 °C
+fSER
+100
+125
+MHz
+SER_CLK reference clock frequency
+JSER
+1
+ps
+SER_CLK reference clock jitter
+tdly,lowpower
+50
+65
+85
+ps
+Step size of the programmable delay element, 15
+levels adjustable
+tdly,economy
+38
+50
+65
+ps
+dto.
+tdly,speed
+30
+38
+50
+ps
+dto.
+RTERM,REF
+198
+200
+202
+Ω
+Internal calibration reference resistor
+RTERM
+100
+Ω
+Internal differential termination impedance
+DSER
+0.3
+5
+Gbit/s
+Data rate
+fDCO
+1250
+2500
+MHz
+Internal frequency range of the SerDes PLL
+Table 4.4: Typical SerDes power consumption at 25 °C
+VDDSER
+2.5 GB/s
+5.0 GB/s
+1.00 V
+36 mA
+40 mA
+1.05 V
+40 mA
+44 mA
+1.10 V
+42 mA
+48 mA
+1.15 V
+46 mA
+51 mA
+DS1001
+September 2026
+155 of 197

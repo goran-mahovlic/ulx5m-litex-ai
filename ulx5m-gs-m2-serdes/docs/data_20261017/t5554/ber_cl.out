@@ -1,0 +1,21 @@
+| cilj BER | CL | k grešaka | bitova N | 2,5 Gb/s (linija) | 1,25e9 b/s (naš checker na 2,5G) | 5 Gb/s (linija) | 2,5e9 b/s (naš checker na 5G) |
+|---|---|---|---|---|---|---|---|
+| 1e-12 | 95 % | 0 | 2.996e+12 | 1,198 s = 20.0 min | 2,397 s = 39.9 min | 599 s = 10.0 min | 1,198 s = 20.0 min |
+| 1e-12 | 95 % | 1 | 4.744e+12 | 1,898 s = 31.6 min | 3,795 s = 63.3 min | 949 s = 15.8 min | 1,898 s = 31.6 min |
+| 1e-12 | 95 % | 2 | 6.296e+12 | 2,518 s = 42.0 min | 5,037 s = 83.9 min | 1,259 s = 21.0 min | 2,518 s = 42.0 min |
+| 1e-12 | 99 % | 0 | 4.605e+12 | 1,842 s = 30.7 min | 3,684 s = 61.4 min | 921 s = 15.4 min | 1,842 s = 30.7 min |
+| 1e-12 | 99 % | 1 | 6.638e+12 | 2,655 s = 44.3 min | 5,311 s = 88.5 min | 1,328 s = 22.1 min | 2,655 s = 44.3 min |
+| 1e-12 | 99 % | 2 | 8.406e+12 | 3,362 s = 56.0 min | 6,725 s = 112.1 min | 1,681 s = 28.0 min | 3,362 s = 56.0 min |
+| 1e-15 | 95 % | 0 | 2.996e+15 | 13.9 dana | 27.7 dana | 6.9 dana | 13.9 dana |
+| 1e-15 | 95 % | 1 | 4.744e+15 | 22.0 dana | 43.9 dana | 11.0 dana | 22.0 dana |
+| 1e-15 | 95 % | 2 | 6.296e+15 | 29.1 dana | 58.3 dana | 14.6 dana | 29.1 dana |
+| 1e-15 | 99 % | 0 | 4.605e+15 | 21.3 dana | 42.6 dana | 10.7 dana | 21.3 dana |
+| 1e-15 | 99 % | 1 | 6.638e+15 | 30.7 dana | 61.5 dana | 15.4 dana | 30.7 dana |
+| 1e-15 | 99 % | 2 | 8.406e+15 | 38.9 dana | 77.8 dana | 19.5 dana | 38.9 dana |
+
+M2->GS: k=50 N=2.239e+12 BER=2.233e-11 95% two-sided [1.657e-11,2.944e-11] one-sided upper95 2.827e-11
+   bits for <1e-12@95% if total errors stayed 50: 6.329e+13 -> 50,630 s at 1.25e9 b/s
+GS->M2: k=2 N=2.239e+12 BER=8.933e-13 95% two-sided [1.082e-13,3.227e-12] one-sided upper95 2.812e-12
+   bits for <1e-12@95% if total errors stayed 2: 6.296e+12 -> 5,037 s at 1.25e9 b/s
+CC serdestool tc_prbs 10 s @1.25G, 0 err: N=1.25e+10, upper95=2.40e-10
+WP428 '3 min @6G for 1e-12': bits=1.08e+12 = 1.08/BER; 95% 0-err needs 8.3 min

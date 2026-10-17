@@ -1,0 +1,107 @@
+4:   parameter DATA_BYTES = 8,
+5:   parameter DATA_WIDTH = DATA_BYTES*8
+108:   parameter  [5:0] PLL_FCNTRL               = 6'h1A;                   // (Default = 58 = T:20d)
+109:   parameter  [5:0] PLL_MAIN_DIVSEL          = {1'b0,2'b11,1'b0,2'b11}; // (Default = 27)
+110:   parameter  [1:0] PLL_OUT_DIVSEL           = 2'b01;                   // (Default = 0 = T:1d)
+116:   parameter  [1:0] RX_DATAPATH_SEL          = 2'b11;              // (Default = 3)
+117:   parameter  [1:0] TX_DATAPATH_SEL          = 2'b11;              // (Default = 3)
+119:   parameter  [9:0] ALIGN_MCOMMA_VALUE       = 10'h283; // (Default = 10'b1010000011)
+120:   parameter  [9:0] ALIGN_PCOMMA_VALUE       = 10'h17C; // (Default = 10'b0101111100)
+121:   parameter  [9:0] ALIGN_COMMA_ENABLE       = 10'h3FF; // (Default = 3FF) : Maske
+122:   parameter  [1:0] ALIGN_COMMA_WORD         = 2'h3;          // (Default = 2'b00 : 8 Bit)
+123:   parameter  [1:0] RX_SLIDE_MODE            = 2'b00;   // !!!
+125:   parameter        PLL_CONFIG_SEL           = 1'h1;              // (Default = 1'b0) (spec!)
+127:   parameter        RX_WAIT_CDR_LOCK         = 1'b0;
+128:   parameter        RX_RESET_DONE_GATE       = 1'h0;
+129:   parameter  [4:0] RX_RESET_TIMER_PRESC     = 5'h0;
+130:   parameter  [4:0] RX_PMA_RESET_TIME        = 5'h3;
+131:   parameter  [4:0] RX_EQA_RESET_TIME        = 5'h3;
+132:   parameter  [4:0] RX_CDR_RESET_TIME        = 5'h3;
+133:   parameter  [4:0] RX_PCS_RESET_TIME        = 5'h3;
+134:   parameter  [4:0] RX_BUF_RESET_TIME        = 5'h3;
+135:   parameter  [2:0] RX_RTERM_VCMSEL          = 3'h4;
+136:   parameter        RX_RTERM_PD              = 1'h0;
+137:   parameter  [7:0] RX_EQA_CKP_HF            = 8'hA3;
+138:   parameter  [7:0] RX_EQA_CKP_LF            = 8'hA3;
+139:   parameter [15:0] RX_EQA_CONFIG            = 16'h01C0;
+140:   parameter  [7:0] RX_EQA_CKP_OFFSET        = 8'h01;
+141:   parameter        RX_EN_EQA                = 1'h0;
+142:   parameter  [3:0] RX_EQA_LOCK_CFG          = 4'h0;
+143:   parameter  [4:0] RX_TH_MON1               = 5'h8;
+144:   parameter  [4:0] RX_TH_MON2               = 5'h8;
+145:   parameter  [4:0] RX_TAPW                  = 5'h8;
+146:   parameter  [4:0] RX_AFE_OFFSET            = 5'h8;
+147:   parameter  [2:0] RX_AFE_VCMSEL            = 3'h4;
+148:   parameter  [3:0] RX_AFE_GAIN              = 4'h8;
+149:   parameter  [4:0] RX_AFE_PEAK              = 5'hF; //old: 16
+150:   parameter  [7:0] RX_CDR_CKP               = 8'hF8; // old: {3'b101, 5'b01111};
+151:   parameter  [7:0] RX_CDR_CKI               = 8'h00;
+152:   parameter  [7:0] RX_CDR_LOCK_CFG          = 8'hD5; // old: 15'b000_1000_1101_0101;
+153:   parameter  [1:0] RX_CDR_SET_ACC_CONFIG    = 2'h0;
+154:   parameter        RX_CDR_FORCE_LOCK        = 1'h0;
+155:   parameter [14:0] RX_CDR_FREQ_ACC          = 15'h0;
+156:   parameter [15:0] RX_CDR_PHASE_ACC         = 16'h0000;
+157:   parameter [14:0] RX_EYE_MEAS_CFG          = 15'h00;
+158:   parameter  [5:0] RX_MON_PH_OFFSET         = 6'h0;
+159:   parameter  [3:0] RX_EI_BIAS               = 4'h4;
+160:   parameter  [3:0] RX_EI_BW_SEL             = 4'h4;
+161:   parameter  [9:0] RX_CLKCOR_SEQ_1_0        = 10'h1F7;
+162:   parameter  [9:0] RX_CLKCOR_SEQ_1_1        = 10'h1F7;
+163:   parameter  [9:0] RX_CLKCOR_SEQ_1_2        = 10'h1F7;
+164:   parameter  [9:0] RX_CLKCOR_SEQ_1_3        = 10'h1F7;
+165:   parameter  [5:0] RX_CLKCOR_MIN_LAT        = 6'h20;
+166:   parameter  [5:0] RX_CLKCOR_MAX_LAT        = 6'h27;
+167:   parameter  [2:0] TX_TAIL_CASCODE          = 3'h4;
+168:   parameter  [4:0] TX_BRANCH_EN_PRE         = 5'hF;
+169:   parameter  [5:0] TX_BRANCH_EN_MAIN        = 6'h3F;
+170:   parameter  [4:0] TX_BRANCH_EN_POST        = 5'hF;
+171:   parameter  [6:0] TX_DC_ENABLE             = 7'h3F;
+172:   parameter  [4:0] TX_AMP                   = 5'd30;
+173:   parameter  [4:0] TX_DC_OFFSET             = 5'h8;
+174:   parameter  [4:0] TX_CM_RAISE              = 5'h0;
+175:   parameter  [4:0] TX_CM_THRESHOLD_0        = 5'hE;
+176:   parameter  [4:0] TX_CM_THRESHOLD_1        = 5'h10;
+177:   parameter        TX_CM_REG_EN             = 1'h1;
+178:   parameter  [7:0] TX_CM_REG_KI             = 8'h80;
+179:   parameter  [4:0] TX_PMA_RESET_TIME        = 5'h3;
+180:   parameter  [4:0] TX_PCS_RESET_TIME        = 5'h3;
+181:   parameter  [1:0] TX_PMA_LOOPBACK          = 2'b00;
+182:   parameter        PLL_EN_ADPLL_CTRL        = 1'h1;
+184:   parameter        PLL_SET_OP_LOCK          = 1'h0; // old: 1;
+185:   parameter        PLL_ENFORCE_LOCK         = 1'h0;
+186:   parameter        PLL_DISABLE_LOCK         = 1'h0;
+187:   parameter        PLL_LOCK_WINDOW          = 1'h1;
+188:   parameter        PLL_FAST_LOCK            = 1'h1;
+189:   parameter        PLL_SYNC_BYPASS          = 1'h0;
+190:   parameter        PLL_PFD_SELECT           = 1'h0;
+191:   parameter        PLL_REF_BYPASS           = 1'h0;
+192:   parameter        PLL_REF_SEL              = 1'h1;
+193:   parameter        PLL_REF_RTERM            = 1'h1;
+194:   parameter  [4:0] PLL_CI                   = 5'h3;// 5'h1; //
+195:   parameter  [9:0] PLL_CP                   = 10'h50;// 10'h3C; //
+196:   parameter  [3:0] PLL_AO                   = 4'h0;
+197:   parameter  [2:0] PLL_SCAP                 = 3'h0;
+198:   parameter        PLL_SCAP_AUTO_CAL        = 1'h1;
+199:   parameter  [1:0] PLL_FILTER_SHIFT         = 2'h2;
+200:   parameter  [2:0] PLL_SAR_LIMIT            = 2'h2;
+201:   parameter [10:0] PLL_FT                   = 11'h200;
+202:   parameter        PLL_OPEN_LOOP            = 1'h0;
+203:   parameter  [2:0] PLL_BISC_MODE            = 3'h5; // MODE B, enable
+204:   parameter  [3:0] PLL_BISC_TIMER_MAX       = 4'hC; // old: 15;
+205:   parameter  [4:0] PLL_BISC_CP_MIN          = 5'h6; // 4;
+206:   parameter  [4:0] PLL_BISC_CP_MAX          = 5'h1E; // old: 18;x
+207:   parameter  [4:0] PLL_BISC_CP_START        = 5'h6; // old: 12;
+208:   parameter        PLL_BISC_OPT_DET_IND     = 1'h0;
+209:   parameter        PLL_BISC_PFD_SEL         = 1'h0;
+210:   parameter        PLL_BISC_DLY_DIR         = 1'h0;
+211:   parameter        PLL_BISC_CAL_SIGN        = 1'h1;// old: 0;
+212:   parameter        PLL_BISC_CAL_AUTO        = 1'h1;
+213:   parameter  [4:0] PLL_BISC_DLY_PFD_MON_REF = 5'h0;
+214:   parameter  [4:0] PLL_BISC_DLY_PFD_MON_DIV = 5'h2;
+215:   parameter  [2:0] PLL_BISC_COR_DLY         = 3'h1;
+227:      .RX_CALIB_EN(1'h1),
+238:      .RX_EN_EQA_EXT_VALUE(4'h0), // ?
+248:      .RX_CDR_TRANS_TH(7'h8), // h15? // ?
+309:      .TX_SEL_PRE(5'h0),
+310:      .TX_SEL_POST(5'h0),
+345:      .TX_CALIB_EN(1'h0),
