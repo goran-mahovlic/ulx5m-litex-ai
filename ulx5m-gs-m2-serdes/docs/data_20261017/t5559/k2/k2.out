@@ -1,0 +1,85 @@
+== k2 start 2026-10-17T13:17:28+02:00 readapt=eqa rounds=20
+ATTEMPT k2_b0p_01 n=1 L3 t_link=62.7 Q=FAIL {'m2_to_gs': 749, 'gs_to_m2': 1} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT k2_b0p_01 n=2 L3 t_link=56.2 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} C=PASS {'m2_to_gs': 5, 'gs_to_m2': 3} PASS
+GATE k2_b0p_01 PASS attempts=2 undecided=0
+ATTEMPT k2_b1_01 n=1 L3 t_link=55.3 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 7} C=FAIL {'m2_to_gs': 108, 'gs_to_m2': 193} FAIL (C: burst > 20 in a 10 s window: gs_to_m2,m2_to_gs)
+ATTEMPT k2_b1_01 n=2 L3 t_link=58.1 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} C=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} PASS
+GATE k2_b1_01 PASS attempts=2 undecided=0
+ATTEMPT k2_b2_01 n=1 L3 t_link=62.5 Q=FAIL {'m2_to_gs': 13, 'gs_to_m2': 4} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT k2_b2_01 n=2 L3 t_link=54.4 Q=FAIL {'m2_to_gs': 42, 'gs_to_m2': 1} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT k2_b2_01 n=3 L3 t_link=57.5 Q=FAIL {'m2_to_gs': 0, 'gs_to_m2': 9} C=None None FAIL (Q: errors > 8: gs_to_m2)
+ATTEMPT k2_b2_01 n=4 L3 t_link=57.0 Q=PASS {'m2_to_gs': 1, 'gs_to_m2': 6} C=PASS {'m2_to_gs': 12, 'gs_to_m2': 17} PASS
+GATE k2_b2_01 PASS attempts=4 undecided=0
+== round 1 done 13:45:16 throttled=0xd0005 temp=57.5'C
+ATTEMPT k2_b0p_02 n=1 L3 t_link=57.6 Q=FAIL {'m2_to_gs': 2, 'gs_to_m2': 42} C=None None FAIL (Q: errors > 8: gs_to_m2)
+ATTEMPT k2_b0p_02 n=2 L3 t_link=54.4 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 1} C=PASS {'m2_to_gs': 41, 'gs_to_m2': 2} PASS
+GATE k2_b0p_02 PASS attempts=2 undecided=0
+ATTEMPT k2_b1_02 n=1 L3 t_link=56.2 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} C=PASS {'m2_to_gs': 1, 'gs_to_m2': 5} PASS
+GATE k2_b1_02 PASS attempts=1 undecided=0
+ATTEMPT k2_b2_02 n=1 L3 t_link=56.7 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 1} C=PASS {'m2_to_gs': 10, 'gs_to_m2': 3} PASS
+GATE k2_b2_02 PASS attempts=1 undecided=0
+== round 2 done 14:00:14 throttled=0xd0000 temp=56.9'C
+ATTEMPT k2_b0p_03 n=1 L3 t_link=57.0 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} C=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} PASS
+GATE k2_b0p_03 PASS attempts=1 undecided=0
+ATTEMPT k2_b1_03 n=1 L3 t_link=56.6 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} C=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} PASS
+GATE k2_b1_03 PASS attempts=1 undecided=0
+ATTEMPT k2_b2_03 n=1 L3 t_link=57.2 Q=FAIL {'m2_to_gs': 48, 'gs_to_m2': 2} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT k2_b2_03 n=2 L3 t_link=57.4 Q=FAIL {'m2_to_gs': 16, 'gs_to_m2': 0} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT k2_b2_03 n=3 L3 t_link=54.3 Q=FAIL {'m2_to_gs': 10, 'gs_to_m2': 2} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT k2_b2_03 n=4 L3 t_link=57.5 Q=PASS {'m2_to_gs': 1, 'gs_to_m2': 1} C=PASS {'m2_to_gs': 8, 'gs_to_m2': 15} PASS
+GATE k2_b2_03 PASS attempts=4 undecided=0
+== round 3 done 14:20:54 throttled=0xd0000 temp=56.9'C
+ATTEMPT k2_b0p_04 n=1 L3 t_link=58.3 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} C=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} PASS
+GATE k2_b0p_04 PASS attempts=1 undecided=0
+ATTEMPT k2_b1_04 n=1 L3 t_link=56.6 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} C=PASS {'m2_to_gs': 2, 'gs_to_m2': 0} PASS
+GATE k2_b1_04 PASS attempts=1 undecided=0
+ATTEMPT k2_b2_04 n=1 L3 t_link=62.9 Q=FAIL {'m2_to_gs': 0, 'gs_to_m2': 40} C=None None FAIL (Q: errors > 8: gs_to_m2)
+ATTEMPT k2_b2_04 n=2 L3 t_link=57.9 Q=FAIL {'m2_to_gs': 3, 'gs_to_m2': 729} C=None None FAIL (Q: errors > 8: gs_to_m2)
+ATTEMPT k2_b2_04 n=3 L3 t_link=54.5 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 3} C=FAIL {'m2_to_gs': 21, 'gs_to_m2': 746} FAIL (C: burst > 20 in a 10 s window: gs_to_m2)
+ATTEMPT k2_b2_04 n=4 L3 t_link=57.7 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} C=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} PASS
+GATE k2_b2_04 PASS attempts=4 undecided=0
+== round 4 done 14:42:45 throttled=0xd0000 temp=56.9'C
+ATTEMPT k2_b0p_05 n=1 L3 t_link=58.2 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 3} C=PASS {'m2_to_gs': 4, 'gs_to_m2': 39} PASS
+GATE k2_b0p_05 PASS attempts=1 undecided=0
+ATTEMPT k2_b1_05 n=1 L3 t_link=59.3 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} C=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} PASS
+GATE k2_b1_05 PASS attempts=1 undecided=0
+ATTEMPT k2_b2_05 n=1 L3 t_link=59.9 Q=FAIL {'m2_to_gs': 40, 'gs_to_m2': 0} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT k2_b2_05 n=2 L3 t_link=55.8 Q=FAIL {'m2_to_gs': 43, 'gs_to_m2': 1} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT k2_b2_05 n=3 L3 t_link=58.7 Q=FAIL {'m2_to_gs': 0, 'gs_to_m2': 40} C=None None FAIL (Q: errors > 8: gs_to_m2)
+ATTEMPT k2_b2_05 n=4 L3 t_link=56.2 Q=FAIL {'m2_to_gs': 9, 'gs_to_m2': 0} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT k2_b2_05 n=5 L3 t_link=56.2 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 7} C=FAIL {'m2_to_gs': 11, 'gs_to_m2': 747} FAIL (C: burst > 20 in a 10 s window: gs_to_m2)
+ATTEMPT k2_b2_05 n=6 L3 t_link=57.7 Q=PASS {'m2_to_gs': 4, 'gs_to_m2': 3} C=FAIL {'m2_to_gs': 164, 'gs_to_m2': 21} FAIL (C: burst > 20 in a 10 s window: m2_to_gs)
+ATTEMPT k2_b2_05 n=7 L3 t_link=57.0 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} C=FAIL {'m2_to_gs': 86, 'gs_to_m2': 88} FAIL (C: burst > 20 in a 10 s window: gs_to_m2,m2_to_gs)
+ATTEMPT k2_b2_05 n=8 L3 t_link=57.8 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} C=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} PASS
+GATE k2_b2_05 PASS attempts=8 undecided=0
+== round 5 done 15:18:59 throttled=0xd0000 temp=56.4'C
+ATTEMPT k2_b0p_06 n=1 L3 t_link=57.4 Q=PASS {'m2_to_gs': 1, 'gs_to_m2': 0} C=PASS {'m2_to_gs': 1, 'gs_to_m2': 4} PASS
+GATE k2_b0p_06 PASS attempts=1 undecided=0
+ATTEMPT k2_b1_06 n=1 L3 t_link=55.5 Q=PASS {'m2_to_gs': 1, 'gs_to_m2': 0} C=FAIL {'m2_to_gs': 4, 'gs_to_m2': 123} FAIL (C: burst > 20 in a 10 s window: gs_to_m2)
+ATTEMPT k2_b1_06 n=2 L3 t_link=59.2 Q=FAIL {'m2_to_gs': 16, 'gs_to_m2': 7} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT k2_b1_06 n=3 L3 t_link=54.5 Q=FAIL {'m2_to_gs': 21, 'gs_to_m2': 0} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT k2_b1_06 n=4 L3 t_link=57.4 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 8} C=FAIL {'m2_to_gs': 9, 'gs_to_m2': 43} FAIL (C: burst > 20 in a 10 s window: gs_to_m2)
+ATTEMPT k2_b1_06 n=5 L3 t_link=65.8 Q=FAIL {'m2_to_gs': 10, 'gs_to_m2': 10} C=None None FAIL (Q: errors > 8: m2_to_gs,gs_to_m2)
+ATTEMPT k2_b1_06 n=6 L3 t_link=56.5 Q=FAIL {'m2_to_gs': 0, 'gs_to_m2': 9} C=None None FAIL (Q: errors > 8: gs_to_m2)
+ATTEMPT k2_b1_06 n=7 L3 t_link=54.5 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} C=FAIL {'m2_to_gs': 40, 'gs_to_m2': 0} FAIL (C: burst > 20 in a 10 s window: m2_to_gs)
+ATTEMPT k2_b1_06 n=8 L3 t_link=63.0 Q=FAIL {'m2_to_gs': 2, 'gs_to_m2': 12} C=None None FAIL (Q: errors > 8: gs_to_m2)
+ATTEMPT k2_b1_06 n=9 L3 t_link=59.7 Q=FAIL {'m2_to_gs': 12, 'gs_to_m2': 2} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT k2_b1_06 n=10 L3 t_link=57.6 Q=PASS {'m2_to_gs': 3, 'gs_to_m2': 7} C=PASS {'m2_to_gs': 7, 'gs_to_m2': 45} PASS
+GATE k2_b1_06 PASS attempts=10 undecided=0
+ATTEMPT k2_b2_06 n=1 L3 t_link=59.0 Q=FAIL {'m2_to_gs': 84, 'gs_to_m2': 1} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT k2_b2_06 n=2 L3 t_link=64.8 Q=FAIL {'m2_to_gs': 17, 'gs_to_m2': 0} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT k2_b2_06 n=3 L3 t_link=54.1 Q=FAIL {'m2_to_gs': 1, 'gs_to_m2': 10} C=None None FAIL (Q: errors > 8: gs_to_m2)
+ATTEMPT k2_b2_06 n=4 L3 t_link=54.7 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} C=PASS {'m2_to_gs': 3, 'gs_to_m2': 4} PASS
+GATE k2_b2_06 PASS attempts=4 undecided=0
+== round 6 done 16:09:22 throttled=0xd0000 temp=56.9'C
+ATTEMPT k2_b0p_07 n=1 L3 t_link=58.8 Q=FAIL {'m2_to_gs': 10, 'gs_to_m2': 4} C=None None FAIL (Q: errors > 8: m2_to_gs)
+ATTEMPT k2_b0p_07 n=2 L3 t_link=56.4 Q=FAIL {'m2_to_gs': 1, 'gs_to_m2': 12} C=None None FAIL (Q: errors > 8: gs_to_m2)
+ATTEMPT k2_b0p_07 n=3 L3 t_link=58.8 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 5} C=FAIL {'m2_to_gs': 51, 'gs_to_m2': 156} FAIL (C: burst > 20 in a 10 s window: gs_to_m2)
+ATTEMPT k2_b0p_07 n=4 L3 t_link=59.1 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} C=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} PASS
+GATE k2_b0p_07 PASS attempts=4 undecided=0
+ATTEMPT k2_b1_07 n=1 L3 t_link=64.6 Q=None None C=None None FAIL (health: gs RX_CDR_LOCKED=0)
+ATTEMPT k2_b1_07 n=2 L3 t_link=55.3 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} C=PASS {'m2_to_gs': 0, 'gs_to_m2': 0} PASS
+GATE k2_b1_07 PASS attempts=2 undecided=0
+ATTEMPT k2_b2_07 n=1 L3 t_link=65.7 Q=FAIL {'m2_to_gs': 3, 'gs_to_m2': 9} C=None None FAIL (Q: errors > 8: gs_to_m2)
+ATTEMPT k2_b2_07 n=2 L3 t_link=55.8 Q=PASS {'m2_to_gs': 0, 'gs_to_m2': 3} C=PASS {'m2_to_gs': 25, 'gs_to_m2': 0} PASS
+GATE k2_b2_07 PASS attempts=2 undecided=0
